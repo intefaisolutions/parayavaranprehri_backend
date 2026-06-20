@@ -16,6 +16,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesModule } from './modules/roles/roles.module';
 import { UsersModule } from './modules/users/users.module';
+import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { GreenSelfiesModule } from './modules/green-selfies/green-selfies.module';
+import { LandOffersModule } from './modules/land-offers/land-offers.module';
 
 @Module({
   imports: [
@@ -35,6 +38,9 @@ import { UsersModule } from './modules/users/users.module';
     AuthModule,
     RolesModule,
     UsersModule,
+    VehiclesModule,
+    GreenSelfiesModule,
+    LandOffersModule,
   ],
   controllers: [AppController],
   providers: [

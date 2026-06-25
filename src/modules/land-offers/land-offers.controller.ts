@@ -10,15 +10,15 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 @UseGuards(JwtAuthGuard)
 @Controller('land-offers')
 export class LandOffersController {
-  constructor(private readonly landOffersService: LandOffersService) {}
+  constructor(private readonly landOffersService: LandOffersService) { }
 
   @Post()
-  create(@Body() createLandOfferDto: CreateLandOfferDto, @Request() req) {
+  create(@Body() createLandOfferDto: CreateLandOfferDto, @Request() req: any) {
     return this.landOffersService.create(createLandOfferDto, req.user._id);
   }
 
   @Get()
-  findAll(@Request() req) {
+  findAll(@Request() req: any) {
     return this.landOffersService.findAll(req.user._id);
   }
 

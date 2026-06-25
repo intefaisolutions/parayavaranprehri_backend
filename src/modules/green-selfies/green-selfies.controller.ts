@@ -10,15 +10,15 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 @UseGuards(JwtAuthGuard)
 @Controller('green-selfies')
 export class GreenSelfiesController {
-  constructor(private readonly greenSelfiesService: GreenSelfiesService) {}
+  constructor(private readonly greenSelfiesService: GreenSelfiesService) { }
 
   @Post()
-  create(@Body() createGreenSelfieDto: CreateGreenSelfieDto, @Request() req) {
+  create(@Body() createGreenSelfieDto: CreateGreenSelfieDto, @Request() req: any) {
     return this.greenSelfiesService.create(createGreenSelfieDto, req.user._id);
   }
 
   @Get()
-  findAll(@Request() req) {
+  findAll(@Request() req: any) {
     return this.greenSelfiesService.findAll(req.user._id);
   }
 

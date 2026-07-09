@@ -13,12 +13,12 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
   @Post()
-  create(@Body() createVehicleDto: CreateVehicleDto, @Request() req) {
+  create(@Body() createVehicleDto: CreateVehicleDto, @Request() req: any) {
     return this.vehiclesService.create(createVehicleDto, req.user._id);
   }
 
   @Get()
-  findAll(@Request() req) {
+  findAll(@Request() req: any) {
     return this.vehiclesService.findAll(req.user._id);
   }
 

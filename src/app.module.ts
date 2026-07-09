@@ -19,6 +19,27 @@ import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { GreenSelfiesModule } from './modules/green-selfies/green-selfies.module';
 import { LandOffersModule } from './modules/land-offers/land-offers.module';
+import { StaticDataModule } from './modules/static-data/static-data.module';
+import { GamificationModule } from './modules/gamification/gamification.module';
+import { PersonsModule } from './persons/persons.module';
+import { TreesModule } from './trees/trees.module';
+import { PersonIdentityModule } from './person-identity/person-identity.module';
+import { MitrasModule } from './mitras/mitras.module';
+import { TasksModule } from './tasks/tasks.module';
+import { VidhanSabhasModule } from './vidhan-sabhas/vidhan-sabhas.module';
+import { LocationsModule } from './locations/locations.module';
+import { MapsModule } from './maps/maps.module';
+import { NewsModule } from './news/news.module';
+import { MediaModule } from './media/media.module';
+import { LeadersModule } from './leaders/leaders.module';
+import { CertificatesModule } from './certificates/certificates.module';
+import { PartnersModule } from './partners/partners.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { CallCenterModule } from './call-center/call-center.module';
+import { LanguagesModule } from './languages/languages.module';
+import { ReportsModule } from './reports/reports.module';
+import { SettingsModule } from './settings/settings.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -41,6 +62,27 @@ import { LandOffersModule } from './modules/land-offers/land-offers.module';
     VehiclesModule,
     GreenSelfiesModule,
     LandOffersModule,
+    StaticDataModule,
+    GamificationModule,
+    PersonsModule,
+    TreesModule,
+    PersonIdentityModule,
+    MitrasModule,
+    TasksModule,
+    VidhanSabhasModule,
+    LocationsModule,
+    MapsModule,
+    NewsModule,
+    MediaModule,
+    LeadersModule,
+    CertificatesModule,
+    PartnersModule,
+    NotificationsModule,
+    CallCenterModule,
+    LanguagesModule,
+    ReportsModule,
+    SettingsModule,
+    AuditLogsModule,
   ],
   controllers: [AppController],
   providers: [

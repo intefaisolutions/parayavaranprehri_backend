@@ -90,6 +90,10 @@ export class UsersService {
     return this.userRepository.findByEmailWithPassword(email);
   }
 
+  async findByPhone(phone: string): Promise<UserDocument | null> {
+    return this.userRepository.findByPhone(phone);
+  }
+
   async update(
     id: string,
     dto: UpdateUserDto,

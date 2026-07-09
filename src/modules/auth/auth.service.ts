@@ -19,6 +19,7 @@ import {
 } from './dto/auth.dto';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { EmailService, OtpRepository } from './services/email.service';
+import { SmsService } from './services/sms.service';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly refreshTokenRepository: RefreshTokenRepository,
     private readonly otpRepository: OtpRepository,
     private readonly emailService: EmailService,
+    private readonly smsService: SmsService,
   ) {}
 
   private generateOtp(): string {
@@ -137,10 +139,17 @@ export class AuthService {
   }
 
   async requestOtp(dto: OtpRequestDto): Promise<{ message: string }> {
-    const user = await this.usersService.findByEmail(dto.email);
+    const identifier = dto.email || dto.phone;
+    if (!identifier) {
+      throw new UnauthorizedException('Email or phone must be provided');
+    }
+
+    const user = dto.email
+      ? await this.usersService.findByEmail(dto.email)
+      : await this.usersService.findByPhone(dto.phone!);
 
     if (!user || !user.isActive) {
-      return { message: 'If the email exists, an OTP has been sent' };
+      return { message: 'If the account exists, an OTP has been sent' };
     }
 
     const code = this.generateOtp();
@@ -149,14 +158,19 @@ export class AuthService {
     const expiresAt = new Date(Date.now() + expiresMinutes * 60 * 1000);
 
     await this.otpRepository.create(
-      dto.email,
+      identifier,
       code,
       expiresAt,
       user._id.toString(),
     );
-    await this.emailService.sendOtp(dto.email, code);
 
-    return { message: 'If the email exists, an OTP has been sent' };
+    if (dto.phone) {
+      await this.smsService.sendOtp(dto.phone, code);
+    } else if (dto.email) {
+      await this.emailService.sendOtp(dto.email, code);
+    }
+
+    return { message: 'If the account exists, an OTP has been sent' };
   }
 
   async verifyOtp(
@@ -164,13 +178,20 @@ export class AuthService {
     userAgent?: string,
     ipAddress?: string,
   ): Promise<AuthResponse> {
-    const otp = await this.otpRepository.findValid(dto.email, dto.code);
+    const identifier = dto.email || dto.phone;
+    if (!identifier) {
+      throw new UnauthorizedException('Email or phone must be provided');
+    }
+
+    const otp = await this.otpRepository.findValid(identifier, dto.code);
 
     if (!otp) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    const user = await this.usersService.findByEmail(dto.email);
+    const user = dto.email
+      ? await this.usersService.findByEmail(dto.email)
+      : await this.usersService.findByPhone(dto.phone!);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');

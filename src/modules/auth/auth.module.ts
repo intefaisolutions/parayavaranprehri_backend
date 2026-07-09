@@ -15,6 +15,7 @@ import {
 } from './schemas/refresh-token.schema';
 import { AdminSeedService } from './services/admin-seed.service';
 import { EmailService, OtpRepository } from './services/email.service';
+import { SmsService } from './services/sms.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -45,6 +46,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     RefreshTokenRepository,
     OtpRepository,
     EmailService,
+    SmsService,
     AdminSeedService,
   ],
   exports: [AuthService, JwtAuthGuard],

@@ -17,6 +17,7 @@ export class AdminSeedService implements OnModuleInit {
         firstName: 'Super',
         lastName: 'Admin',
         email,
+        phone: '6263817082', // Assigned the user's provided number
         password: 'SuperAdmin@123',
         role: SystemRole.SUPER_ADMIN,
         permissions: [],

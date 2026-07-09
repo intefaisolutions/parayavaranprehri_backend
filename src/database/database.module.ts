@@ -10,9 +10,15 @@ import { TransactionService } from './transaction.service';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('MONGODB_URI');
+        console.log('====================================');
+        console.log('🟢 CONNECTING TO MONGODB URI:', uri);
+        console.log('====================================');
+        return {
+          uri,
+        };
+      },
     }),
   ],
   providers: [TransactionService],

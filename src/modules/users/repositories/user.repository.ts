@@ -28,4 +28,15 @@ export class UserRepository extends BaseRepository<UserDocument> {
   async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
     return this.findByEmail(email, true);
   }
+
+  async findByPhone(
+    phone: string,
+    includePassword = false,
+  ): Promise<UserDocument | null> {
+    const filter = { phone, isDeleted: false };
+    if (includePassword) {
+      return this.userModel.findOne(filter).select('+password').exec();
+    }
+    return this.userModel.findOne(filter).exec();
+  }
 }

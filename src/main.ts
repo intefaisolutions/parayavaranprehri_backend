@@ -1,3 +1,6 @@
+import * as dns from 'dns';
+dns.setServers(['8.8.8.8', '1.1.1.1']);
+
 import { Logger, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';

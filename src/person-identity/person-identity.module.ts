@@ -4,6 +4,6 @@ import { PersonIdentityService } from './person-identity.service';
 
 @Module({
   controllers: [PersonIdentityController],
-  providers: [PersonIdentityService]
+  providers: [PersonIdentityService],
 })
 export class PersonIdentityModule {}

@@ -7,11 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { PaginatedResult } from '../../common/interfaces/api-response.interface';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { RolesService } from '../roles/roles.service';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserQueryDto,
-} from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto, UserQueryDto } from './dto/user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UserDocument } from './schemas/user.schema';
 
@@ -52,7 +48,9 @@ export class UsersService {
     return this.sanitizeUser(user);
   }
 
-  async findAll(query: UserQueryDto): Promise<PaginatedResult<Record<string, unknown>>> {
+  async findAll(
+    query: UserQueryDto,
+  ): Promise<PaginatedResult<Record<string, unknown>>> {
     const options = PaginationUtil.parse(query);
     const baseFilter: Record<string, unknown> = {};
 
@@ -125,6 +123,34 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.userRepository.softDelete(id);
+  }
+
+  async getUserVehicles(userId: string): Promise<any> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id "${userId}" not found`);
+    }
+
+    if (!user.phone) {
+      throw new ConflictException('User does not have a phone number');
+    }
+
+    const insuranceApiUrl =
+      process.env.INSURANCE_API_URL || 'http://localhost:5001';
+
+    try {
+      const response = await fetch(
+        `${insuranceApiUrl}/api/integration/paryawaran/users/vehicles?mobile=${user.phone}`,
+      );
+      if (!response.ok) {
+        throw new Error(`Insurance API error: ${response.statusText}`);
+      }
+      return await response.json();
+    } catch (error: any) {
+      throw new Error(
+        `Failed to fetch vehicles from Insurance API: ${error.message}`,
+      );
+    }
   }
 
   async updateLastLogin(id: string): Promise<void> {

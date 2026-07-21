@@ -52,10 +52,7 @@ export class OtpRepository {
   ) {}
 
   async create(email: string, code: string, expiresAt: Date, userId?: string) {
-    await this.otpModel.updateMany(
-      { email, isUsed: false },
-      { isUsed: true },
-    );
+    await this.otpModel.updateMany({ email, isUsed: false }, { isUsed: true });
 
     return this.otpModel.create({
       email,

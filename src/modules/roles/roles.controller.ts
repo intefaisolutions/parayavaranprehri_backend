@@ -9,11 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permissions } from '../../common/decorators/permissions.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import {
@@ -47,18 +43,14 @@ export class RolesController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(`${PermissionResource.ROLES}:${PermissionAction.CREATE}`)
   @ApiOperation({ summary: 'Create a new role' })
-  create(
-    @Body(new ZodValidationPipe(createRoleSchema)) dto: CreateRoleDto,
-  ) {
+  create(@Body(new ZodValidationPipe(createRoleSchema)) dto: CreateRoleDto) {
     return this.rolesService.create(dto);
   }
 
   @Get()
   @Permissions(`${PermissionResource.ROLES}:${PermissionAction.LIST}`)
   @ApiOperation({ summary: 'List all roles with pagination' })
-  findAll(
-    @Query(new ZodValidationPipe(roleQuerySchema)) query: RoleQueryDto,
-  ) {
+  findAll(@Query(new ZodValidationPipe(roleQuerySchema)) query: RoleQueryDto) {
     return this.rolesService.findAll(query);
   }
 
@@ -99,9 +91,7 @@ export class PermissionsController {
   @Get()
   @Permissions(`${PermissionResource.PERMISSIONS}:${PermissionAction.LIST}`)
   @ApiOperation({ summary: 'List all permissions' })
-  findAll(
-    @Query(new ZodValidationPipe(roleQuerySchema)) query: RoleQueryDto,
-  ) {
+  findAll(@Query(new ZodValidationPipe(roleQuerySchema)) query: RoleQueryDto) {
     return this.rolesService.findAllPermissions(query);
   }
 }

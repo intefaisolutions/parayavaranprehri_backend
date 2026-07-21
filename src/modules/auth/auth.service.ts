@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -35,7 +32,7 @@ export class AuthService {
   ) {}
 
   private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
   private buildPayload(user: UserDocument): JwtPayload {
@@ -149,7 +146,7 @@ export class AuthService {
       : await this.usersService.findByPhone(dto.phone!);
 
     if (!user || !user.isActive) {
-      return { message: 'If the account exists, an OTP has been sent' };
+      throw new UnauthorizedException('Please register first');
     }
 
     const code = this.generateOtp();
@@ -170,7 +167,7 @@ export class AuthService {
       await this.emailService.sendOtp(dto.email, code);
     }
 
-    return { message: 'If the account exists, an OTP has been sent' };
+    return { message: 'OTP has been sent successfully' };
   }
 
   async verifyOtp(

@@ -14,11 +14,7 @@ import { SystemRole } from '../../common/enums/role.enum';
 import { PaginatedResult } from '../../common/interfaces/api-response.interface';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { ROLE_SEED_DATA } from './constants/role-seed.constant';
-import {
-  CreateRoleDto,
-  RoleQueryDto,
-  UpdateRoleDto,
-} from './dto/role.dto';
+import { CreateRoleDto, RoleQueryDto, UpdateRoleDto } from './dto/role.dto';
 import {
   PermissionRepository,
   RoleRepository,
@@ -140,7 +136,9 @@ export class RolesService implements OnModuleInit {
       const permissions = await this.permissionRepository.findByKeys(
         dto.permissionKeys,
       );
-      updateData.permissions = permissions.map((p: PermissionDocument) => p._id);
+      updateData.permissions = permissions.map(
+        (p: PermissionDocument) => p._id,
+      );
     }
 
     const updated = await this.roleRepository.updateById(id, updateData);

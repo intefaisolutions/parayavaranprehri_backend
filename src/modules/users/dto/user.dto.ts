@@ -16,7 +16,9 @@ export const createUserSchema = z.object({
   state: z.string().optional(),
 });
 
-export const updateUserSchema = createUserSchema.partial().omit({ email: true });
+export const updateUserSchema = createUserSchema
+  .partial()
+  .omit({ email: true });
 
 export const userQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),

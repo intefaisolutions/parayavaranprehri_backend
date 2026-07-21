@@ -5,20 +5,26 @@ export const loginSchema = z.object({
   password: z.string().min(8),
 });
 
-export const otpRequestSchema = z.object({
-  email: z.string().email().optional(),
-  phone: z.string().min(10).max(15).optional(),
-}).refine(data => data.email || data.phone, {
-  message: "Either email or phone must be provided",
-});
+export const otpRequestSchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z.string().min(10).max(15).optional(),
+  })
+  .refine((data) => data.email || data.phone, {
+    message: 'Either email or phone must be provided',
+  });
 
-export const otpVerifySchema = z.object({
-  email: z.string().email().optional(),
-  phone: z.string().min(10).max(15).optional(),
-  code: z.string().length(6),
-}).refine(data => data.email || data.phone, {
-  message: "Either email or phone must be provided",
-});
+export const otpVerifySchema = z
+  .object({
+    email: z.string().email().optional(),
+    phone: z.string().min(10).max(15).optional(),
+    code: z
+      .string({ message: 'Please enter your OTP' })
+      .length(4, 'OTP must be exactly 4 digits'),
+  })
+  .refine((data) => data.email || data.phone, {
+    message: 'Either email or phone must be provided',
+  });
 
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),

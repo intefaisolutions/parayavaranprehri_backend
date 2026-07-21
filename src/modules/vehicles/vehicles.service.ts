@@ -11,7 +11,10 @@ export class VehiclesService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
   ) {}
 
-  async create(createVehicleDto: CreateVehicleDto, userId: string): Promise<Vehicle> {
+  async create(
+    createVehicleDto: CreateVehicleDto,
+    userId: string,
+  ): Promise<Vehicle> {
     const createdVehicle = new this.vehicleModel({
       ...createVehicleDto,
       userId,
@@ -32,7 +35,10 @@ export class VehiclesService {
     return vehicle;
   }
 
-  async update(id: string, updateVehicleDto: UpdateVehicleDto): Promise<Vehicle> {
+  async update(
+    id: string,
+    updateVehicleDto: UpdateVehicleDto,
+  ): Promise<Vehicle> {
     const updatedVehicle = await this.vehicleModel
       .findByIdAndUpdate(id, updateVehicleDto, { new: true })
       .exec();

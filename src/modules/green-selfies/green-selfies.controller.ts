@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { GreenSelfiesService } from './green-selfies.service';
 import { CreateGreenSelfieDto } from './dto/create-green-selfie.dto';
 import { UpdateGreenSelfieDto } from './dto/update-green-selfie.dto';
@@ -13,7 +23,10 @@ export class GreenSelfiesController {
   constructor(private readonly greenSelfiesService: GreenSelfiesService) {}
 
   @Post()
-  create(@Body() createGreenSelfieDto: CreateGreenSelfieDto, @Request() req: any) {
+  create(
+    @Body() createGreenSelfieDto: CreateGreenSelfieDto,
+    @Request() req: any,
+  ) {
     return this.greenSelfiesService.create(createGreenSelfieDto, req.user._id);
   }
 
@@ -28,7 +41,10 @@ export class GreenSelfiesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGreenSelfieDto: UpdateGreenSelfieDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateGreenSelfieDto: UpdateGreenSelfieDto,
+  ) {
     return this.greenSelfiesService.update(id, updateGreenSelfieDto);
   }
 

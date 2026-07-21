@@ -6,7 +6,9 @@ import { ClientSession, Connection } from 'mongoose';
 export class TransactionService {
   constructor(@InjectConnection() private readonly connection: Connection) {}
 
-  async execute<T>(callback: (session: ClientSession) => Promise<T>): Promise<T> {
+  async execute<T>(
+    callback: (session: ClientSession) => Promise<T>,
+  ): Promise<T> {
     const session = await this.connection.startSession();
     session.startTransaction();
 

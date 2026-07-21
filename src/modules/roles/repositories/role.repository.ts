@@ -30,7 +30,14 @@ export class PermissionRepository extends BaseRepository<PermissionDocument> {
     return this.permissionModel
       .findOneAndUpdate(
         { key },
-        { key, resource, action, description, isActive: true, isDeleted: false },
+        {
+          key,
+          resource,
+          action,
+          description,
+          isActive: true,
+          isDeleted: false,
+        },
         { upsert: true, new: true },
       )
       .exec();

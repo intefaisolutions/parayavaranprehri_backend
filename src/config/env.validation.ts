@@ -23,6 +23,10 @@ export const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   GOOGLE_MAPS_API_KEY: z.string().optional(),
+  HSP_SMS_USERNAME: z.string().optional(),
+  HSP_SMS_PASSWORD: z.string().optional(),
+  HSP_API_KEY: z.string().optional(),
+  HSP_SMS_SENDER_ID: z.string().optional(),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

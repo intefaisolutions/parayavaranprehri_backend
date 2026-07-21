@@ -40,11 +40,7 @@ export class ApiResponseUtil {
     };
   }
 
-  static buildMeta(
-    page: number,
-    limit: number,
-    total: number,
-  ): PaginatedMeta {
+  static buildMeta(page: number, limit: number, total: number): PaginatedMeta {
     const totalPages = Math.ceil(total / limit) || 1;
     return {
       page,

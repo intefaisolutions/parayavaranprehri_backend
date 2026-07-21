@@ -4,6 +4,6 @@ import { VidhanSabhasService } from './vidhan-sabhas.service';
 
 @Module({
   controllers: [VidhanSabhasController],
-  providers: [VidhanSabhasService]
+  providers: [VidhanSabhasService],
 })
 export class VidhanSabhasModule {}

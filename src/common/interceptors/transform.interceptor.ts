@@ -19,15 +19,16 @@ export class TransformInterceptor implements NestInterceptor {
         }
 
         if (data?.items && data?.meta) {
-          return ApiResponseUtil.paginated(
-            data,
-            'Success',
-            200,
-            request.url,
-          );
+          return ApiResponseUtil.paginated(data, 'Success', 200, request.url);
         }
 
-        return ApiResponseUtil.success(data, 'Success', 200, undefined, request.url);
+        return ApiResponseUtil.success(
+          data,
+          'Success',
+          200,
+          undefined,
+          request.url,
+        );
       }),
     );
   }

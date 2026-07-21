@@ -8,10 +8,14 @@ import { LandOffer, LandOfferDocument } from './schemas/land-offer.schema';
 @Injectable()
 export class LandOffersService {
   constructor(
-    @InjectModel(LandOffer.name) private landOfferModel: Model<LandOfferDocument>,
+    @InjectModel(LandOffer.name)
+    private landOfferModel: Model<LandOfferDocument>,
   ) {}
 
-  async create(createLandOfferDto: CreateLandOfferDto, userId?: string): Promise<LandOffer> {
+  async create(
+    createLandOfferDto: CreateLandOfferDto,
+    userId?: string,
+  ): Promise<LandOffer> {
     const createdLandOffer = new this.landOfferModel({
       ...createLandOfferDto,
       userId,
@@ -32,7 +36,10 @@ export class LandOffersService {
     return landOffer;
   }
 
-  async update(id: string, updateLandOfferDto: UpdateLandOfferDto): Promise<LandOffer> {
+  async update(
+    id: string,
+    updateLandOfferDto: UpdateLandOfferDto,
+  ): Promise<LandOffer> {
     const updatedLandOffer = await this.landOfferModel
       .findByIdAndUpdate(id, updateLandOfferDto, { new: true })
       .exec();
@@ -43,7 +50,9 @@ export class LandOffersService {
   }
 
   async remove(id: string): Promise<LandOffer> {
-    const deletedLandOffer = await this.landOfferModel.findByIdAndDelete(id).exec();
+    const deletedLandOffer = await this.landOfferModel
+      .findByIdAndDelete(id)
+      .exec();
     if (!deletedLandOffer) {
       throw new NotFoundException(`Land Offer with ID ${id} not found`);
     }

@@ -4,6 +4,6 @@ import { MitrasService } from './mitras.service';
 
 @Module({
   controllers: [MitrasController],
-  providers: [MitrasService]
+  providers: [MitrasService],
 })
 export class MitrasModule {}

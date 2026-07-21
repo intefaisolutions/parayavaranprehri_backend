@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { GamificationService } from './gamification.service';
 import { CreateGamificationDto } from './dto/create-gamification.dto';
 import { UpdateGamificationDto } from './dto/update-gamification.dto';
@@ -23,7 +31,10 @@ export class GamificationController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGamificationDto: UpdateGamificationDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateGamificationDto: UpdateGamificationDto,
+  ) {
     return this.gamificationService.update(+id, updateGamificationDto);
   }
 

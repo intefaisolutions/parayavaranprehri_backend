@@ -17,10 +17,7 @@ import { PaginationUtil } from '../utils/pagination.util';
 export abstract class BaseRepository<T extends Document> {
   constructor(protected readonly model: Model<T>) {}
 
-  async create(
-    data: Partial<T>,
-    session?: ClientSession,
-  ): Promise<T> {
+  async create(data: Partial<T>, session?: ClientSession): Promise<T> {
     const entity = new this.model(data);
     return session ? entity.save({ session }) : entity.save();
   }

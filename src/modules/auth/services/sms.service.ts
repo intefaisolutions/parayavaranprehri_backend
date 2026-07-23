@@ -9,9 +9,15 @@ export class SmsService {
 
   async sendOtp(phone: string, otp: string): Promise<boolean> {
     const username = this.configService.get<string>('HSP_SMS_USERNAME');
-    const password = this.configService.get<string>('HSP_SMS_PASSWORD');
     const apiKey = this.configService.get<string>('HSP_API_KEY');
     const senderId = this.configService.get<string>('HSP_SMS_SENDER_ID');
+
+    if (!username || !apiKey || !senderId) {
+      this.logger.error(
+        'SMS gateway is not configured. Missing HSP_SMS_USERNAME / HSP_API_KEY / HSP_SMS_SENDER_ID.',
+      );
+      return false;
+    }
 
     // The message that the user will receive
     const message = encodeURIComponent(
@@ -41,6 +47,16 @@ export class SmsService {
       console.log('--------------------');
 
       this.logger.log(`SMS Provider Response: ${data}`);
+
+      const isDelivered =
+        response.ok && /success/i.test(data) && !/error|invalid|fail/i.test(data);
+
+      if (!isDelivered) {
+        this.logger.error(
+          `[SMS FAILED] Gateway did not confirm delivery to ${phone}: ${data}`,
+        );
+        return false;
+      }
 
       this.logger.log(
         `[LIVE SUCCESS] OTP SMS sent successfully to ${phone} with OTP ${otp}`,

@@ -24,6 +24,7 @@ export enum PermissionResource {
   CARBON = 'carbon',
   QR_CODES = 'qr_codes',
   CERTIFICATES = 'certificates',
+  MITRAS = 'mitras',
   NOTIFICATIONS = 'notifications',
   REPORTS = 'reports',
   CMS = 'cms',

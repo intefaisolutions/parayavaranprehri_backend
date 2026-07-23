@@ -1,9 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
+import { WhatsappService } from '../../common/services/whatsapp.service';
 import { UserRepository } from '../users/repositories/user.repository';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -29,9 +34,17 @@ export class AuthService {
     private readonly otpRepository: OtpRepository,
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   private generateOtp(): string {
+    // TEMPORARY: while SMS/WhatsApp delivery is being fixed on the gateway
+    // side, allow forcing a fixed OTP via env so login can still be tested.
+    // Remove STATIC_OTP_MODE from .env to restore normal random OTPs.
+    const staticMode = this.configService.get<string>('STATIC_OTP_MODE');
+    if (staticMode === 'true') {
+      return this.configService.get<string>('STATIC_OTP_CODE') ?? '1234';
+    }
     return Math.floor(1000 + Math.random() * 9000).toString();
   }
 
@@ -161,8 +174,30 @@ export class AuthService {
       user._id.toString(),
     );
 
+    const staticMode =
+      this.configService.get<string>('STATIC_OTP_MODE') === 'true';
+
+    if (staticMode) {
+      // Skip real gateway calls entirely while testing with a fixed OTP.
+      return { message: 'OTP has been sent successfully' };
+    }
+
     if (dto.phone) {
-      await this.smsService.sendOtp(dto.phone, code);
+      const smsSent = await this.smsService.sendOtp(dto.phone, code);
+
+      if (!smsSent) {
+        // SMS gateway failed (e.g. DLT/delivery block) - fall back to WhatsApp
+        const waResult = await this.whatsappService.sendMessage(
+          dto.phone,
+          `Your Paryavaran Prahri Admin Login OTP is ${code}. Please do not share this code.`,
+        );
+
+        if (!waResult.success) {
+          throw new InternalServerErrorException(
+            'Failed to send OTP via SMS and WhatsApp. Please try again.',
+          );
+        }
+      }
     } else if (dto.email) {
       await this.emailService.sendOtp(dto.email, code);
     }

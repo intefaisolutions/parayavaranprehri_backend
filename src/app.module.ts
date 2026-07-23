@@ -9,6 +9,7 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
+import { CommonModule } from './common/common.module';
 import configuration from './config/configuration';
 import { validateEnv } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
@@ -56,6 +57,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
       },
     ]),
     DatabaseModule,
+    CommonModule,
     AuthModule,
     RolesModule,
     UsersModule,

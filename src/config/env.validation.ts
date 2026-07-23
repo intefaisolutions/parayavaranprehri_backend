@@ -27,7 +27,16 @@ export const envSchema = z.object({
   HSP_SMS_PASSWORD: z.string().optional(),
   HSP_API_KEY: z.string().optional(),
   HSP_SMS_SENDER_ID: z.string().optional(),
-});
+  HSP_WHATSAPP_API_KEY: z.string().optional(),
+  HSP_WHATSAPP_NUMBER: z.string().optional(),
+  FRONTEND_URL: z.string().optional(),
+  STATIC_OTP_MODE: z.string().optional(),
+  STATIC_OTP_CODE: z.string().optional(),
+}).passthrough();
+// .passthrough() ensures any env var not explicitly listed above (e.g. AWS_*,
+// GEMINI_API_KEY, future additions) still reaches ConfigService.get() instead
+// of being silently stripped, since this validated object replaces process.env
+// for ConfigService lookups.
 
 export type EnvConfig = z.infer<typeof envSchema>;
 

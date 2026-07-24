@@ -41,6 +41,8 @@ import { LanguagesModule } from './languages/languages.module';
 import { ReportsModule } from './reports/reports.module';
 import { SettingsModule } from './settings/settings.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { RashiTreesModule } from './rashi-trees/rashi-trees.module';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     ReportsModule,
     SettingsModule,
     AuditLogsModule,
+    UploadsModule,
+    RashiTreesModule,
   ],
   controllers: [AppController],
   providers: [

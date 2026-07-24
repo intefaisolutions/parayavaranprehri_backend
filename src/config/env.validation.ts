@@ -32,6 +32,10 @@ export const envSchema = z.object({
   FRONTEND_URL: z.string().optional(),
   STATIC_OTP_MODE: z.string().optional(),
   STATIC_OTP_CODE: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  AWS_S3_BUCKET_NAME: z.string().optional(),
 }).passthrough();
 // .passthrough() ensures any env var not explicitly listed above (e.g. AWS_*,
 // GEMINI_API_KEY, future additions) still reaches ConfigService.get() instead

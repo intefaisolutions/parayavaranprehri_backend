@@ -33,6 +33,18 @@ export enum PermissionResource {
   AUDIT_LOGS = 'audit_logs',
   ACTIVITY_LOGS = 'activity_logs',
   SETTINGS = 'settings',
+  PERSONS = 'persons',
+  PERSON_IDENTITY = 'person_identity',
+  TASKS = 'tasks',
+  VIDHAN_SABHAS = 'vidhan_sabhas',
+  LOCATIONS = 'locations',
+  MAPS = 'maps',
+  NEWS = 'news',
+  MEDIA = 'media',
+  LEADERS = 'leaders',
+  PARTNERS = 'partners',
+  CALL_CENTER = 'call_center',
+  LANGUAGES = 'languages',
 }
 
 export type PermissionKey = `${PermissionResource}:${PermissionAction}`;

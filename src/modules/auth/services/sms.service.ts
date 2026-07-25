@@ -8,6 +8,13 @@ export class SmsService {
   constructor(private readonly configService: ConfigService) {}
 
   async sendOtp(phone: string, otp: string): Promise<boolean> {
+    return this.sendMessage(
+      phone,
+      `Your Paryavaran Prahri Admin Login OTP is ${otp}. Please do not share this code.`,
+    );
+  }
+
+  async sendMessage(phone: string, message: string): Promise<boolean> {
     const username = this.configService.get<string>('HSP_SMS_USERNAME');
     const apiKey = this.configService.get<string>('HSP_API_KEY');
     const senderId = this.configService.get<string>('HSP_SMS_SENDER_ID');
@@ -19,14 +26,11 @@ export class SmsService {
       return false;
     }
 
-    // The message that the user will receive
-    const message = encodeURIComponent(
-      `Your Paryavaran Prahri Admin Login OTP is ${otp}. Please do not share this code.`,
-    );
+    const encodedMessage = encodeURIComponent(message);
 
     // NOTE: This is a standard HSP SMS API URL structure.
     // If the provider has a different base URL (like https://api.msg91.com or similar), it can be updated here.
-    const url = `http://sms.hspsms.com/sendSMS?username=${username}&message=${message}&sendername=${senderId}&smstype=TRANS&numbers=${phone}&apikey=${apiKey}`;
+    const url = `http://sms.hspsms.com/sendSMS?username=${username}&message=${encodedMessage}&sendername=${senderId}&smstype=TRANS&numbers=${phone}&apikey=${apiKey}`;
 
     console.log('--- SMS DEBUG INFO ---');
     console.log('USERNAME:', username);
@@ -58,9 +62,7 @@ export class SmsService {
         return false;
       }
 
-      this.logger.log(
-        `[LIVE SUCCESS] OTP SMS sent successfully to ${phone} with OTP ${otp}`,
-      );
+      this.logger.log(`[LIVE SUCCESS] SMS sent successfully to ${phone}`);
       return true;
     } catch (error) {
       console.error('--- SMS ERROR ---');

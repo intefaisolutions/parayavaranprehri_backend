@@ -7,6 +7,7 @@ export type NotificationDocument = HydratedDocument<Notification>;
 export enum NotificationType {
   PUSH = 'push',
   SMS = 'sms',
+  WHATSAPP = 'whatsapp',
   EMAIL = 'email',
 }
 
@@ -66,6 +67,9 @@ export class Notification extends BaseSchema {
 
   @Prop({ default: 0 })
   deliveryCount!: number;
+
+  @Prop({ type: String, trim: true, default: null })
+  failureReason?: string | null;
 }
 
 export const NotificationSchema = SchemaFactory.createForClass(Notification);

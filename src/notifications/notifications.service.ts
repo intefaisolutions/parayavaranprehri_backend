@@ -5,6 +5,7 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { NotificationRepository } from './repositories/notification.repository';
+import { NotificationDispatchService } from './services/notification-dispatch.service';
 import {
   Notification,
   NotificationDocument,
@@ -15,6 +16,7 @@ import {
 export class NotificationsService {
   constructor(
     private readonly notificationRepository: NotificationRepository,
+    private readonly dispatchService: NotificationDispatchService,
   ) {}
 
   async create(dto: CreateNotificationDto): Promise<Notification> {
@@ -23,11 +25,13 @@ export class NotificationsService {
       scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
     } as Partial<NotificationDocument>;
 
+    const created = await this.notificationRepository.create(data);
+
     if (dto.status === NotificationStatus.SENT) {
-      data.sentAt = new Date();
+      return this.dispatchAndPersist(String(created._id), created);
     }
 
-    return this.notificationRepository.create(data);
+    return created;
   }
 
   async findAll(
@@ -77,10 +81,27 @@ export class NotificationsService {
   }
 
   async send(id: string): Promise<Notification> {
+    const entry = await this.notificationRepository.findById(id);
+    if (!entry) {
+      throw new NotFoundException(`Notification "${id}" not found`);
+    }
+    return this.dispatchAndPersist(id, entry);
+  }
+
+  private async dispatchAndPersist(
+    id: string,
+    notification: Notification,
+  ): Promise<Notification> {
+    const result = await this.dispatchService.dispatch(notification);
+
     const updated = await this.notificationRepository.updateById(id, {
-      status: NotificationStatus.SENT,
+      status:
+        result.delivered > 0 ? NotificationStatus.SENT : NotificationStatus.FAILED,
       sentAt: new Date(),
+      deliveryCount: result.delivered,
+      failureReason: result.failureReason,
     } as Partial<NotificationDocument>);
+
     if (!updated) {
       throw new NotFoundException(`Notification "${id}" not found`);
     }

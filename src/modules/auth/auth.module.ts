@@ -49,6 +49,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     SmsService,
     AdminSeedService,
   ],
-  exports: [AuthService, JwtAuthGuard],
+  exports: [AuthService, JwtAuthGuard, EmailService, SmsService],
 })
 export class AuthModule {}

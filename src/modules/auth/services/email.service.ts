@@ -43,6 +43,24 @@ export class EmailService {
 
     await this.transporter.sendMail({ from, to: email, subject, html });
   }
+
+  async sendMail(to: string, subject: string, html: string): Promise<boolean> {
+    const from =
+      this.configService.get<string>('SMTP_FROM') ?? 'noreply@paryavaran.com';
+
+    if (!this.transporter) {
+      console.log(`[DEV] Email to ${to} (${subject}): ${html}`);
+      return false;
+    }
+
+    try {
+      await this.transporter.sendMail({ from, to, subject, html });
+      return true;
+    } catch (error) {
+      console.error(`Failed to send email to ${to}`, error);
+      return false;
+    }
+  }
 }
 
 @Injectable()

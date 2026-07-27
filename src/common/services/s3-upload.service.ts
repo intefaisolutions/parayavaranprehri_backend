@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomBytes } from 'crypto';
 import type {} from 'multer';
 
@@ -94,6 +99,45 @@ export class S3UploadService {
     return `${PROJECT_PREFIX}/${category}/${uniquePrefix}-${safeName}`;
   }
 
+  /** Extract the object key from a full S3 URL, or return the input if it is already a key. */
+  extractKeyFromUrl(urlOrKey: string): string | null {
+    if (!urlOrKey) return null;
+    if (!urlOrKey.startsWith('http')) {
+      return urlOrKey.replace(/^\/+/, '');
+    }
+    try {
+      const parsed = new URL(urlOrKey);
+      // https://bucket.s3.region.amazonaws.com/key  OR  https://s3.region.amazonaws.com/bucket/key
+      const host = parsed.hostname;
+      const path = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
+      if (host.startsWith('s3.') || host.startsWith('s3-')) {
+        // path-style: /bucket/key...
+        const slash = path.indexOf('/');
+        return slash >= 0 ? path.slice(slash + 1) : null;
+      }
+      return path || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Temporary signed GET URL so private S3 objects can be shown in <img> tags. */
+  async getSignedGetUrl(
+    urlOrKey: string,
+    expiresInSeconds = 60 * 60,
+  ): Promise<string> {
+    const key = this.extractKeyFromUrl(urlOrKey);
+    if (!key) {
+      throw new BadRequestException('Invalid file URL or key');
+    }
+    const { client, bucket } = this.getClient();
+    return getSignedUrl(
+      client,
+      new GetObjectCommand({ Bucket: bucket, Key: key }),
+      { expiresIn: expiresInSeconds },
+    );
+  }
+
   async uploadFile(
     file: Express.Multer.File,
     category: UploadCategory = 'general',
@@ -113,14 +157,35 @@ export class S3UploadService {
     const { client, bucket } = this.getClient();
     const key = this.buildKey(category, file.originalname);
 
-    await client.send(
-      new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-      }),
-    );
+    const baseParams = {
+      Bucket: bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    };
+
+    // Prefer public-read so stored URLs work in <img> tags. Some buckets have
+    // ACLs disabled ("Bucket owner enforced") — fall back to a private object
+    // and rely on signed preview URLs for display.
+    try {
+      await client.send(
+        new PutObjectCommand({ ...baseParams, ACL: 'public-read' }),
+      );
+    } catch (err: any) {
+      const msg = String(err?.name || err?.Code || err?.message || '');
+      if (
+        msg.includes('AccessControlListNotSupported') ||
+        msg.includes('InvalidRequest') ||
+        msg.includes('AccessDenied')
+      ) {
+        this.logger.warn(
+          `ACL public-read not allowed on bucket; uploading private object (${msg})`,
+        );
+        await client.send(new PutObjectCommand(baseParams));
+      } else {
+        throw err;
+      }
+    }
 
     const url = `https://${bucket}.s3.${this.region}.amazonaws.com/${key}`;
     this.logger.log(`Uploaded file to S3: ${key}`);

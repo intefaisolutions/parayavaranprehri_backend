@@ -1,13 +1,19 @@
 import {
   BadRequestException,
   Controller,
+  Get,
   Post,
   Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import type {} from 'multer';
 import {
   S3UploadService,
@@ -50,5 +56,19 @@ export class UploadsController {
       : 'general';
 
     return this.s3UploadService.uploadFile(file, resolvedCategory);
+  }
+
+  @Get('signed')
+  @ApiOperation({
+    summary:
+      'Get a temporary signed URL so a private S3 object can be previewed in the browser',
+  })
+  async signed(@Query('url') url?: string, @Query('key') key?: string) {
+    const target = url || key;
+    if (!target) {
+      throw new BadRequestException('Provide either "url" or "key" query param');
+    }
+    const signedUrl = await this.s3UploadService.getSignedGetUrl(target);
+    return { signedUrl };
   }
 }

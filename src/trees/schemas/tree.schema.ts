@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type TreeDocument = Tree & Document;
 
@@ -47,6 +47,18 @@ export class Tree {
 
   @Prop()
   plantedBy!: string;
+
+  // Optional link to the Person master record (the insured customer this
+  // tree belongs to), if the owner has also been registered as a Person.
+  @Prop({ type: Types.ObjectId, ref: 'Person', default: null })
+  personId?: Types.ObjectId | null;
+
+  // The Mitra (volunteer) assigned to take care of this tree.
+  @Prop({ type: Types.ObjectId, ref: 'Mitra', default: null })
+  assignedMitraId?: Types.ObjectId | null;
+
+  @Prop({ type: String, trim: true, default: null })
+  assignedMitraName?: string | null;
 
   // Location
   @Prop()

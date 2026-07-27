@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
+import { Mitra, MitraDocument, MitraStatus } from '../mitras/schemas/mitra.schema';
 import { Tree, TreeDocument } from './schemas/tree.schema';
+import { AssignMitraDto } from './dto/assign-mitra.dto';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
 
@@ -9,6 +11,7 @@ import { UpdateTreeDto } from './dto/update-tree.dto';
 export class TreesService {
   constructor(
     @InjectModel(Tree.name) private treeModel: Model<TreeDocument>,
+    @InjectModel(Mitra.name) private mitraModel: Model<MitraDocument>,
     @InjectConnection() private connection: Connection,
   ) {}
 
@@ -68,6 +71,36 @@ export class TreesService {
       throw new NotFoundException(`Tree with ID ${id} not found`);
     }
     return existingTree;
+  }
+
+  /**
+   * Assigns a Mitra (volunteer) to take care of this tree. Only Approved
+   * Mitras can be assigned as caretakers.
+   */
+  async assignMitra(id: string, dto: AssignMitraDto): Promise<Tree> {
+    const mitra = await this.mitraModel
+      .findOne({ _id: dto.mitraId, isDeleted: false })
+      .exec();
+    if (!mitra) {
+      throw new NotFoundException(`Mitra with ID "${dto.mitraId}" not found`);
+    }
+    if (mitra.status !== MitraStatus.APPROVED) {
+      throw new BadRequestException(
+        `Mitra "${mitra.name}" is not Approved yet and cannot be assigned to trees`,
+      );
+    }
+
+    const updatedTree = await this.treeModel
+      .findByIdAndUpdate(
+        id,
+        { assignedMitraId: mitra._id, assignedMitraName: mitra.name },
+        { new: true },
+      )
+      .exec();
+    if (!updatedTree) {
+      throw new NotFoundException(`Tree with ID ${id} not found`);
+    }
+    return updatedTree;
   }
 
   async remove(id: string): Promise<Tree> {

@@ -15,6 +15,11 @@ export enum MitraStatus {
   CANCELLED = 'Cancelled',
 }
 
+export enum MitraSource {
+  APP = 'app',
+  ADMIN = 'admin',
+}
+
 @Schema({ timestamps: true, collection: 'mitras' })
 export class Mitra extends BaseSchema {
   @Prop({ unique: true, index: true })
@@ -52,6 +57,12 @@ export class Mitra extends BaseSchema {
 
   @Prop({ enum: MitraStatus, default: MitraStatus.PENDING, index: true })
   status!: MitraStatus;
+
+  // Self-registered (app) Mitras start Pending and need admin review;
+  // admin-created Mitras default to Approved. Tracked so the UI/API can
+  // tell the two onboarding paths apart.
+  @Prop({ enum: MitraSource, default: MitraSource.ADMIN, index: true })
+  source!: MitraSource;
 
   @Prop({ type: Date, default: Date.now })
   joinedDate!: Date;

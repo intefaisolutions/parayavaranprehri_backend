@@ -37,9 +37,18 @@ export class PersonsController {
   @Post()
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.CREATE}`)
-  @ApiOperation({ summary: 'Register a new person' })
+  @ApiOperation({ summary: 'Admin-register a new person' })
   create(@Body() dto: CreatePersonDto) {
     return this.personsService.create(dto);
+  }
+
+  @Post('self-register')
+  @ApiOperation({
+    summary:
+      'App self-registration for a person — auto-checks the insurance system for a matching vehicle policy',
+  })
+  selfRegister(@Body() dto: CreatePersonDto) {
+    return this.personsService.selfRegister(dto);
   }
 
   @Get()

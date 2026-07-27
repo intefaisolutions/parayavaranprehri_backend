@@ -7,7 +7,7 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
 import { CreateMitraDto } from './dto/create-mitra.dto';
 import { UpdateMitraDto } from './dto/update-mitra.dto';
-import { Mitra, MitraDocument } from './schemas/mitra.schema';
+import { Mitra, MitraDocument, MitraSource, MitraStatus } from './schemas/mitra.schema';
 
 export interface MitraQuery {
   status?: string;
@@ -32,7 +32,30 @@ export class MitrasService {
     return `PM-${seq.toString().padStart(6, '0')}`;
   }
 
+  /**
+   * Admin-created Mitra: defaults to Approved (admin is vouching for them
+   * directly) but the admin can still override `status` explicitly, e.g.
+   * to create one as Pending or Cancelled.
+   */
   async create(dto: CreateMitraDto): Promise<Mitra> {
+    return this.createInternal(dto, MitraSource.ADMIN, MitraStatus.APPROVED);
+  }
+
+  /**
+   * App self-registration: always starts Pending and is always tagged as
+   * `source: app`, regardless of what the client sends, so it goes through
+   * admin review before becoming Approved.
+   */
+  async selfRegister(dto: CreateMitraDto): Promise<Mitra> {
+    return this.createInternal(dto, MitraSource.APP, MitraStatus.PENDING, true);
+  }
+
+  private async createInternal(
+    dto: CreateMitraDto,
+    source: MitraSource,
+    defaultStatus: MitraStatus,
+    forceStatus = false,
+  ): Promise<Mitra> {
     const existing = await this.mitraModel
       .findOne({ mobile: dto.mobile, isDeleted: false })
       .exec();
@@ -43,7 +66,13 @@ export class MitrasService {
     }
 
     const mitraId = await this.generateMitraId();
-    const mitra = new this.mitraModel({ ...dto, mitraId });
+    const status = forceStatus ? defaultStatus : dto.status ?? defaultStatus;
+    const mitra = new this.mitraModel({
+      ...dto,
+      mitraId,
+      source,
+      status,
+    });
     return mitra.save();
   }
 
@@ -93,6 +122,34 @@ export class MitrasService {
   async update(id: string, dto: UpdateMitraDto): Promise<Mitra> {
     const updated = await this.mitraModel
       .findOneAndUpdate({ _id: id, isDeleted: false }, dto, { new: true })
+      .exec();
+    if (!updated) {
+      throw new NotFoundException(`Mitra with ID "${id}" not found`);
+    }
+    return updated;
+  }
+
+  async approve(id: string): Promise<Mitra> {
+    const updated = await this.mitraModel
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { status: MitraStatus.APPROVED },
+        { new: true },
+      )
+      .exec();
+    if (!updated) {
+      throw new NotFoundException(`Mitra with ID "${id}" not found`);
+    }
+    return updated;
+  }
+
+  async reject(id: string): Promise<Mitra> {
+    const updated = await this.mitraModel
+      .findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        { status: MitraStatus.CANCELLED },
+        { new: true },
+      )
       .exec();
     if (!updated) {
       throw new NotFoundException(`Mitra with ID "${id}" not found`);

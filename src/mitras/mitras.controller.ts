@@ -36,9 +36,20 @@ export class MitrasController {
   @Post()
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(`${PermissionResource.MITRAS}:${PermissionAction.CREATE}`)
-  @ApiOperation({ summary: 'Register a new Paryavaran Mitra (volunteer)' })
+  @ApiOperation({
+    summary: 'Admin-create a Paryavaran Mitra (volunteer) — defaults to Approved',
+  })
   create(@Body() dto: CreateMitraDto) {
     return this.mitrasService.create(dto);
+  }
+
+  @Post('self-register')
+  @ApiOperation({
+    summary:
+      'App self-registration for a Paryavaran Mitra — always starts Pending for admin review',
+  })
+  selfRegister(@Body() dto: CreateMitraDto) {
+    return this.mitrasService.selfRegister(dto);
   }
 
   @Get()
@@ -67,6 +78,22 @@ export class MitrasController {
   @ApiOperation({ summary: 'Get a Mitra by ID' })
   findOne(@Param('id') id: string) {
     return this.mitrasService.findOne(id);
+  }
+
+  @Patch(':id/approve')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Permissions(`${PermissionResource.MITRAS}:${PermissionAction.APPROVE}`)
+  @ApiOperation({ summary: 'Approve a Pending Mitra application' })
+  approve(@Param('id') id: string) {
+    return this.mitrasService.approve(id);
+  }
+
+  @Patch(':id/reject')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  @Permissions(`${PermissionResource.MITRAS}:${PermissionAction.APPROVE}`)
+  @ApiOperation({ summary: 'Reject a Pending Mitra application' })
+  reject(@Param('id') id: string) {
+    return this.mitrasService.reject(id);
   }
 
   @Patch(':id')

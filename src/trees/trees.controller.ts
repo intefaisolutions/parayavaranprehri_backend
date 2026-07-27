@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Put, Delete } from '@nestjs/common';
+import { Roles } from '../common/decorators/roles.decorator';
+import { SystemRole } from '../common/enums/role.enum';
 import { TreesService } from './trees.service';
+import { AssignMitraDto } from './dto/assign-mitra.dto';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
 
@@ -30,6 +33,12 @@ export class TreesController {
   @Put(':id')
   update(@Param('id') id: string, @Body() updateTreeDto: UpdateTreeDto) {
     return this.treesService.update(id, updateTreeDto);
+  }
+
+  @Patch(':id/assign-mitra')
+  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
+  assignMitra(@Param('id') id: string, @Body() dto: AssignMitraDto) {
+    return this.treesService.assignMitra(id, dto);
   }
 
   @Delete(':id')

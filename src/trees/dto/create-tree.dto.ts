@@ -1,10 +1,14 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsNumber, IsDate } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsNumber, IsDate, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateTreeDto {
   @IsString()
   @IsNotEmpty()
   treeName!: string;
+
+  @IsMongoId()
+  @IsOptional()
+  personId?: string;
 
   @IsString()
   @IsOptional()

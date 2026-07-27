@@ -23,6 +23,11 @@ export enum PersonStatus {
   INACTIVE = 'Inactive',
 }
 
+export enum PersonSource {
+  APP = 'app',
+  ADMIN = 'admin',
+}
+
 @Schema({ timestamps: true, collection: 'persons' })
 export class Person extends BaseSchema {
   @Prop({ unique: true, index: true })
@@ -70,8 +75,22 @@ export class Person extends BaseSchema {
   @Prop({ default: 0, min: 0 })
   treesAssigned!: number;
 
+  // Always Active on registration regardless of source or insurance
+  // verification result — verification only informs vehiclesLinked/
+  // insuranceVerified, it does not gate the account status.
   @Prop({ enum: PersonStatus, default: PersonStatus.ACTIVE, index: true })
   status!: PersonStatus;
+
+  @Prop({ enum: PersonSource, default: PersonSource.ADMIN, index: true })
+  source!: PersonSource;
+
+  // Result of checking the insurance system's DB (by mobile number) for a
+  // matching vehicle insurance policy at registration time.
+  @Prop({ default: false })
+  insuranceVerified!: boolean;
+
+  @Prop({ type: Date, default: null })
+  insuranceCheckedAt?: Date | null;
 
   @Prop({ type: Date, default: Date.now })
   registrationDate!: Date;

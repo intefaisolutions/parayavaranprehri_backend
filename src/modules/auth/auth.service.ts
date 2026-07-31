@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -8,7 +9,10 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
+import { SystemRole } from '../../common/enums/role.enum';
 import { WhatsappService } from '../../common/services/whatsapp.service';
+import { PersonGender } from '../../persons/schemas/person.schema';
+import { PersonsService } from '../../persons/persons.service';
 import { UserRepository } from '../users/repositories/user.repository';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -17,6 +21,8 @@ import {
   LoginDto,
   OtpRequestDto,
   OtpVerifyDto,
+  RegisterDto,
+  RegisterResponse,
   TokenPair,
 } from './dto/auth.dto';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
@@ -28,6 +34,7 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly userRepository: UserRepository,
+    private readonly personsService: PersonsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
@@ -117,6 +124,72 @@ export class AuthService {
         role: user.role,
         permissions: user.permissions ?? [],
       },
+    };
+  }
+
+  async register(dto: RegisterDto): Promise<RegisterResponse> {
+    const mobile = dto.mobile.trim();
+    const existingByPhone = await this.usersService.findByPhone(mobile);
+    if (existingByPhone) {
+      throw new ConflictException(
+        'This mobile number is already registered. Please login with OTP.',
+      );
+    }
+
+    const firstName = dto.firstName.trim();
+    const lastName = dto.lastName.trim();
+    const email = dto.email.trim().toLowerCase();
+
+    const existingByEmail = await this.usersService.findByEmail(email);
+    if (existingByEmail) {
+      throw new ConflictException(
+        'Email already registered. Please login or use a different email.',
+      );
+    }
+
+    await this.usersService.create({
+      firstName,
+      lastName,
+      email,
+      phone: mobile,
+      role: SystemRole.CUSTOMER,
+      permissions: [],
+      isActive: true,
+    });
+
+    let insuranceVerified = false;
+    let vehiclesLinked = 0;
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    try {
+      const person = await this.personsService.selfRegister({
+        name: fullName,
+        mobile,
+        email: dto.email.trim(),
+        gender: dto.gender as PersonGender,
+        address: dto.address.trim(),
+      });
+      insuranceVerified = Boolean(person.insuranceVerified);
+      vehiclesLinked = person.vehiclesLinked ?? 0;
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        const existingPerson = await this.personsService.findByMobile(mobile);
+        if (existingPerson) {
+          insuranceVerified = Boolean(existingPerson.insuranceVerified);
+          vehiclesLinked = existingPerson.vehiclesLinked ?? 0;
+        }
+      } else {
+        throw error;
+      }
+    }
+
+    return {
+      message: insuranceVerified
+        ? 'Registered successfully. Insurance verified — you can login with OTP.'
+        : 'Registered successfully. No insurance found for this mobile — vehicle slots will be empty until a vehicle is added. You can login with OTP.',
+      phone: mobile,
+      insuranceVerified,
+      vehiclesLinked,
     };
   }
 

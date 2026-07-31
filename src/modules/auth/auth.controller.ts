@@ -8,18 +8,30 @@ import {
   otpRequestSchema,
   otpVerifySchema,
   refreshTokenSchema,
+  registerSchema,
 } from './dto/auth.dto';
 import type {
   LoginDto,
   OtpRequestDto,
   OtpVerifyDto,
   RefreshTokenDto,
+  RegisterDto,
 } from './dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('register')
+  @ApiOperation({
+    summary:
+      'Public customer register — creates login user + person, checks ShieldSure insurance',
+  })
+  register(@Body(new ZodValidationPipe(registerSchema)) dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
 
   @Public()
   @Post('login')

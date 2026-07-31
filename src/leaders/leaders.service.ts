@@ -17,7 +17,9 @@ export class LeadersService {
 
   async findAll(query: LeaderQueryDto): Promise<PaginatedResult<Leader>> {
     const options = PaginationUtil.parse(query);
-    const baseFilter: Record<string, unknown> = {};
+    const baseFilter: Record<string, unknown> = {
+      leaderName: { $not: { $regex: /^__seed_/ } },
+    };
     if (query.isActive !== undefined) {
       baseFilter.isActive = query.isActive;
     }

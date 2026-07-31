@@ -143,13 +143,16 @@ export class UsersService {
         `${insuranceApiUrl}/api/integration/paryawaran/users/vehicles?mobile=${user.phone}`,
       );
       if (!response.ok) {
-        throw new Error(`Insurance API error: ${response.statusText}`);
+        return [];
       }
-      return await response.json();
-    } catch (error: any) {
-      throw new Error(
-        `Failed to fetch vehicles from Insurance API: ${error.message}`,
-      );
+      const data = await response.json().catch(() => null);
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.vehicles)) return data.vehicles;
+      if (Array.isArray(data?.data)) return data.data;
+      return [];
+    } catch {
+      // No insurance / API down → empty vehicle slots (not an error for the app)
+      return [];
     }
   }
 

@@ -30,10 +30,31 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+export const registerSchema = z.object({
+  firstName: z.string().min(2).max(50),
+  lastName: z.string().min(1).max(50),
+  mobile: z
+    .string()
+    .min(10)
+    .max(15)
+    .regex(/^\d+$/, 'Mobile must contain digits only'),
+  email: z.string().email(),
+  gender: z.enum(['Male', 'Female', 'Other']),
+  address: z.string().min(5).max(300),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type OtpRequestDto = z.infer<typeof otpRequestSchema>;
 export type OtpVerifyDto = z.infer<typeof otpVerifySchema>;
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
+export type RegisterDto = z.infer<typeof registerSchema>;
+
+export interface RegisterResponse {
+  message: string;
+  phone: string;
+  insuranceVerified: boolean;
+  vehiclesLinked: number;
+}
 
 export interface TokenPair {
   accessToken: string;

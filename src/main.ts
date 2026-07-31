@@ -46,9 +46,11 @@ async function bootstrap() {
   });
 
   const port = configService.get<number>('PORT') ?? 3000;
-  await app.listen(port);
+  // Listen on all interfaces so phone/APK on same Wi‑Fi can reach this PC
+  await app.listen(port, '0.0.0.0');
 
   logger.log(`Application running on: http://localhost:${port}/api/v1`);
+  logger.log(`LAN (phone/APK): http://<your-pc-ip>:${port}/api/v1`);
   logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 bootstrap();

@@ -148,6 +148,10 @@ export class PersonsService {
     return entry;
   }
 
+  async findByMobile(mobile: string): Promise<Person | null> {
+    return this.personRepository.findByMobile(mobile);
+  }
+
   async update(id: string, dto: UpdatePersonDto): Promise<Person> {
     await this.findOne(id);
 

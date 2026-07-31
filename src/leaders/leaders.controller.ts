@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,16 +43,18 @@ export class LeadersController {
     return this.leadersService.create(dto);
   }
 
+  @Public()
   @Get()
-  @Permissions(`${PermissionResource.LEADERS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List initiative leaders (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List initiative leaders (public — app swipe carousel)',
+  })
   findAll(@Query() query: LeaderQueryDto) {
     return this.leadersService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @Permissions(`${PermissionResource.LEADERS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get an initiative leader by ID' })
+  @ApiOperation({ summary: 'Get an initiative leader by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.leadersService.findOne(id);
   }

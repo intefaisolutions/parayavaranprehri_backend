@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,18 +43,18 @@ export class LocationsController {
     return this.locationsService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.LOCATIONS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List locations (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List locations (public — citizen map / filters)',
+  })
   findAll(@Query() query: LocationQueryDto) {
     return this.locationsService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.LOCATIONS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get a location by ID' })
+  @ApiOperation({ summary: 'Get a location by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.locationsService.findOne(id);
   }

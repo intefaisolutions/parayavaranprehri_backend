@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,18 +43,18 @@ export class MapsController {
     return this.mapsService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.MAPS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List map records (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List map plantation sites (public — citizen map screen)',
+  })
   findAll(@Query() query: MapQueryDto) {
     return this.mapsService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.MAPS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get a map record by ID' })
+  @ApiOperation({ summary: 'Get a map record by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.mapsService.findOne(id);
   }

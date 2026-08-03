@@ -29,7 +29,10 @@ export class SmsService {
   }
 
   async sendOtp(phone: string, otp: string): Promise<boolean> {
-    return this.sendMessage(phone, this.buildOtpMessage(otp));
+    const message = this.buildOtpMessage(otp);
+    // Log exact SMS body so prod deploy can be verified against DLT template
+    this.logger.log(`OTP SMS body: ${message}`);
+    return this.sendMessage(phone, message);
   }
 
   async sendMessage(phone: string, message: string): Promise<boolean> {

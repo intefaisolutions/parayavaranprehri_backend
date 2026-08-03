@@ -16,7 +16,8 @@ export class User extends BaseSchema {
   @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email!: string;
 
-  @Prop({ trim: true })
+  /** Unique when present (sparse — optional on some admin users). */
+  @Prop({ trim: true, unique: true, sparse: true, index: true })
   phone?: string;
 
   @Prop({ select: false })
@@ -55,6 +56,5 @@ export class User extends BaseSchema {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1, isActive: 1 });
 UserSchema.index({ firstName: 'text', lastName: 'text', email: 'text' });

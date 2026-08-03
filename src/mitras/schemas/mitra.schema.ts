@@ -28,10 +28,10 @@ export class Mitra extends BaseSchema {
   @Prop({ required: true, trim: true })
   name!: string;
 
-  @Prop({ required: true, unique: true, trim: true })
+  @Prop({ required: true, unique: true, trim: true, index: true })
   mobile!: string;
 
-  @Prop({ trim: true, lowercase: true })
+  @Prop({ trim: true, lowercase: true, unique: true, sparse: true, index: true })
   email?: string;
 
   @Prop({ trim: true })

@@ -30,16 +30,17 @@ export enum PersonSource {
 
 @Schema({ timestamps: true, collection: 'persons' })
 export class Person extends BaseSchema {
-  @Prop({ unique: true, index: true })
+  @Prop({ index: true })
   personId!: string;
 
   @Prop({ required: true, trim: true })
   name!: string;
 
-  @Prop({ required: true, unique: true, trim: true })
+  @Prop({ required: true, trim: true, index: true })
   mobile!: string;
 
-  @Prop({ trim: true, lowercase: true })
+  /** Unique when present among active (non-deleted) persons. */
+  @Prop({ trim: true, lowercase: true, index: true })
   email?: string;
 
   @Prop({ type: Date })
@@ -94,9 +95,44 @@ export class Person extends BaseSchema {
 
   @Prop({ type: Date, default: Date.now })
   registrationDate!: Date;
+
+  /** Who created this record (email / display name). */
+  @Prop({ trim: true })
+  createdBy?: string;
+
+  @Prop({ trim: true, index: true })
+  createdByUserId?: string;
+
+  /** Who last updated this record (email / display name). */
+  @Prop({ trim: true })
+  updatedBy?: string;
+
+  @Prop({ trim: true, index: true })
+  updatedByUserId?: string;
 }
 
 export const PersonSchema = SchemaFactory.createForClass(Person);
+
+// Soft-delete safe uniqueness — allows re-registering the same mobile/email
+// after a person is soft-deleted (isDeleted: true).
+PersonSchema.index(
+  { personId: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } },
+);
+PersonSchema.index(
+  { mobile: 1 },
+  { unique: true, partialFilterExpression: { isDeleted: false } },
+);
+PersonSchema.index(
+  { email: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      isDeleted: false,
+      email: { $type: 'string' },
+    },
+  },
+);
 
 PersonSchema.index({
   name: 'text',

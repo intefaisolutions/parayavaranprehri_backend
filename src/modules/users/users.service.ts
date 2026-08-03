@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PaginatedResult } from '../../common/interfaces/api-response.interface';
+import { GlobalIdentityService } from '../../common/services/global-identity.service';
 import { PaginationUtil } from '../../common/utils/pagination.util';
+import {
+  normalizeEmail,
+  normalizeMobile,
+} from '../../common/utils/identity.util';
 import { RolesService } from '../roles/roles.service';
 import {
   CreateUserDto,
@@ -23,6 +28,7 @@ export class UsersService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly rolesService: RolesService,
+    private readonly globalIdentity: GlobalIdentityService,
   ) {}
 
   private sanitizeUser(user: UserDocument): Record<string, unknown> {
@@ -32,10 +38,14 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto): Promise<Record<string, unknown>> {
-    const existing = await this.userRepository.findByEmail(dto.email);
-    if (existing) {
-      throw new ConflictException('Email already registered');
-    }
+    const email = normalizeEmail(dto.email)!;
+    const phone = normalizeMobile(dto.phone);
+
+    await this.globalIdentity.assertAvailable({
+      as: 'user',
+      email,
+      mobile: phone,
+    });
 
     const role = await this.rolesService.findByName(dto.role);
     const passwordHash = dto.password
@@ -44,6 +54,8 @@ export class UsersService {
 
     const user = await this.userRepository.create({
       ...dto,
+      email,
+      phone,
       password: passwordHash,
       roleId: role._id,
       permissions:
@@ -86,24 +98,48 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userRepository.findByEmail(email);
+    const normalized = normalizeEmail(email) ?? email;
+    return this.userRepository.findByEmail(normalized);
   }
 
   async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
-    return this.userRepository.findByEmailWithPassword(email);
+    const normalized = normalizeEmail(email) ?? email;
+    return this.userRepository.findByEmailWithPassword(normalized);
   }
 
   async findByPhone(phone: string): Promise<UserDocument | null> {
-    return this.userRepository.findByPhone(phone);
+    const normalized = normalizeMobile(phone) ?? phone;
+    return this.userRepository.findByPhone(normalized);
   }
 
   async update(
     id: string,
     dto: UpdateUserDto,
   ): Promise<Record<string, unknown>> {
-    await this.findOne(id);
+    const existing = await this.userRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundException(`User with id "${id}" not found`);
+    }
 
     const updateData: Record<string, unknown> = { ...dto };
+    const nextPhone =
+      dto.phone !== undefined
+        ? normalizeMobile(dto.phone)
+        : normalizeMobile(existing.phone);
+    const nextEmail = normalizeEmail(existing.email);
+
+    if (dto.phone !== undefined) {
+      updateData.phone = nextPhone;
+    }
+
+    if (dto.phone !== undefined) {
+      await this.globalIdentity.assertAvailable({
+        as: 'user',
+        mobile: nextPhone,
+        email: nextEmail,
+        exclude: { userId: id },
+      });
+    }
 
     if (dto.role) {
       const role = await this.rolesService.findByName(dto.role);
@@ -129,8 +165,28 @@ export class UsersService {
     id: string,
     dto: UpdateMeDto,
   ): Promise<Record<string, unknown>> {
-    await this.findOne(id);
+    const existing = await this.userRepository.findById(id);
+    if (!existing) {
+      throw new NotFoundException(`User with id "${id}" not found`);
+    }
+
     const updateData: Record<string, unknown> = { ...dto };
+    const nextPhone =
+      dto.phone !== undefined
+        ? normalizeMobile(dto.phone)
+        : normalizeMobile(existing.phone);
+    const nextEmail = normalizeEmail(existing.email);
+
+    if (dto.phone !== undefined) {
+      updateData.phone = nextPhone;
+      await this.globalIdentity.assertAvailable({
+        as: 'user',
+        mobile: nextPhone,
+        email: nextEmail,
+        exclude: { userId: id },
+      });
+    }
+
     if (dto.avatar === '') {
       updateData.avatar = undefined;
     }
@@ -161,19 +217,75 @@ export class UsersService {
 
     try {
       const response = await fetch(
-        `${insuranceApiUrl}/api/integration/paryawaran/users/vehicles?mobile=${user.phone}`,
+        `${insuranceApiUrl}/api/integration/paryawaran/users/vehicles?mobile=${encodeURIComponent(user.phone)}`,
       );
       if (!response.ok) {
-        return [];
+        return {
+          success: false,
+          count: 0,
+          insuredVehicles: 0,
+          uninsuredVehicles: 0,
+          hasActiveInsurance: false,
+          vehicles: [],
+          message: 'Unable to fetch insurance vehicles',
+        };
       }
       const data = await response.json().catch(() => null);
-      if (Array.isArray(data)) return data;
-      if (Array.isArray(data?.vehicles)) return data.vehicles;
-      if (Array.isArray(data?.data)) return data.data;
-      return [];
+      if (Array.isArray(data)) {
+        return {
+          success: true,
+          count: data.length,
+          insuredVehicles: data.filter(
+            (v: { isInsured?: boolean; policyStatus?: string }) =>
+              v.isInsured ||
+              String(v.policyStatus || '').toUpperCase() === 'ACTIVE',
+          ).length,
+          uninsuredVehicles: 0,
+          hasActiveInsurance: data.some(
+            (v: { isInsured?: boolean; policyStatus?: string }) =>
+              v.isInsured ||
+              String(v.policyStatus || '').toUpperCase() === 'ACTIVE',
+          ),
+          vehicles: data,
+          message: 'Vehicles retrieved successfully',
+        };
+      }
+      if (data && typeof data === 'object') {
+        return {
+          success: data.success !== false,
+          user: data.user ?? null,
+          count: data.count ?? (Array.isArray(data.vehicles) ? data.vehicles.length : 0),
+          insuredVehicles: data.insuredVehicles ?? 0,
+          uninsuredVehicles: data.uninsuredVehicles ?? 0,
+          hasActiveInsurance: Boolean(data.hasActiveInsurance),
+          vehicles: Array.isArray(data.vehicles)
+            ? data.vehicles
+            : Array.isArray(data.data)
+              ? data.data
+              : [],
+          message: data.message || 'Vehicles retrieved successfully',
+        };
+      }
+      return {
+        success: true,
+        count: 0,
+        insuredVehicles: 0,
+        uninsuredVehicles: 0,
+        hasActiveInsurance: false,
+        vehicles: [],
+        message: 'No vehicles found',
+      };
     } catch {
       // No insurance / API down → empty vehicle slots (not an error for the app)
-      return [];
+      return {
+        success: false,
+        count: 0,
+        insuredVehicles: 0,
+        uninsuredVehicles: 0,
+        hasActiveInsurance: false,
+        vehicles: [],
+        message: 'Insurance service unavailable',
+      };
     }
   }
 

@@ -26,7 +26,25 @@ export class PersonRepository extends BaseRepository<PersonDocument> {
     if (excludeId) {
       filter._id = { $ne: excludeId };
     }
-    const existing = await this.personModel.findOne(filter).exec();
+    const existing = await this.personModel.findOne(filter).select('_id').exec();
     return !!existing;
+  }
+
+  async existsByEmail(email: string, excludeId?: string): Promise<boolean> {
+    const filter: Record<string, unknown> = {
+      email: email.toLowerCase().trim(),
+      isDeleted: false,
+    };
+    if (excludeId) {
+      filter._id = { $ne: excludeId };
+    }
+    const existing = await this.personModel.findOne(filter).select('_id').exec();
+    return !!existing;
+  }
+
+  async findByEmail(email: string): Promise<PersonDocument | null> {
+    return this.personModel
+      .findOne({ email: email.toLowerCase().trim(), isDeleted: false })
+      .exec();
   }
 }

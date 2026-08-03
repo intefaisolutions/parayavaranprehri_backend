@@ -1,9 +1,13 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
+import { GlobalIdentityService } from '../common/services/global-identity.service';
+import {
+  normalizeEmail,
+  normalizeMobile,
+} from '../common/utils/identity.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { PartnerQueryDto } from './dto/partner-query.dto';
@@ -13,16 +17,26 @@ import { Partner, PartnerDocument } from './schemas/partner.schema';
 
 @Injectable()
 export class PartnersService {
-  constructor(private readonly partnerRepository: PartnerRepository) {}
+  constructor(
+    private readonly partnerRepository: PartnerRepository,
+    private readonly globalIdentity: GlobalIdentityService,
+  ) {}
 
   async create(dto: CreatePartnerDto): Promise<Partner> {
-    const exists = await this.partnerRepository.existsByPhone(dto.phone);
-    if (exists) {
-      throw new ConflictException(
-        `A partner with phone "${dto.phone}" already exists`,
-      );
-    }
-    return this.partnerRepository.create(dto as Partial<PartnerDocument>);
+    const phone = normalizeMobile(dto.phone) ?? dto.phone.trim();
+    const email = normalizeEmail(dto.email);
+
+    await this.globalIdentity.assertAvailable({
+      as: 'partner',
+      mobile: phone,
+      email,
+    });
+
+    return this.partnerRepository.create({
+      ...dto,
+      phone,
+      email,
+    } as Partial<PartnerDocument>);
   }
 
   async findAll(query: PartnerQueryDto): Promise<PaginatedResult<Partner>> {
@@ -52,22 +66,38 @@ export class PartnersService {
   }
 
   async update(id: string, dto: UpdatePartnerDto): Promise<Partner> {
+    const existing = await this.findOne(id);
+
+    const nextPhone =
+      dto.phone !== undefined
+        ? normalizeMobile(dto.phone) ?? dto.phone.trim()
+        : normalizeMobile(existing.phone) ?? existing.phone;
+    const nextEmail =
+      dto.email !== undefined
+        ? normalizeEmail(dto.email)
+        : normalizeEmail(existing.email);
+
+    const patch: Partial<PartnerDocument> = {
+      ...dto,
+    } as Partial<PartnerDocument>;
+
     if (dto.phone !== undefined) {
-      const exists = await this.partnerRepository.existsByPhone(
-        dto.phone,
-        id,
-      );
-      if (exists) {
-        throw new ConflictException(
-          'Another partner already uses this phone number',
-        );
-      }
+      patch.phone = nextPhone;
+    }
+    if (dto.email !== undefined) {
+      patch.email = nextEmail;
     }
 
-    const updated = await this.partnerRepository.updateById(
-      id,
-      dto as Partial<PartnerDocument>,
-    );
+    if (dto.phone !== undefined || dto.email !== undefined) {
+      await this.globalIdentity.assertAvailable({
+        as: 'partner',
+        mobile: nextPhone,
+        email: nextEmail,
+        exclude: { partnerId: id },
+      });
+    }
+
+    const updated = await this.partnerRepository.updateById(id, patch);
     if (!updated) {
       throw new NotFoundException(`Partner "${id}" not found`);
     }

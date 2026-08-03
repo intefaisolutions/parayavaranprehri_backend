@@ -27,10 +27,10 @@ export class Partner extends BaseSchema {
   @Prop({ required: true, trim: true })
   contactPerson!: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ required: true, trim: true, unique: true, index: true })
   phone!: string;
 
-  @Prop({ trim: true, lowercase: true })
+  @Prop({ trim: true, lowercase: true, unique: true, sparse: true, index: true })
   email?: string;
 
   @Prop({ trim: true })

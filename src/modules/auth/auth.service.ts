@@ -11,6 +11,10 @@ import { randomBytes } from 'crypto';
 import { JwtPayload } from '../../common/decorators/current-user.decorator';
 import { SystemRole } from '../../common/enums/role.enum';
 import { WhatsappService } from '../../common/services/whatsapp.service';
+import {
+  normalizeEmail,
+  normalizeMobile,
+} from '../../common/utils/identity.util';
 import { PersonGender } from '../../persons/schemas/person.schema';
 import { PersonsService } from '../../persons/persons.service';
 import { UserRepository } from '../users/repositories/user.repository';
@@ -127,17 +131,17 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto): Promise<RegisterResponse> {
-    const mobile = dto.mobile.trim();
+    const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.replace(/\D/g, '').slice(-10);
+    const firstName = dto.firstName.trim();
+    const lastName = dto.lastName.trim();
+    const email = normalizeEmail(dto.email)!;
+
     const existingByPhone = await this.usersService.findByPhone(mobile);
     if (existingByPhone) {
       throw new ConflictException(
         'This mobile number is already registered. Please login with OTP.',
       );
     }
-
-    const firstName = dto.firstName.trim();
-    const lastName = dto.lastName.trim();
-    const email = dto.email.trim().toLowerCase();
 
     const existingByEmail = await this.usersService.findByEmail(email);
     if (existingByEmail) {
@@ -146,7 +150,10 @@ export class AuthService {
       );
     }
 
-    await this.usersService.create({
+    // usersService.create enforces global unique email + mobile across
+    // User / Person / Mitra / Partner (same mobile+email may already exist
+    // as Person/Mitra — that is allowed as the same identity).
+    const createdUser = await this.usersService.create({
       firstName,
       lastName,
       email,
@@ -159,18 +166,27 @@ export class AuthService {
     let insuranceVerified = false;
     let vehiclesLinked = 0;
     const fullName = `${firstName} ${lastName}`.trim();
+    const userId = String(
+      (createdUser.id as string | undefined) ||
+        (createdUser._id as string | undefined) ||
+        '',
+    ) || undefined;
 
     try {
-      const person = await this.personsService.selfRegister({
-        name: fullName,
-        mobile,
-        email: dto.email.trim(),
-        gender: dto.gender as PersonGender,
-        address: dto.address.trim(),
-      });
+      const person = await this.personsService.selfRegister(
+        {
+          name: fullName,
+          mobile,
+          email,
+          gender: dto.gender as PersonGender,
+          address: dto.address.trim(),
+        },
+        { userId, label: email },
+      );
       insuranceVerified = Boolean(person.insuranceVerified);
       vehiclesLinked = person.vehiclesLinked ?? 0;
     } catch (error) {
+      // Person already exists with this mobile (same identity) — reuse it
       if (error instanceof ConflictException) {
         const existingPerson = await this.personsService.findByMobile(mobile);
         if (existingPerson) {
@@ -221,14 +237,16 @@ export class AuthService {
   }
 
   async requestOtp(dto: OtpRequestDto): Promise<{ message: string }> {
-    const identifier = dto.email || dto.phone;
+    const email = normalizeEmail(dto.email);
+    const phone = normalizeMobile(dto.phone);
+    const identifier = email || phone;
     if (!identifier) {
       throw new UnauthorizedException('Email or phone must be provided');
     }
 
-    const user = dto.email
-      ? await this.usersService.findByEmail(dto.email)
-      : await this.usersService.findByPhone(dto.phone!);
+    const user = email
+      ? await this.usersService.findByEmail(email)
+      : await this.usersService.findByPhone(phone!);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Please register first');
@@ -254,8 +272,8 @@ export class AuthService {
       return { message: 'OTP has been sent successfully' };
     }
 
-    if (dto.phone) {
-      const smsSent = await this.smsService.sendOtp(dto.phone, code);
+    if (phone) {
+      const smsSent = await this.smsService.sendOtp(phone, code);
 
       // Also try WhatsApp — SMS can be accepted by HSP but dropped by DLT/operators.
       const company =
@@ -263,7 +281,7 @@ export class AuthService {
         'Shield Sure Insurance';
       const waMessage = `${company} ,Dear User ${code} is your OTP for login into your account. GGISKB`;
       const waResult = await this.whatsappService.sendMessage(
-        dto.phone,
+        phone,
         waMessage,
       );
 
@@ -278,8 +296,8 @@ export class AuthService {
           message: 'OTP has been sent successfully via WhatsApp',
         };
       }
-    } else if (dto.email) {
-      await this.emailService.sendOtp(dto.email, code);
+    } else if (email) {
+      await this.emailService.sendOtp(email, code);
     }
 
     return { message: 'OTP has been sent successfully' };
@@ -290,7 +308,9 @@ export class AuthService {
     userAgent?: string,
     ipAddress?: string,
   ): Promise<AuthResponse> {
-    const identifier = dto.email || dto.phone;
+    const email = normalizeEmail(dto.email);
+    const phone = normalizeMobile(dto.phone);
+    const identifier = email || phone;
     if (!identifier) {
       throw new UnauthorizedException('Email or phone must be provided');
     }
@@ -301,9 +321,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    const user = dto.email
-      ? await this.usersService.findByEmail(dto.email)
-      : await this.usersService.findByPhone(dto.phone!);
+    const user = email
+      ? await this.usersService.findByEmail(email)
+      : await this.usersService.findByPhone(phone!);
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');

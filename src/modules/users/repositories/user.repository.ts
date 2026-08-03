@@ -39,4 +39,19 @@ export class UserRepository extends BaseRepository<UserDocument> {
     }
     return this.userModel.findOne(filter).exec();
   }
+
+  async existsByEmail(email: string, excludeId?: string): Promise<boolean> {
+    const filter: Record<string, unknown> = {
+      email: email.toLowerCase().trim(),
+      isDeleted: false,
+    };
+    if (excludeId) filter._id = { $ne: excludeId };
+    return !!(await this.userModel.findOne(filter).select('_id').exec());
+  }
+
+  async existsByPhone(phone: string, excludeId?: string): Promise<boolean> {
+    const filter: Record<string, unknown> = { phone, isDeleted: false };
+    if (excludeId) filter._id = { $ne: excludeId };
+    return !!(await this.userModel.findOne(filter).select('_id').exec());
+  }
 }

@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxDate,
   Min,
 } from 'class-validator';
 import {
@@ -25,11 +26,14 @@ export class CreatePersonDto {
   mobile!: string;
 
   @IsEmail()
-  @IsOptional()
-  email?: string;
+  @IsNotEmpty()
+  email!: string;
 
   @Type(() => Date)
   @IsDate()
+  @MaxDate(() => new Date(), {
+    message: 'Date of Birth cannot be a future date',
+  })
   @IsOptional()
   dob?: Date;
 

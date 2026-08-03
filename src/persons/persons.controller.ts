@@ -12,6 +12,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -38,8 +40,11 @@ export class PersonsController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.CREATE}`)
   @ApiOperation({ summary: 'Admin-register a new person' })
-  create(@Body() dto: CreatePersonDto) {
-    return this.personsService.create(dto);
+  create(
+    @Body() dto: CreatePersonDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.personsService.create(dto, user);
   }
 
   @Post('self-register')
@@ -47,8 +52,11 @@ export class PersonsController {
     summary:
       'App self-registration for a person — auto-checks the insurance system for a matching vehicle policy',
   })
-  selfRegister(@Body() dto: CreatePersonDto) {
-    return this.personsService.selfRegister(dto);
+  selfRegister(
+    @Body() dto: CreatePersonDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.personsService.selfRegister(dto, user);
   }
 
   @Get()
@@ -56,6 +64,16 @@ export class PersonsController {
   @ApiOperation({ summary: 'List persons (paginated, searchable, sortable)' })
   findAll(@Query() query: PersonQueryDto) {
     return this.personsService.findAll(query);
+  }
+
+  @Get(':id/vehicles')
+  @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.READ}`)
+  @ApiOperation({
+    summary:
+      'Live vehicle + insurance policies for a person (from insurance system by mobile)',
+  })
+  getVehicles(@Param('id') id: string) {
+    return this.personsService.getVehicles(id);
   }
 
   @Get(':id')
@@ -69,8 +87,12 @@ export class PersonsController {
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.UPDATE}`)
   @ApiOperation({ summary: 'Update a person by ID' })
-  update(@Param('id') id: string, @Body() dto: UpdatePersonDto) {
-    return this.personsService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePersonDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.personsService.update(id, dto, user);
   }
 
   @Delete(':id')

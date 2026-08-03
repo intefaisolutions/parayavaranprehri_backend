@@ -1,10 +1,14 @@
 import {
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
+import { GlobalIdentityService } from '../common/services/global-identity.service';
+import {
+  normalizeEmail,
+  normalizeMobile,
+} from '../common/utils/identity.util';
 import { CreateMitraDto } from './dto/create-mitra.dto';
 import { UpdateMitraDto } from './dto/update-mitra.dto';
 import { Mitra, MitraDocument, MitraSource, MitraStatus } from './schemas/mitra.schema';
@@ -18,6 +22,7 @@ export interface MitraQuery {
 export class MitrasService {
   constructor(
     @InjectModel(Mitra.name) private readonly mitraModel: Model<MitraDocument>,
+    private readonly globalIdentity: GlobalIdentityService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -56,19 +61,21 @@ export class MitrasService {
     defaultStatus: MitraStatus,
     forceStatus = false,
   ): Promise<Mitra> {
-    const existing = await this.mitraModel
-      .findOne({ mobile: dto.mobile, isDeleted: false })
-      .exec();
-    if (existing) {
-      throw new ConflictException(
-        `Mitra with mobile "${dto.mobile}" already exists`,
-      );
-    }
+    const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
+    const email = normalizeEmail(dto.email);
+
+    await this.globalIdentity.assertAvailable({
+      as: 'mitra',
+      mobile,
+      email,
+    });
 
     const mitraId = await this.generateMitraId();
     const status = forceStatus ? defaultStatus : dto.status ?? defaultStatus;
     const mitra = new this.mitraModel({
       ...dto,
+      mobile,
+      email,
       mitraId,
       source,
       status,
@@ -116,12 +123,43 @@ export class MitrasService {
   }
 
   async findByMobile(mobile: string): Promise<Mitra | null> {
-    return this.mitraModel.findOne({ mobile, isDeleted: false }).exec();
+    const normalized = normalizeMobile(mobile) ?? mobile;
+    return this.mitraModel
+      .findOne({ mobile: normalized, isDeleted: false })
+      .exec();
   }
 
   async update(id: string, dto: UpdateMitraDto): Promise<Mitra> {
+    const existing = await this.findOne(id);
+    const patch: Record<string, unknown> = { ...dto };
+
+    const nextMobile =
+      dto.mobile !== undefined
+        ? normalizeMobile(dto.mobile) ?? dto.mobile.trim()
+        : normalizeMobile(existing.mobile) ?? existing.mobile;
+    const nextEmail =
+      dto.email !== undefined
+        ? normalizeEmail(dto.email)
+        : normalizeEmail(existing.email);
+
+    if (dto.mobile !== undefined) {
+      patch.mobile = nextMobile;
+    }
+    if (dto.email !== undefined) {
+      patch.email = nextEmail;
+    }
+
+    if (dto.mobile !== undefined || dto.email !== undefined) {
+      await this.globalIdentity.assertAvailable({
+        as: 'mitra',
+        mobile: nextMobile,
+        email: nextEmail,
+        exclude: { mitraId: id },
+      });
+    }
+
     const updated = await this.mitraModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, dto, { new: true })
+      .findOneAndUpdate({ _id: id, isDeleted: false }, patch, { new: true })
       .exec();
     if (!updated) {
       throw new NotFoundException(`Mitra with ID "${id}" not found`);

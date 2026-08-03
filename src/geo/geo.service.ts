@@ -1,0 +1,200 @@
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { buildPoint } from '../common/utils/geo.util';
+import {
+  VidhanSabha,
+  VidhanSabhaDocument,
+} from '../vidhan-sabhas/schemas/vidhan-sabha.schema';
+import { ReverseGeocodeDto } from './dto/reverse-geocode.dto';
+
+export interface ReverseGeocodeResult {
+  latitude: number;
+  longitude: number;
+  country: string;
+  state: string;
+  district: string;
+  tehsil: string;
+  villageOrCity: string;
+  pinCode: string;
+  landAddress: string;
+  landmark: string;
+  vidhanSabha: string | null;
+  vidhanSabhaId: string | null;
+  rawDisplayName?: string;
+  source: 'nominatim';
+}
+
+type NominatimAddress = {
+  country?: string;
+  state?: string;
+  state_district?: string;
+  county?: string;
+  district?: string;
+  municipality?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  hamlet?: string;
+  suburb?: string;
+  neighbourhood?: string;
+  city_district?: string;
+  taluk?: string;
+  postcode?: string;
+  road?: string;
+  amenity?: string;
+  leisure?: string;
+  building?: string;
+};
+
+type NominatimResponse = {
+  display_name?: string;
+  address?: NominatimAddress;
+  error?: string;
+};
+
+@Injectable()
+export class GeoService {
+  private readonly logger = new Logger(GeoService.name);
+
+  constructor(
+    @InjectModel(VidhanSabha.name)
+    private readonly vidhanSabhaModel: Model<VidhanSabhaDocument>,
+  ) {}
+
+  async reverse(dto: ReverseGeocodeDto): Promise<ReverseGeocodeResult> {
+    const latitude = Number(dto.latitude);
+    const longitude = Number(dto.longitude);
+    if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+      throw new BadRequestException('Valid latitude and longitude are required');
+    }
+
+    const osm = await this.fetchNominatim(latitude, longitude);
+    const address = osm.address || {};
+
+    const district =
+      address.state_district ||
+      address.county ||
+      address.district ||
+      address.city_district ||
+      '';
+
+    const tehsil =
+      address.municipality ||
+      address.taluk ||
+      (address.county && address.county !== district ? address.county : '') ||
+      '';
+
+    const villageOrCity =
+      address.village ||
+      address.town ||
+      address.city ||
+      address.hamlet ||
+      address.suburb ||
+      address.neighbourhood ||
+      '';
+
+    const landmark =
+      address.amenity || address.leisure || address.building || address.road || '';
+
+    const vs = await this.resolveVidhanSabha(
+      longitude,
+      latitude,
+      district || undefined,
+    );
+
+    return {
+      latitude,
+      longitude,
+      country: address.country || 'India',
+      state: address.state || '',
+      district,
+      tehsil,
+      villageOrCity,
+      pinCode: address.postcode || '',
+      landAddress: osm.display_name || '',
+      landmark,
+      vidhanSabha: vs?.name ?? null,
+      vidhanSabhaId: vs?.id ? String(vs.id) : null,
+      rawDisplayName: osm.display_name,
+      source: 'nominatim',
+    };
+  }
+
+  private async fetchNominatim(
+    latitude: number,
+    longitude: number,
+  ): Promise<NominatimResponse> {
+    const url = new URL('https://nominatim.openstreetmap.org/reverse');
+    url.searchParams.set('lat', String(latitude));
+    url.searchParams.set('lon', String(longitude));
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('addressdetails', '1');
+    url.searchParams.set('zoom', '18');
+    url.searchParams.set('accept-language', 'en');
+
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'ParyavaranPrahri/1.0 (admin reverse-geocode)',
+        },
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`Nominatim HTTP ${response.status}`);
+        throw new ServiceUnavailableException(
+          'Location lookup service is temporarily unavailable',
+        );
+      }
+
+      const data = (await response.json()) as NominatimResponse;
+      if (data.error) {
+        throw new BadRequestException(
+          `Could not resolve address for these coordinates: ${data.error}`,
+        );
+      }
+      return data;
+    } catch (err) {
+      if (
+        err instanceof BadRequestException ||
+        err instanceof ServiceUnavailableException
+      ) {
+        throw err;
+      }
+      this.logger.error('Nominatim reverse geocode failed', err as Error);
+      throw new ServiceUnavailableException(
+        'Failed to reverse-geocode coordinates',
+      );
+    }
+  }
+
+  private async resolveVidhanSabha(
+    longitude: number,
+    latitude: number,
+    district?: string,
+  ): Promise<{ id: Types.ObjectId; name: string } | null> {
+    const point = buildPoint(longitude, latitude);
+    const geoFilter = {
+      isDeleted: false,
+      boundary: { $geoIntersects: { $geometry: point } },
+    };
+
+    let vs = district
+      ? await this.vidhanSabhaModel
+          .findOne({ ...geoFilter, district } as any)
+          .exec()
+      : null;
+
+    if (!vs) {
+      vs = await this.vidhanSabhaModel.findOne(geoFilter as any).exec();
+    }
+    if (!vs) return null;
+    return { id: vs._id as Types.ObjectId, name: vs.vidhanSabhaName };
+  }
+}

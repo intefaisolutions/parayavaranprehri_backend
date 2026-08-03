@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  Allow,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -16,11 +17,23 @@ export class CreateVidhanSabhaDto {
 
   @IsString()
   @IsOptional()
+  country?: string;
+
+  @IsString()
+  @IsOptional()
   district?: string;
 
   @IsString()
   @IsOptional()
   state?: string;
+
+  /**
+   * Geo boundary: full GeoJSON Polygon/MultiPolygon, OR a simple ring
+   * [[lng,lat], ...] which is converted to a Polygon server-side.
+   */
+  @IsOptional()
+  @Allow()
+  boundary?: unknown;
 
   @Type(() => Number)
   @IsInt()

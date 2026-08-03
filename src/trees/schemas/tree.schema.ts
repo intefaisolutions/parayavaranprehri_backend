@@ -53,6 +53,21 @@ export class Tree {
   @Prop({ type: Types.ObjectId, ref: 'Person', default: null })
   personId?: Types.ObjectId | null;
 
+  /** Land parcel where this tree is planted. */
+  @Prop({ type: Types.ObjectId, ref: 'Land', default: null, index: true })
+  landId?: Types.ObjectId | null;
+
+  @Prop({ trim: true })
+  landName?: string;
+
+  @Prop({
+    enum: ['INDIVIDUAL', 'PLANTATION_DRIVE', 'CSR', 'GOVERNMENT_SCHEME'],
+  })
+  plantationMethod?: string;
+
+  @Prop({ trim: true })
+  responsibleOrganization?: string;
+
   // The Mitra (volunteer) assigned to take care of this tree.
   @Prop({ type: Types.ObjectId, ref: 'Mitra', default: null })
   assignedMitraId?: Types.ObjectId | null;
@@ -88,6 +103,22 @@ export class Tree {
 
   @Prop()
   height!: number;
+
+  /** Trunk diameter at breast height (cm) — improves O₂ estimate accuracy. */
+  @Prop({ type: Number, default: null })
+  dbh?: number | null;
+
+  /** Auto-derived: years since plantation date. */
+  @Prop({ type: Number, default: 0 })
+  treeAgeYears!: number;
+
+  /** Auto-derived annual O₂ estimate (kg/year). Never accept from client. */
+  @Prop({ type: Number, default: 0 })
+  annualOxygenProductionKg!: number;
+
+  /** Constituency this tree counts toward (name match with Vidhan Sabha). */
+  @Prop({ trim: true, index: true })
+  vidhanSabha?: string;
 
   @Prop()
   remarks!: string;

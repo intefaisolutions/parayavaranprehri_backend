@@ -10,6 +10,22 @@ export class CreateTreeDto {
   @IsOptional()
   personId?: string;
 
+  @IsMongoId()
+  @IsOptional()
+  landId?: string;
+
+  @IsString()
+  @IsOptional()
+  landName?: string;
+
+  @IsEnum(['INDIVIDUAL', 'PLANTATION_DRIVE', 'CSR', 'GOVERNMENT_SCHEME'])
+  @IsOptional()
+  plantationMethod?: string;
+
+  @IsString()
+  @IsOptional()
+  responsibleOrganization?: string;
+
   @IsString()
   @IsOptional()
   species?: string;
@@ -82,6 +98,16 @@ export class CreateTreeDto {
   @IsNumber()
   @IsOptional()
   height?: number;
+
+  /** Trunk diameter at breast height in cm (optional, improves O₂ accuracy). */
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  dbh?: number;
+
+  @IsString()
+  @IsOptional()
+  vidhanSabha?: string;
 
   @IsString()
   @IsOptional()

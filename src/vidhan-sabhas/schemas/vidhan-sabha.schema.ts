@@ -14,11 +14,30 @@ export class VidhanSabha extends BaseSchema {
   @Prop({ required: true, unique: true, trim: true })
   vidhanSabhaName!: string;
 
+  @Prop({ trim: true, default: 'India' })
+  country?: string;
+
   @Prop({ trim: true, index: true })
   district?: string;
 
   @Prop({ trim: true, default: 'Madhya Pradesh' })
   state?: string;
+
+  /**
+   * GeoJSON Polygon / MultiPolygon boundary used to auto-map lands by lat/lng.
+   * Coordinates are [longitude, latitude] per GeoJSON spec.
+   */
+  @Prop({
+    type: {
+      type: String,
+      enum: ['Polygon', 'MultiPolygon'],
+    },
+    coordinates: { type: Array },
+  })
+  boundary?: {
+    type: 'Polygon' | 'MultiPolygon';
+    coordinates: number[][][] | number[][][][];
+  };
 
   @Prop({ default: 0, min: 0 })
   totalPersons!: number;
@@ -28,6 +47,10 @@ export class VidhanSabha extends BaseSchema {
 
   @Prop({ default: 0, min: 0 })
   totalTrees!: number;
+
+  /** Sum of trees' estimated annual O₂ (kg/year) for this constituency. */
+  @Prop({ default: 0, min: 0 })
+  totalAnnualOxygenKg!: number;
 
   @Prop({ default: 0, min: 0 })
   totalMitras!: number;
@@ -47,3 +70,5 @@ VidhanSabhaSchema.index({
   state: 'text',
   assignedAdmin: 'text',
 });
+
+VidhanSabhaSchema.index({ boundary: '2dsphere' });

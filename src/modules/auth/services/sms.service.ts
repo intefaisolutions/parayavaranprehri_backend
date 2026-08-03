@@ -7,11 +7,29 @@ export class SmsService {
 
   constructor(private readonly configService: ConfigService) {}
 
+  /** Strip +91 / 91 / 0 so HSP receives a bare 10-digit Indian mobile. */
+  private normalizeMobile(phone: string): string {
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
+    if (digits.length === 11 && digits.startsWith('0')) return digits.slice(1);
+    return digits.slice(-10);
+  }
+
+  /**
+   * Exact TRAI/DLT template used by insurance_backend (sender DASSAM).
+   * Any other wording is accepted by HSP but dropped by operators.
+   * Do NOT put brand names inside `{...}` placeholders in .env.
+   */
+  private buildOtpMessage(otp: string): string {
+    const company =
+      this.configService.get<string>('COMPANY_NAME')?.trim() ||
+      'Shield Sure Insurance';
+    // Exact registered template — keep spaces/punctuation identical
+    return `${company} ,Dear User ${otp} is your OTP for login into your account. GGISKB`;
+  }
+
   async sendOtp(phone: string, otp: string): Promise<boolean> {
-    return this.sendMessage(
-      phone,
-      `Your Paryavaran Prahri Admin Login OTP is ${otp}. Please do not share this code.`,
-    );
+    return this.sendMessage(phone, this.buildOtpMessage(otp));
   }
 
   async sendMessage(phone: string, message: string): Promise<boolean> {
@@ -26,49 +44,45 @@ export class SmsService {
       return false;
     }
 
+    const mobile = this.normalizeMobile(phone);
+    if (mobile.length !== 10) {
+      this.logger.error(`Invalid mobile for SMS: ${phone}`);
+      return false;
+    }
+
     const encodedMessage = encodeURIComponent(message);
+    const url = `http://sms.hspsms.com/sendSMS?username=${encodeURIComponent(
+      username,
+    )}&message=${encodedMessage}&sendername=${encodeURIComponent(
+      senderId,
+    )}&smstype=TRANS&numbers=${mobile}&apikey=${encodeURIComponent(apiKey)}`;
 
-    // NOTE: This is a standard HSP SMS API URL structure.
-    // If the provider has a different base URL (like https://api.msg91.com or similar), it can be updated here.
-    const url = `http://sms.hspsms.com/sendSMS?username=${username}&message=${encodedMessage}&sendername=${senderId}&smstype=TRANS&numbers=${phone}&apikey=${apiKey}`;
-
-    console.log('--- SMS DEBUG INFO ---');
-    console.log('USERNAME:', username);
-    console.log('API_KEY:', apiKey);
-    console.log('SENDER_ID:', senderId);
-    console.log('URL:', url);
-    console.log('----------------------');
-
-    this.logger.log(`Attempting to send OTP SMS to ${phone} via HSP API...`);
+    this.logger.log(
+      `Sending SMS to ${mobile} via HSP (sender=${senderId})...`,
+    );
 
     try {
       const response = await fetch(url);
       const data = await response.text();
+      this.logger.log(`SMS provider response (${response.status}): ${data}`);
 
-      console.log('--- SMS RESPONSE ---');
-      console.log('STATUS:', response.status);
-      console.log('DATA:', data);
-      console.log('--------------------');
+      // HSP returns e.g. [{"responseCode":"Message SuccessFully Submitted"},{"msgid":"..."}]
+      const isAccepted =
+        response.ok &&
+        (/success/i.test(data) || /submitted/i.test(data)) &&
+        !/error|invalid|fail/i.test(data);
 
-      this.logger.log(`SMS Provider Response: ${data}`);
-
-      const isDelivered =
-        response.ok && /success/i.test(data) && !/error|invalid|fail/i.test(data);
-
-      if (!isDelivered) {
+      if (!isAccepted) {
         this.logger.error(
-          `[SMS FAILED] Gateway did not confirm delivery to ${phone}: ${data}`,
+          `[SMS FAILED] Gateway did not accept message to ${mobile}: ${data}`,
         );
         return false;
       }
 
-      this.logger.log(`[LIVE SUCCESS] SMS sent successfully to ${phone}`);
+      this.logger.log(`SMS accepted by gateway for ${mobile}`);
       return true;
     } catch (error) {
-      console.error('--- SMS ERROR ---');
-      console.error(error);
-      console.error('-----------------');
-      this.logger.error(`Failed to send SMS to ${phone}`, error);
+      this.logger.error(`Failed to send SMS to ${mobile}`, error);
       return false;
     }
   }

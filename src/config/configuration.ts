@@ -25,6 +25,16 @@ export default () => {
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
+    HSP_SMS_USERNAME: process.env.HSP_SMS_USERNAME,
+    HSP_SMS_PASSWORD: process.env.HSP_SMS_PASSWORD,
+    HSP_API_KEY: process.env.HSP_API_KEY,
+    HSP_SMS_SENDER_ID: process.env.HSP_SMS_SENDER_ID,
+    HSP_WHATSAPP_API_KEY: process.env.HSP_WHATSAPP_API_KEY,
+    HSP_WHATSAPP_NUMBER: process.env.HSP_WHATSAPP_NUMBER,
+    COMPANY_NAME: process.env.COMPANY_NAME,
+    SMS_OTP_TEMPLATE: process.env.SMS_OTP_TEMPLATE,
+    STATIC_OTP_MODE: process.env.STATIC_OTP_MODE,
+    STATIC_OTP_CODE: process.env.STATIC_OTP_CODE,
   };
 
   return config;

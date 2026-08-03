@@ -45,9 +45,8 @@ export class AuthService {
   ) {}
 
   private generateOtp(): string {
-    // TEMPORARY: while SMS/WhatsApp delivery is being fixed on the gateway
-    // side, allow forcing a fixed OTP via env so login can still be tested.
-    // Remove STATIC_OTP_MODE from .env to restore normal random OTPs.
+    // STATIC_OTP_MODE=true → fixed code for local testing (skips SMS).
+    // Otherwise → random 4-digit OTP delivered via HSP SMS / WhatsApp.
     const staticMode = this.configService.get<string>('STATIC_OTP_MODE');
     if (staticMode === 'true') {
       return this.configService.get<string>('STATIC_OTP_CODE') ?? '1234';
@@ -258,18 +257,26 @@ export class AuthService {
     if (dto.phone) {
       const smsSent = await this.smsService.sendOtp(dto.phone, code);
 
-      if (!smsSent) {
-        // SMS gateway failed (e.g. DLT/delivery block) - fall back to WhatsApp
-        const waResult = await this.whatsappService.sendMessage(
-          dto.phone,
-          `Your Paryavaran Prahri Admin Login OTP is ${code}. Please do not share this code.`,
-        );
+      // Also try WhatsApp — SMS can be accepted by HSP but dropped by DLT/operators.
+      const company =
+        this.configService.get<string>('COMPANY_NAME') ||
+        'Shield Sure Insurance';
+      const waMessage = `${company} ,Dear User ${code} is your OTP for login into your account. GGISKB`;
+      const waResult = await this.whatsappService.sendMessage(
+        dto.phone,
+        waMessage,
+      );
 
-        if (!waResult.success) {
-          throw new InternalServerErrorException(
-            'Failed to send OTP via SMS and WhatsApp. Please try again.',
-          );
-        }
+      if (!smsSent && !waResult.success) {
+        throw new InternalServerErrorException(
+          'Failed to send OTP via SMS and WhatsApp. Please try again.',
+        );
+      }
+
+      if (!smsSent && waResult.success) {
+        return {
+          message: 'OTP has been sent successfully via WhatsApp',
+        };
       }
     } else if (dto.email) {
       await this.emailService.sendOtp(dto.email, code);

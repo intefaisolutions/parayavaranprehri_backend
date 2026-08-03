@@ -29,6 +29,8 @@ export const envSchema = z.object({
   HSP_SMS_SENDER_ID: z.string().optional(),
   HSP_WHATSAPP_API_KEY: z.string().optional(),
   HSP_WHATSAPP_NUMBER: z.string().optional(),
+  COMPANY_NAME: z.string().optional(),
+  SMS_OTP_TEMPLATE: z.string().optional(),
   FRONTEND_URL: z.string().optional(),
   STATIC_OTP_MODE: z.string().optional(),
   STATIC_OTP_CODE: z.string().optional(),

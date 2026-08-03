@@ -7,7 +7,12 @@ import * as bcrypt from 'bcrypt';
 import { PaginatedResult } from '../../common/interfaces/api-response.interface';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { RolesService } from '../roles/roles.service';
-import { CreateUserDto, UpdateUserDto, UserQueryDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  UpdateMeDto,
+  UpdateUserDto,
+  UserQueryDto,
+} from './dto/user.dto';
 import { UserRepository } from './repositories/user.repository';
 import { UserDocument } from './schemas/user.schema';
 
@@ -117,6 +122,22 @@ export class UsersService {
       throw new NotFoundException(`User with id "${id}" not found`);
     }
 
+    return this.sanitizeUser(updated);
+  }
+
+  async updateMe(
+    id: string,
+    dto: UpdateMeDto,
+  ): Promise<Record<string, unknown>> {
+    await this.findOne(id);
+    const updateData: Record<string, unknown> = { ...dto };
+    if (dto.avatar === '') {
+      updateData.avatar = undefined;
+    }
+    const updated = await this.userRepository.updateById(id, updateData);
+    if (!updated) {
+      throw new NotFoundException(`User with id "${id}" not found`);
+    }
     return this.sanitizeUser(updated);
   }
 

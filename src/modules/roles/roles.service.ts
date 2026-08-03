@@ -5,6 +5,8 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 import {
   ALL_PERMISSIONS,
   PermissionAction,
@@ -29,6 +31,7 @@ export class RolesService implements OnModuleInit {
   constructor(
     private readonly roleRepository: RoleRepository,
     private readonly permissionRepository: PermissionRepository,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async onModuleInit() {
@@ -69,7 +72,21 @@ export class RolesService implements OnModuleInit {
           isSystem: true,
           isActive: true,
         } as Partial<RoleDocument>);
+      } else if (existing.isSystem) {
+        // Keep system roles in sync when new permission resources are added
+        await this.roleRepository.updateById(String(existing._id), {
+          permissions: permissions.map((p: PermissionDocument) => p._id),
+          permissionKeys: roleData.permissionKeys,
+          displayName: roleData.displayName,
+          description: roleData.description,
+        } as Partial<RoleDocument>);
       }
+
+      // Keep user JWT permission arrays aligned with system role seeds
+      await this.connection.collection('users').updateMany(
+        { role: roleData.name, isDeleted: { $ne: true } },
+        { $set: { permissions: roleData.permissionKeys } },
+      );
     }
     this.logger.log(`Seeded ${ROLE_SEED_DATA.length} system roles`);
   }

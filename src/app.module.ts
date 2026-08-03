@@ -43,6 +43,10 @@ import { SettingsModule } from './settings/settings.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { RashiTreesModule } from './rashi-trees/rashi-trees.module';
+import { JourneyModule } from './journey/journey.module';
+import { MitraEventsModule } from './mitra-events/mitra-events.module';
+import { FieldIssuesModule } from './field-issues/field-issues.module';
+import { MaintenanceLogsModule } from './maintenance-logs/maintenance-logs.module';
 
 @Module({
   imports: [
@@ -89,6 +93,10 @@ import { RashiTreesModule } from './rashi-trees/rashi-trees.module';
     AuditLogsModule,
     UploadsModule,
     RashiTreesModule,
+    JourneyModule,
+    MitraEventsModule,
+    FieldIssuesModule,
+    MaintenanceLogsModule,
   ],
   controllers: [AppController],
   providers: [

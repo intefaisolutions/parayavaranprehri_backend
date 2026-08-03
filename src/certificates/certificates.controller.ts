@@ -12,6 +12,8 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -92,6 +94,14 @@ export class CertificatesController {
     return this.certificatesService.verify(code);
   }
 
+  @Get('me')
+  @ApiOperation({
+    summary: 'List certificates issued to the current user / Mitra',
+  })
+  findMine(@CurrentUser() user: JwtPayload) {
+    return this.certificatesService.findMine(user);
+  }
+
   @Get('mitra/:mitraId')
   @Permissions(`${PermissionResource.CERTIFICATES}:${PermissionAction.LIST}`)
   @ApiOperation({ summary: 'List all certificates issued to a Mitra' })
@@ -126,11 +136,15 @@ export class CertificatesController {
   }
 
   @Post(':id/share-whatsapp')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @Permissions(`${PermissionResource.CERTIFICATES}:${PermissionAction.UPDATE}`)
-  @ApiOperation({ summary: 'Share an issued certificate with the recipient via WhatsApp' })
-  shareViaWhatsapp(@Param('id') id: string) {
-    return this.certificatesService.shareViaWhatsapp(id);
+  @ApiOperation({
+    summary:
+      'Share certificate via WhatsApp (admins: any; citizens/mitras: own only)',
+  })
+  shareViaWhatsapp(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.certificatesService.shareViaWhatsapp(id, user);
   }
 
   @Patch(':id/revoke')

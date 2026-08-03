@@ -11,6 +11,7 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -32,7 +33,10 @@ import { MapsService } from './maps.service';
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 @Controller({ path: 'maps', version: '1' })
 export class MapsController {
-  constructor(private readonly mapsService: MapsService) {}
+  constructor(
+    private readonly mapsService: MapsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   @ApiBearerAuth()
@@ -50,6 +54,22 @@ export class MapsController {
   })
   findAll(@Query() query: MapQueryDto) {
     return this.mapsService.findAll(query);
+  }
+
+  @Public()
+  @Get('config')
+  @ApiOperation({
+    summary:
+      'Maps client config (Google Maps API key if configured — optional tiles)',
+  })
+  getConfig() {
+    const googleMapsApiKey =
+      this.configService.get<string>('GOOGLE_MAPS_API_KEY') || null;
+    return {
+      provider: googleMapsApiKey ? 'google' : 'none',
+      googleMapsApiKey,
+      enabled: Boolean(googleMapsApiKey),
+    };
   }
 
   @Public()

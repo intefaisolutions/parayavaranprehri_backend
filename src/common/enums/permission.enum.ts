@@ -45,6 +45,10 @@ export enum PermissionResource {
   PARTNERS = 'partners',
   CALL_CENTER = 'call_center',
   LANGUAGES = 'languages',
+  JOURNEY = 'journey',
+  MITRA_EVENTS = 'mitra_events',
+  FIELD_ISSUES = 'field_issues',
+  MAINTENANCE_LOGS = 'maintenance_logs',
 }
 
 export type PermissionKey = `${PermissionResource}:${PermissionAction}`;

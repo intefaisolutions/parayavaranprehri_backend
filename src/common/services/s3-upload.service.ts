@@ -131,8 +131,11 @@ export class S3UploadService {
       throw new BadRequestException('Invalid file URL or key');
     }
     const { client, bucket } = this.getClient();
+    // Cast avoids duplicate @smithy Client types when client-s3 / presigner
+    // resolve slightly different package versions under pnpm.
     return getSignedUrl(
-      client,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      client as any,
       new GetObjectCommand({ Bucket: bucket, Key: key }),
       { expiresIn: expiresInSeconds },
     );

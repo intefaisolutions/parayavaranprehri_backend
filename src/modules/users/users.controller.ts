@@ -25,11 +25,13 @@ import type { JwtPayload } from '../../common/decorators/current-user.decorator'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import {
   createUserSchema,
+  updateMeSchema,
   updateUserSchema,
   userQuerySchema,
 } from './dto/user.dto';
 import type {
   CreateUserDto,
+  UpdateMeDto,
   UpdateUserDto,
   UserQueryDto,
 } from './dto/user.dto';
@@ -48,6 +50,23 @@ export class UsersController {
   @ApiOperation({ summary: 'Create a new user' })
   create(@Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto) {
     return this.usersService.create(dto);
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get the currently authenticated user profile' })
+  getMe(@CurrentUser() user: JwtPayload) {
+    return this.usersService.findOne(user.sub);
+  }
+
+  @Patch('me')
+  @ApiOperation({
+    summary: 'Update own profile (name, phone, avatar, district, state)',
+  })
+  updateMe(
+    @CurrentUser() user: JwtPayload,
+    @Body(new ZodValidationPipe(updateMeSchema)) dto: UpdateMeDto,
+  ) {
+    return this.usersService.updateMe(user.sub, dto);
   }
 
   @Get('me/vehicles')

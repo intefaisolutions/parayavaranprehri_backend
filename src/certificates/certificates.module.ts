@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MitrasModule } from '../mitras/mitras.module';
+import { UsersModule } from '../modules/users/users.module';
 import { CertificateTemplatesService } from './certificate-templates.service';
 import { CertificatesController } from './certificates.controller';
 import { CertificatesService } from './certificates.service';
@@ -17,6 +18,7 @@ import { Certificate, CertificateSchema } from './schemas/certificate.schema';
       { name: Certificate.name, schema: CertificateSchema },
     ]),
     MitrasModule,
+    UsersModule,
   ],
   controllers: [CertificatesController],
   providers: [CertificatesService, CertificateTemplatesService],

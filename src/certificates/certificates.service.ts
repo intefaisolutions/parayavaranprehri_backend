@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { randomBytes } from 'crypto';
 import { Connection, Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
+import { JwtPayload } from '../common/decorators/current-user.decorator';
+import { SystemRole } from '../common/enums/role.enum';
 import { MitrasService } from '../mitras/mitras.service';
+import { UsersService } from '../modules/users/users.service';
 import {
   WhatsappSendResult,
   WhatsappService,
@@ -36,6 +43,7 @@ export class CertificatesService {
     private readonly templateModel: Model<CertificateTemplateDocument>,
     @InjectConnection() private readonly connection: Connection,
     private readonly mitrasService: MitrasService,
+    private readonly usersService: UsersService,
     private readonly whatsappService: WhatsappService,
     private readonly configService: ConfigService,
   ) {}
@@ -127,6 +135,49 @@ export class CertificatesService {
       .exec();
   }
 
+  async findMine(user: JwtPayload): Promise<Certificate[]> {
+    const me = (await this.usersService.findOne(user.sub)) as {
+      phone?: string;
+    };
+    const or: Record<string, unknown>[] = [{ recipientId: user.sub }];
+
+    if (me.phone) {
+      or.push({ recipientMobile: me.phone });
+      const mitra = await this.mitrasService.findByMobile(me.phone);
+      if (mitra?.mitraId) {
+        or.push({ recipientId: mitra.mitraId });
+      }
+    }
+
+    return this.certificateModel
+      .find({ isDeleted: false, $or: or })
+      .populate('templateId')
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  private async assertCanShare(
+    certificate: Certificate,
+    user: JwtPayload,
+  ): Promise<void> {
+    if (
+      user.role === SystemRole.SUPER_ADMIN ||
+      user.role === SystemRole.ADMIN
+    ) {
+      return;
+    }
+
+    const mine = await this.findMine(user);
+    const owned = mine.some(
+      (c) => String((c as CertificateDocument)._id) === String((certificate as CertificateDocument)._id),
+    );
+    if (!owned) {
+      throw new ForbiddenException(
+        'You can only share certificates issued to you',
+      );
+    }
+  }
+
   async findOne(id: string): Promise<Certificate> {
     const certificate = await this.certificateModel
       .findOne({ _id: id, isDeleted: false })
@@ -164,8 +215,14 @@ export class CertificatesService {
     return this.update(id, { status: CertificateStatus.REVOKED });
   }
 
-  async shareViaWhatsapp(id: string): Promise<WhatsappSendResult> {
+  async shareViaWhatsapp(
+    id: string,
+    user?: JwtPayload,
+  ): Promise<WhatsappSendResult> {
     const certificate = await this.findOne(id);
+    if (user) {
+      await this.assertCanShare(certificate, user);
+    }
 
     if (!certificate.recipientMobile) {
       return {

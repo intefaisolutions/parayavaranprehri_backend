@@ -422,6 +422,122 @@ export class PersonsService implements OnModuleInit {
     };
   }
 
+  /**
+   * Flat list of insurance vehicles for every active person — used by
+   * admin Vehicle Management (no manual vehicle CRUD).
+   */
+  async listLinkedVehicles(): Promise<
+    Array<{
+      id: string;
+      personMongoId: string;
+      personId: string;
+      personName: string;
+      mobile: string;
+      email?: string;
+      photo?: string;
+      personStatus?: string;
+      personSource?: string;
+      registrationNumber: string;
+      vehicleType?: string;
+      vehicleModel?: string;
+      isInsured: boolean;
+      policyStatus: string;
+      policyNumber?: string | null;
+      policyStartDate?: string | null;
+      policyEndDate?: string | null;
+      hasActiveInsurance: boolean;
+    }>
+  > {
+    const persons = await this.personRepository.findActiveForVehicles();
+    const rows: Array<{
+      id: string;
+      personMongoId: string;
+      personId: string;
+      personName: string;
+      mobile: string;
+      email?: string;
+      photo?: string;
+      personStatus?: string;
+      personSource?: string;
+      registrationNumber: string;
+      vehicleType?: string;
+      vehicleModel?: string;
+      isInsured: boolean;
+      policyStatus: string;
+      policyNumber?: string | null;
+      policyStartDate?: string | null;
+      policyEndDate?: string | null;
+      hasActiveInsurance: boolean;
+    }> = [];
+
+    // Bound concurrency so insurance API is not flooded
+    const concurrency = 5;
+    for (let i = 0; i < persons.length; i += concurrency) {
+      const chunk = persons.slice(i, i + concurrency);
+      const chunkResults = await Promise.all(
+        chunk.map(async (person) => {
+          const personMongoId = String((person as PersonDocument)._id);
+          const insurance = await this.fetchInsuranceVehicles(person.mobile);
+
+          if (insurance.ok) {
+            await this.personRepository.updateById(personMongoId, {
+              vehiclesLinked: insurance.vehiclesLinked,
+              insuranceVerified: insurance.hasActiveInsurance,
+              insuranceCheckedAt: new Date(),
+            } as Partial<PersonDocument>);
+          }
+
+          return insurance.vehicles.map((v, index) => {
+            const status = String(v.policyStatus || 'NOT_INSURED').toUpperCase();
+            const isInsured =
+              v.isInsured === true ||
+              status === 'ACTIVE' ||
+              status === 'EXPIRED' ||
+              !!v.policyNumber;
+            const registrationNumber = String(
+              v.registrationNumber || `UNKNOWN-${index}`,
+            );
+
+            return {
+              id: `${personMongoId}:${registrationNumber}`,
+              personMongoId,
+              personId: person.personId,
+              personName: person.name,
+              mobile: person.mobile,
+              email: person.email,
+              photo: person.photo,
+              personStatus: person.status,
+              personSource: person.source,
+              registrationNumber,
+              vehicleType: v.vehicleType
+                ? String(v.vehicleType)
+                : undefined,
+              vehicleModel: v.vehicleModel
+                ? String(v.vehicleModel)
+                : undefined,
+              isInsured,
+              policyStatus: status,
+              policyNumber: (v.policyNumber as string | null) ?? null,
+              policyStartDate: v.policyStartDate
+                ? String(v.policyStartDate)
+                : null,
+              policyEndDate: v.policyEndDate
+                ? String(v.policyEndDate)
+                : null,
+              hasActiveInsurance: insurance.hasActiveInsurance,
+            };
+          });
+        }),
+      );
+
+      for (const list of chunkResults) {
+        rows.push(...list);
+      }
+    }
+
+    return rows;
+  }
+
   async findByMobile(mobile: string): Promise<Person | null> {
     const normalized = normalizeMobile(mobile) ?? mobile;
     return this.personRepository.findByMobile(normalized);

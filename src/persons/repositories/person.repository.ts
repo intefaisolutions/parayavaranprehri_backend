@@ -47,4 +47,14 @@ export class PersonRepository extends BaseRepository<PersonDocument> {
       .findOne({ email: email.toLowerCase().trim(), isDeleted: false })
       .exec();
   }
+
+  /** Lightweight active persons for insurance vehicle aggregation. */
+  async findActiveForVehicles(): Promise<PersonDocument[]> {
+    return this.personModel
+      .find({ isDeleted: false })
+      .select('_id personId name mobile email photo status source')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec() as unknown as Promise<PersonDocument[]>;
+  }
 }

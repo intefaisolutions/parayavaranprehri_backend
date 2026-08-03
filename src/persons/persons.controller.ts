@@ -66,6 +66,16 @@ export class PersonsController {
     return this.personsService.findAll(query);
   }
 
+  @Get('linked-vehicles')
+  @Permissions(`${PermissionResource.VEHICLES}:${PermissionAction.LIST}`)
+  @ApiOperation({
+    summary:
+      'All insurance vehicles linked to persons (admin Vehicle Management)',
+  })
+  listLinkedVehicles() {
+    return this.personsService.listLinkedVehicles();
+  }
+
   @Get(':id/vehicles')
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.READ}`)
   @ApiOperation({

@@ -305,11 +305,19 @@ export class VidhanSabhasService implements OnModuleInit {
   ): Promise<PaginatedResult<VidhanSabhaListItem>> {
     const options = PaginationUtil.parse(query);
     const baseFilter: Record<string, unknown> = {};
-    if (query.district !== undefined) {
-      baseFilter.district = query.district;
+    const escapeRegex = (value: string) =>
+      value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (query.district !== undefined && query.district.trim()) {
+      baseFilter.district = {
+        $regex: `^${escapeRegex(query.district.trim())}$`,
+        $options: 'i',
+      };
     }
-    if (query.state !== undefined) {
-      baseFilter.state = query.state;
+    if (query.state !== undefined && query.state.trim()) {
+      baseFilter.state = {
+        $regex: `^${escapeRegex(query.state.trim())}$`,
+        $options: 'i',
+      };
     }
     if (query.status !== undefined) {
       baseFilter.status = query.status;

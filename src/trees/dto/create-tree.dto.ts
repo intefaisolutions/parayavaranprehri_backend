@@ -67,6 +67,11 @@ export class CreateTreeDto {
   @IsOptional()
   plantedBy?: string;
 
+  /** Optional Mitra (volunteer) who planted / cares for this tree */
+  @IsMongoId()
+  @IsOptional()
+  assignedMitraId?: string;
+
   @IsString()
   @IsOptional()
   state?: string;

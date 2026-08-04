@@ -153,6 +153,8 @@ export class TreesService {
       }
     }
 
+    const mitraLink = await this.resolveMitraLink(createTreeDto.assignedMitraId);
+
     const createdTree = new this.treeModel({
       ...createTreeDto,
       landName,
@@ -161,6 +163,9 @@ export class TreesService {
       district,
       city,
       treeId,
+      plantedBy: createTreeDto.plantedBy || mitraLink?.name || undefined,
+      assignedMitraId: mitraLink?.id ?? null,
+      assignedMitraName: mitraLink?.name ?? null,
       ...oxygen,
     });
     const saved = await createdTree.save();
@@ -171,6 +176,24 @@ export class TreesService {
       await this.syncLandCounts(String(saved.landId));
     }
     return saved;
+  }
+
+  private async resolveMitraLink(
+    mitraId?: string,
+  ): Promise<{ id: MitraDocument['_id']; name: string } | null> {
+    if (!mitraId) return null;
+    const mitra = await this.mitraModel
+      .findOne({ _id: mitraId, isDeleted: false })
+      .exec();
+    if (!mitra) {
+      throw new NotFoundException(`Mitra with ID "${mitraId}" not found`);
+    }
+    if (mitra.status !== MitraStatus.APPROVED) {
+      throw new BadRequestException(
+        `Mitra "${mitra.name}" is not Approved yet and cannot be assigned to trees`,
+      );
+    }
+    return { id: mitra._id, name: mitra.name };
   }
 
   async findAll(): Promise<Tree[]> {
@@ -241,6 +264,22 @@ export class TreesService {
         if (locality) patch.city = locality;
       } catch {
         // ignore
+      }
+    }
+
+    if (updateTreeDto.assignedMitraId !== undefined) {
+      if (!updateTreeDto.assignedMitraId) {
+        patch.assignedMitraId = null;
+        patch.assignedMitraName = null;
+      } else {
+        const mitraLink = await this.resolveMitraLink(
+          updateTreeDto.assignedMitraId,
+        );
+        patch.assignedMitraId = mitraLink?.id ?? null;
+        patch.assignedMitraName = mitraLink?.name ?? null;
+        if (!updateTreeDto.plantedBy && mitraLink?.name) {
+          patch.plantedBy = mitraLink.name;
+        }
       }
     }
 

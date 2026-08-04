@@ -1,13 +1,19 @@
 import {
   IsEmail,
   IsEnum,
+  IsMongoId,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { MitraMembership, MitraStatus } from '../schemas/mitra.schema';
+import {
+  MitraMembership,
+  MitraStatus,
+  MitraTreeAssignment,
+} from '../schemas/mitra.schema';
 
 export class CreateMitraDto {
   @IsString()
@@ -30,6 +36,7 @@ export class CreateMitraDto {
   @IsOptional()
   address?: string;
 
+  /** Required for admin assignment; optional for app self-register */
   @IsString()
   @IsOptional()
   vidhanSabha?: string;
@@ -45,6 +52,34 @@ export class CreateMitraDto {
   @IsString()
   @IsOptional()
   state?: string;
+
+  @ValidateIf((_, v) => v !== null && v !== undefined && v !== "")
+  @IsMongoId()
+  @IsOptional()
+  landId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  landName?: string | null;
+
+  @IsEnum(MitraTreeAssignment)
+  @IsOptional()
+  treeAssignment?: MitraTreeAssignment;
+
+  @ValidateIf(
+    (o, v) =>
+      o.treeAssignment === MitraTreeAssignment.SINGLE &&
+      v !== null &&
+      v !== undefined &&
+      v !== "",
+  )
+  @IsMongoId()
+  @IsOptional()
+  assignedTreeId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  assignedTreeName?: string;
 
   @IsEnum(MitraMembership)
   @IsOptional()

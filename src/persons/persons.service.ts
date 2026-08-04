@@ -405,6 +405,31 @@ export class PersonsService implements OnModuleInit {
       } as Partial<PersonDocument>);
     }
 
+    const vehicles = (insurance.vehicles || []).map((v, index) => {
+      const registrationNumber = String(
+        v.registrationNumber ||
+          v.plate ||
+          v.vehicleNumber ||
+          v.regNo ||
+          v.registration_number ||
+          '',
+      ).trim();
+      return {
+        ...v,
+        registrationNumber:
+          registrationNumber || `UNKNOWN-${index + 1}`,
+        vehicleType: v.vehicleType ? String(v.vehicleType) : undefined,
+        vehicleModel: v.vehicleModel ? String(v.vehicleModel) : undefined,
+        policyStatus: String(v.policyStatus || 'NOT_INSURED').toUpperCase(),
+        policyNumber: (v.policyNumber as string | null) ?? null,
+        isInsured:
+          v.isInsured === true ||
+          String(v.policyStatus || '').toUpperCase() === 'ACTIVE' ||
+          String(v.policyStatus || '').toUpperCase() === 'EXPIRED' ||
+          !!v.policyNumber,
+      };
+    });
+
     return {
       personId: person.personId,
       mobile: person.mobile,
@@ -417,8 +442,14 @@ export class PersonsService implements OnModuleInit {
       insuredVehicles: insurance.insuredVehicles,
       uninsuredVehicles: insurance.uninsuredVehicles,
       hasActiveInsurance: insurance.hasActiveInsurance,
-      message: insurance.message,
-      vehicles: insurance.vehicles,
+      message: insurance.ok
+        ? insurance.message ||
+          (vehicles.length
+            ? `${vehicles.length} vehicle(s) found`
+            : 'No vehicles linked to this mobile in the insurance system')
+        : insurance.message ||
+          'Could not reach insurance system for this mobile — no vehicles to list',
+      vehicles,
     };
   }
 

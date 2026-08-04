@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from '../../common/schemas/base.schema';
 
 export type MitraDocument = HydratedDocument<Mitra>;
@@ -18,6 +18,13 @@ export enum MitraStatus {
 export enum MitraSource {
   APP = 'app',
   ADMIN = 'admin',
+}
+
+/** How trees under an optional land are linked to this Mitra */
+export enum MitraTreeAssignment {
+  NONE = 'NONE',
+  ALL = 'ALL',
+  SINGLE = 'SINGLE',
 }
 
 @Schema({ timestamps: true, collection: 'mitras' })
@@ -40,17 +47,38 @@ export class Mitra extends BaseSchema {
   @Prop({ trim: true })
   address?: string;
 
-  @Prop({ trim: true })
+  /** Required operating constituency (name) */
+  @Prop({ trim: true, index: true })
   vidhanSabha?: string;
 
   @Prop({ trim: true })
   assignedZone?: string;
 
-  @Prop({ trim: true })
+  @Prop({ trim: true, index: true })
   district?: string;
 
-  @Prop({ trim: true })
+  @Prop({ trim: true, index: true })
   state?: string;
+
+  /** Optional land under the Vidhan Sabha */
+  @Prop({ type: Types.ObjectId, ref: 'Land', default: null, index: true })
+  landId?: Types.ObjectId | null;
+
+  @Prop({ trim: true })
+  landName?: string;
+
+  @Prop({
+    enum: MitraTreeAssignment,
+    default: MitraTreeAssignment.NONE,
+  })
+  treeAssignment?: MitraTreeAssignment;
+
+  /** When treeAssignment === SINGLE */
+  @Prop({ type: Types.ObjectId, ref: 'Tree', default: null })
+  assignedTreeId?: Types.ObjectId | null;
+
+  @Prop({ trim: true })
+  assignedTreeName?: string;
 
   @Prop({ enum: MitraMembership, default: MitraMembership.FREE })
   membership!: MitraMembership;

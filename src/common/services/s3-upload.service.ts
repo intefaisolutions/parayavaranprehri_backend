@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   GetObjectCommand,
@@ -20,17 +25,6 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
-// All Paryavaran Prahri uploads live under this prefix inside the shared
-// suregrowth-uploads bucket, alongside the old project's own folder, e.g.:
-//   suregrowth-uploads/
-//   ├── old-project/
-//   └── paryavaran/
-//       ├── users/
-//       ├── certificates/
-//       ├── trees/
-//       └── documents/
-const PROJECT_PREFIX = 'paryavaran';
-
 export type UploadCategory =
   | 'users'
   | 'certificates'
@@ -39,15 +33,34 @@ export type UploadCategory =
   | 'general';
 
 @Injectable()
-export class S3UploadService {
+export class S3UploadService implements OnModuleInit {
   private readonly logger = new Logger(S3UploadService.name);
   private client: S3Client | null = null;
-  private bucket: string | undefined;
-  private region: string | undefined;
+  private cachedBucket: string | undefined;
+  private cachedRegion: string | undefined;
+  private cachedAccessKeyId: string | undefined;
 
   constructor(private readonly configService: ConfigService) {}
 
-  private getClient(): { client: S3Client; bucket: string } {
+  onModuleInit() {
+    const bucket = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    const region = this.configService.get<string>('AWS_REGION');
+    const hasKeys = Boolean(
+      this.configService.get<string>('AWS_ACCESS_KEY_ID') &&
+        this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+    );
+    if (bucket && region && hasKeys) {
+      this.logger.log(
+        `S3 uploads ready → bucket="${bucket}" region="${region}"`,
+      );
+    } else {
+      this.logger.warn(
+        'S3 uploads not fully configured (need AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, AWS_S3_BUCKET_NAME).',
+      );
+    }
+  }
+
+  private getClient(): { client: S3Client; bucket: string; region: string } {
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get<string>(
       'AWS_SECRET_ACCESS_KEY',
@@ -61,16 +74,23 @@ export class S3UploadService {
       );
     }
 
-    if (!this.client || this.region !== region) {
+    const needsRefresh =
+      !this.client ||
+      this.cachedRegion !== region ||
+      this.cachedBucket !== bucket ||
+      this.cachedAccessKeyId !== accessKeyId;
+
+    if (needsRefresh) {
       this.client = new S3Client({
         region,
         credentials: { accessKeyId, secretAccessKey },
       });
-      this.region = region;
-      this.bucket = bucket;
+      this.cachedRegion = region;
+      this.cachedBucket = bucket;
+      this.cachedAccessKeyId = accessKeyId;
     }
 
-    return { client: this.client, bucket };
+    return { client: this.client!, bucket, region };
   }
 
   private sanitizeFileName(originalName: string): string {
@@ -78,47 +98,76 @@ export class S3UploadService {
     const name = lastDot > 0 ? originalName.slice(0, lastDot) : originalName;
     const ext = lastDot > 0 ? originalName.slice(lastDot + 1) : 'bin';
 
-    const safeName = name
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 60) || 'file';
+    const safeName =
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9-_]+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 60) || 'file';
 
     return `${safeName}.${ext.toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'}`;
   }
 
   /**
-   * Builds a namespaced key so this project's files never collide with the
-   * old project's files in the shared bucket, e.g.
-   * "paryavaran/certificates/1721… -a1b2c3-cert-logo.png".
+   * Keys live under category folders in the dedicated project bucket, e.g.
+   * "certificates/1721…-a1b2c3-logo.png".
    */
   private buildKey(category: UploadCategory, originalName: string): string {
     const uniquePrefix = `${Date.now()}-${randomBytes(3).toString('hex')}`;
     const safeName = this.sanitizeFileName(originalName);
-    return `${PROJECT_PREFIX}/${category}/${uniquePrefix}-${safeName}`;
+    return `${category}/${uniquePrefix}-${safeName}`;
   }
 
-  /** Extract the object key from a full S3 URL, or return the input if it is already a key. */
-  extractKeyFromUrl(urlOrKey: string): string | null {
-    if (!urlOrKey) return null;
+  /** Parse bucket + object key from a full S3 URL (or treat input as a key). */
+  extractBucketAndKey(urlOrKey: string): {
+    bucket: string | null;
+    key: string | null;
+  } {
+    if (!urlOrKey) return { bucket: null, key: null };
+
     if (!urlOrKey.startsWith('http')) {
-      return urlOrKey.replace(/^\/+/, '');
+      return { bucket: null, key: urlOrKey.replace(/^\/+/, '') };
     }
+
     try {
       const parsed = new URL(urlOrKey);
-      // https://bucket.s3.region.amazonaws.com/key  OR  https://s3.region.amazonaws.com/bucket/key
       const host = parsed.hostname;
       const path = decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
+
+      // Path-style: s3.region.amazonaws.com/bucket/key  OR  s3-region.amazonaws.com/bucket/key
       if (host.startsWith('s3.') || host.startsWith('s3-')) {
-        // path-style: /bucket/key...
         const slash = path.indexOf('/');
-        return slash >= 0 ? path.slice(slash + 1) : null;
+        if (slash < 0) return { bucket: path || null, key: null };
+        return {
+          bucket: path.slice(0, slash),
+          key: path.slice(slash + 1) || null,
+        };
       }
-      return path || null;
+
+      // Virtual-hosted: bucket.s3.region.amazonaws.com/key
+      // Also: bucket.s3.amazonaws.com/key
+      const virtualMatch = host.match(
+        /^(.+)\.s3[.-]([a-z0-9-]+)\.amazonaws\.com$/i,
+      );
+      if (virtualMatch) {
+        return { bucket: virtualMatch[1], key: path || null };
+      }
+
+      const legacyMatch = host.match(/^(.+)\.s3\.amazonaws\.com$/i);
+      if (legacyMatch) {
+        return { bucket: legacyMatch[1], key: path || null };
+      }
+
+      return { bucket: null, key: path || null };
     } catch {
-      return null;
+      return { bucket: null, key: null };
     }
+  }
+
+  /** @deprecated Use extractBucketAndKey — kept for callers that only need the key. */
+  extractKeyFromUrl(urlOrKey: string): string | null {
+    return this.extractBucketAndKey(urlOrKey).key;
   }
 
   /** Temporary signed GET URL so private S3 objects can be shown in <img> tags. */
@@ -126,13 +175,14 @@ export class S3UploadService {
     urlOrKey: string,
     expiresInSeconds = 60 * 60,
   ): Promise<string> {
-    const key = this.extractKeyFromUrl(urlOrKey);
+    const { bucket: urlBucket, key } = this.extractBucketAndKey(urlOrKey);
     if (!key) {
       throw new BadRequestException('Invalid file URL or key');
     }
-    const { client, bucket } = this.getClient();
-    // Cast avoids duplicate @smithy Client types when client-s3 / presigner
-    // resolve slightly different package versions under pnpm.
+
+    const { client, bucket: defaultBucket } = this.getClient();
+    const bucket = urlBucket || defaultBucket;
+
     return getSignedUrl(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       client as any,
@@ -144,7 +194,14 @@ export class S3UploadService {
   async uploadFile(
     file: Express.Multer.File,
     category: UploadCategory = 'general',
-  ): Promise<{ url: string; key: string }> {
+  ): Promise<{
+    key: string;
+    bucket: string;
+    /** Permanent object URL — store this in the database. */
+    url: string;
+    /** Temporary signed GET URL — use for <img src> / immediate preview. */
+    signedUrl: string;
+  }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -157,7 +214,7 @@ export class S3UploadService {
       throw new BadRequestException('File is too large (max 10MB).');
     }
 
-    const { client, bucket } = this.getClient();
+    const { client, bucket, region } = this.getClient();
     const key = this.buildKey(category, file.originalname);
 
     const baseParams = {
@@ -182,7 +239,7 @@ export class S3UploadService {
         msg.includes('AccessDenied')
       ) {
         this.logger.warn(
-          `ACL public-read not allowed on bucket; uploading private object (${msg})`,
+          `ACL public-read not allowed on bucket "${bucket}"; uploading private object (${msg})`,
         );
         await client.send(new PutObjectCommand(baseParams));
       } else {
@@ -190,9 +247,11 @@ export class S3UploadService {
       }
     }
 
-    const url = `https://${bucket}.s3.${this.region}.amazonaws.com/${key}`;
-    this.logger.log(`Uploaded file to S3: ${key}`);
+    const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+    // Long-lived enough for form editing / certificate preview sessions.
+    const signedUrl = await this.getSignedGetUrl(url, 60 * 60 * 12);
+    this.logger.log(`Uploaded file to s3://${bucket}/${key}`);
 
-    return { url, key };
+    return { key, bucket, url, signedUrl };
   }
 }

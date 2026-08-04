@@ -38,7 +38,7 @@ export class UploadsController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary:
-      'Upload an image/PDF to S3 under paryavaran/<category>/ and get back a public URL',
+      'Upload an image/PDF to S3. Returns permanent `url` (store in DB) and temporary `signedUrl` (use for preview).',
   })
   @UseInterceptors(FileInterceptor('file'))
   async upload(

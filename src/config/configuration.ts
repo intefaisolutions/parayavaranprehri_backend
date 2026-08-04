@@ -35,6 +35,10 @@ export default () => {
     SMS_OTP_TEMPLATE: process.env.SMS_OTP_TEMPLATE,
     STATIC_OTP_MODE: process.env.STATIC_OTP_MODE,
     STATIC_OTP_CODE: process.env.STATIC_OTP_CODE,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
   };
 
   return config;

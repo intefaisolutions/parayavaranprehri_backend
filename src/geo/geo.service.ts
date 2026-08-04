@@ -11,7 +11,21 @@ import {
   VidhanSabha,
   VidhanSabhaDocument,
 } from '../vidhan-sabhas/schemas/vidhan-sabha.schema';
+import { BoundaryLookupDto } from './dto/boundary-lookup.dto';
 import { ReverseGeocodeDto } from './dto/reverse-geocode.dto';
+
+export interface BoundaryLookupResult {
+  name: string;
+  state?: string;
+  district?: string;
+  source: 'database' | 'nominatim' | 'nominatim_bbox';
+  center?: { lat: number; lng: number };
+  boundary: {
+    type: 'Polygon' | 'MultiPolygon';
+    coordinates: number[][][] | number[][][][];
+  };
+  message?: string;
+}
 
 export interface ReverseGeocodeResult {
   latitude: number;
@@ -174,6 +188,161 @@ export class GeoService {
     }
   }
 
+  /**
+   * Auto-load a constituency / place boundary:
+   * 1) Existing Vidhan Sabha in DB with same name (+ district/state)
+   * 2) Nominatim search with polygon_geojson
+   * 3) Fallback: bounding-box rectangle as a simple Polygon
+   */
+  async lookupBoundary(dto: BoundaryLookupDto): Promise<BoundaryLookupResult> {
+    const state = dto.state?.trim();
+    const district = dto.district?.trim();
+    const name = dto.name?.trim();
+
+    if (!name && !district && !state) {
+      throw new BadRequestException(
+        'Provide at least state, district, or Vidhan Sabha name',
+      );
+    }
+
+    // 1) Database match
+    if (name) {
+      const filter: Record<string, unknown> = {
+        isDeleted: false,
+        vidhanSabhaName: new RegExp(`^${escapeRegex(name)}$`, 'i'),
+        boundary: { $exists: true, $ne: null },
+      };
+      if (district) filter.district = new RegExp(`^${escapeRegex(district)}$`, 'i');
+      if (state) filter.state = new RegExp(`^${escapeRegex(state)}$`, 'i');
+
+      const existing = await this.vidhanSabhaModel.findOne(filter as any).exec();
+      if (existing?.boundary?.coordinates) {
+        return {
+          name: existing.vidhanSabhaName,
+          state: existing.state,
+          district: existing.district,
+          source: 'database',
+          boundary: existing.boundary,
+          message: 'Loaded saved boundary from database',
+        };
+      }
+    }
+
+    // 2) Nominatim place search
+    const queryParts = [name, district, state, dto.country || 'India'].filter(
+      Boolean,
+    );
+    const query = queryParts.join(', ');
+    const place = await this.searchNominatimPlace(query);
+
+    if (!place) {
+      throw new BadRequestException(
+        `No boundary found for "${query}". Try Draw Polygon on the map.`,
+      );
+    }
+
+    const center = {
+      lat: Number(place.lat),
+      lng: Number(place.lon),
+    };
+
+    if (
+      place.geojson &&
+      (place.geojson.type === 'Polygon' ||
+        place.geojson.type === 'MultiPolygon') &&
+      place.geojson.coordinates
+    ) {
+      return {
+        name: place.display_name?.split(',')[0] || name || district || state || 'Place',
+        state,
+        district,
+        source: 'nominatim',
+        center,
+        boundary: {
+          type: place.geojson.type,
+          coordinates: place.geojson.coordinates,
+        },
+        message:
+          'Auto-loaded from OpenStreetMap. You can edit vertices, then save.',
+      };
+    }
+
+    // 3) Bounding box → rectangle polygon (south, north, west, east)
+    if (place.boundingbox?.length === 4) {
+      const [south, north, west, east] = place.boundingbox.map(Number);
+      const ring: number[][] = [
+        [west, south],
+        [east, south],
+        [east, north],
+        [west, north],
+        [west, south],
+      ];
+      return {
+        name: place.display_name?.split(',')[0] || name || district || state || 'Place',
+        state,
+        district,
+        source: 'nominatim_bbox',
+        center,
+        boundary: { type: 'Polygon', coordinates: [ring] },
+        message:
+          'Approximate boundary from map bbox — please edit to match the real constituency.',
+      };
+    }
+
+    throw new BadRequestException(
+      `No usable boundary geometry for "${query}". Draw the polygon manually.`,
+    );
+  }
+
+  private async searchNominatimPlace(query: string): Promise<{
+    lat: string;
+    lon: string;
+    display_name?: string;
+    boundingbox?: string[];
+    geojson?: {
+      type?: string;
+      coordinates?: number[][][] | number[][][][];
+    };
+  } | null> {
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.searchParams.set('q', query);
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('limit', '1');
+    url.searchParams.set('countrycodes', 'in');
+    url.searchParams.set('polygon_geojson', '1');
+    url.searchParams.set('addressdetails', '1');
+    url.searchParams.set('accept-language', 'en');
+
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'ParyavaranPrahri/1.0 (boundary-lookup)',
+        },
+      });
+      if (!response.ok) {
+        throw new ServiceUnavailableException(
+          'Boundary lookup service is temporarily unavailable',
+        );
+      }
+      const rows = (await response.json()) as Array<{
+        lat: string;
+        lon: string;
+        display_name?: string;
+        boundingbox?: string[];
+        geojson?: {
+          type?: string;
+          coordinates?: number[][][] | number[][][][];
+        };
+      }>;
+      return rows[0] || null;
+    } catch (err) {
+      if (err instanceof ServiceUnavailableException) throw err;
+      this.logger.error('Nominatim place search failed', err as Error);
+      throw new ServiceUnavailableException('Failed to look up place boundary');
+    }
+  }
+
   private async resolveVidhanSabha(
     longitude: number,
     latitude: number,
@@ -197,4 +366,8 @@ export class GeoService {
     if (!vs) return null;
     return { id: vs._id as Types.ObjectId, name: vs.vidhanSabhaName };
   }
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

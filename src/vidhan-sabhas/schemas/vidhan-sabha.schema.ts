@@ -14,6 +14,10 @@ export class VidhanSabha extends BaseSchema {
   @Prop({ required: true, unique: true, trim: true })
   vidhanSabhaName!: string;
 
+  /** Stable id from master_constituencies (e.g. mp-indore-3) */
+  @Prop({ trim: true, unique: true, sparse: true, index: true })
+  masterId?: string;
+
   @Prop({ trim: true, default: 'India' })
   country?: string;
 

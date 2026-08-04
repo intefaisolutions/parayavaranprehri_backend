@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MasterGeographyModule } from '../master-geography/master-geography.module';
 import {
   VidhanSabha,
   VidhanSabhaSchema,
@@ -12,6 +13,7 @@ import { GeoService } from './geo.service';
     MongooseModule.forFeature([
       { name: VidhanSabha.name, schema: VidhanSabhaSchema },
     ]),
+    MasterGeographyModule,
   ],
   controllers: [GeoController],
   providers: [GeoService],

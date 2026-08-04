@@ -30,4 +30,10 @@ export class VidhanSabhaRepository extends BaseRepository<VidhanSabhaDocument> {
     const existing = await this.vidhanSabhaModel.findOne(filter).exec();
     return !!existing;
   }
+
+  async findByMasterId(masterId: string): Promise<VidhanSabhaDocument | null> {
+    return this.vidhanSabhaModel
+      .findOne({ isDeleted: false, masterId })
+      .exec();
+  }
 }

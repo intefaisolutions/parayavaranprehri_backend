@@ -69,6 +69,21 @@ export class CreateLandDto {
   @IsString()
   pinCode?: string;
 
+  /** Registered Vidhan Sabha Mongo id (preferred when selected from dropdown). */
+  @IsOptional()
+  @IsString()
+  vidhanSabhaId?: string;
+
+  /** Display / denormalized name */
+  @IsOptional()
+  @IsString()
+  vidhanSabha?: string;
+
+  /** Geography master constituency id (e.g. mp-indore-3) — resolved to saved VS when possible */
+  @IsOptional()
+  @IsString()
+  masterId?: string;
+
   @IsOptional()
   @IsString()
   khasraNumber?: string;

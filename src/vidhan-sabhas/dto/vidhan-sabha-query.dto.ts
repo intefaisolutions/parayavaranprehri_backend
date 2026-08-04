@@ -29,6 +29,10 @@ export class VidhanSabhaQueryDto {
   @IsOptional()
   district?: string;
 
+  @IsString()
+  @IsOptional()
+  state?: string;
+
   @IsEnum(VidhanSabhaStatus)
   @IsOptional()
   status?: VidhanSabhaStatus;

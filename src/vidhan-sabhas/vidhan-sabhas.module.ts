@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { GeoModule } from '../geo/geo.module';
 import { LandsModule } from '../lands/lands.module';
 import {
   Plantation,
@@ -22,6 +23,7 @@ import { VidhanSabhasService } from './vidhan-sabhas.service';
       { name: Plantation.name, schema: PlantationSchema },
     ]),
     LandsModule,
+    GeoModule,
   ],
   controllers: [VidhanSabhasController],
   providers: [VidhanSabhasService, VidhanSabhaRepository],

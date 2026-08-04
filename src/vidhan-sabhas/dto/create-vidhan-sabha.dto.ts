@@ -11,9 +11,14 @@ import {
 import { VidhanSabhaStatus } from '../schemas/vidhan-sabha.schema';
 
 export class CreateVidhanSabhaDto {
+  /** Preferred: master catalog id (e.g. mp-indore-3). Name/state/district filled from master when omitted. */
   @IsString()
-  @IsNotEmpty()
-  vidhanSabhaName!: string;
+  @IsOptional()
+  masterId?: string;
+
+  @IsString()
+  @IsOptional()
+  vidhanSabhaName?: string;
 
   @IsString()
   @IsOptional()

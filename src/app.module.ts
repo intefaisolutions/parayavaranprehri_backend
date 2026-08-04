@@ -49,6 +49,7 @@ import { FieldIssuesModule } from './field-issues/field-issues.module';
 import { MaintenanceLogsModule } from './maintenance-logs/maintenance-logs.module';
 import { LandsModule } from './lands/lands.module';
 import { GeoModule } from './geo/geo.module';
+import { MasterGeographyModule } from './master-geography/master-geography.module';
 import { TreeMastersModule } from './tree-masters/tree-masters.module';
 import { PlantationsModule } from './plantations/plantations.module';
 
@@ -79,6 +80,7 @@ import { PlantationsModule } from './plantations/plantations.module';
     PersonsModule,
     TreesModule,
     LandsModule,
+    MasterGeographyModule,
     GeoModule,
     TreeMastersModule,
     PlantationsModule,

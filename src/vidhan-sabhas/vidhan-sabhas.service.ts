@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -13,6 +14,7 @@ import {
   normalizeBoundaryInput,
 } from '../common/utils/geo.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
+import { GeoService } from '../geo/geo.service';
 import { LandsService } from '../lands/lands.service';
 import {
   Plantation,
@@ -52,6 +54,7 @@ export class VidhanSabhasService implements OnModuleInit {
     @InjectModel(Plantation.name)
     private readonly plantationModel: Model<PlantationDocument>,
     private readonly landsService: LandsService,
+    private readonly geoService: GeoService,
   ) {}
 
   async onModuleInit() {
@@ -129,18 +132,61 @@ export class VidhanSabhasService implements OnModuleInit {
   }
 
   async create(dto: CreateVidhanSabhaDto): Promise<VidhanSabha> {
+    let masterId = dto.masterId?.trim();
+    let vidhanSabhaName = dto.vidhanSabhaName?.trim();
+    let country = dto.country?.trim() || 'India';
+    let state = dto.state?.trim();
+    let district = dto.district?.trim();
+    let boundaryInput = dto.boundary;
+
+    if (masterId) {
+      const master = await this.geoService.findConstituencyById(masterId);
+      if (!master) {
+        throw new BadRequestException(
+          `Unknown masterId "${masterId}" — not in master_constituencies. Run: pnpm run seed:master`,
+        );
+      }
+      vidhanSabhaName = vidhanSabhaName || master.name;
+      country = master.country || country;
+      state = state || master.state;
+      district = district || master.district;
+      if (boundaryInput === undefined && master.boundary) {
+        boundaryInput = master.boundary;
+      }
+    }
+
+    if (!vidhanSabhaName) {
+      throw new BadRequestException(
+        'Provide masterId or vidhanSabhaName',
+      );
+    }
+
     const exists = await this.vidhanSabhaRepository.existsByName(
-      dto.vidhanSabhaName,
+      vidhanSabhaName,
     );
     if (exists) {
       throw new ConflictException(
-        `A Vidhan Sabha named "${dto.vidhanSabhaName}" already exists`,
+        `A Vidhan Sabha named "${vidhanSabhaName}" already exists`,
       );
     }
-    const geo = this.boundaryPatch(dto.boundary);
+
+    if (masterId) {
+      const byMaster = await this.vidhanSabhaRepository.findByMasterId(masterId);
+      if (byMaster) {
+        throw new ConflictException(
+          `Vidhan Sabha with masterId "${masterId}" already exists`,
+        );
+      }
+    }
+
+    const geo = this.boundaryPatch(boundaryInput);
     const created = await this.vidhanSabhaRepository.create({
       ...dto,
-      country: dto.country?.trim() || 'India',
+      masterId: masterId || undefined,
+      vidhanSabhaName,
+      country,
+      state,
+      district,
       ...geo,
     } as unknown as Partial<VidhanSabhaDocument>);
 
@@ -261,6 +307,9 @@ export class VidhanSabhasService implements OnModuleInit {
     const baseFilter: Record<string, unknown> = {};
     if (query.district !== undefined) {
       baseFilter.district = query.district;
+    }
+    if (query.state !== undefined) {
+      baseFilter.state = query.state;
     }
     if (query.status !== undefined) {
       baseFilter.status = query.status;

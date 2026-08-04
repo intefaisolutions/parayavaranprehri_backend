@@ -241,14 +241,61 @@ export class LandsService {
       district: dto.district,
     });
 
+    // Prefer explicit VS selection (dropdown) over polygon auto-map
+    const explicitVs = await this.resolveExplicitVidhanSabha(dto);
+
     const created = new this.landModel({
       ...dto,
       ...locality,
       ...geo,
+      ...(explicitVs
+        ? {
+            vidhanSabhaId: explicitVs.id,
+            vidhanSabha: explicitVs.name,
+          }
+        : {}),
       landId,
       ...capacity,
     });
     return created.save();
+  }
+
+  private async resolveExplicitVidhanSabha(dto: {
+    vidhanSabhaId?: string;
+    vidhanSabha?: string;
+    masterId?: string;
+  }): Promise<{ id: Types.ObjectId; name: string } | null> {
+    if (dto.vidhanSabhaId && Types.ObjectId.isValid(dto.vidhanSabhaId)) {
+      const vs = await this.vidhanSabhaModel
+        .findOne({ _id: dto.vidhanSabhaId, isDeleted: false })
+        .exec();
+      if (vs) {
+        return { id: vs._id as Types.ObjectId, name: vs.vidhanSabhaName };
+      }
+    }
+    if (dto.masterId?.trim()) {
+      const vs = await this.vidhanSabhaModel
+        .findOne({ masterId: dto.masterId.trim(), isDeleted: false })
+        .exec();
+      if (vs) {
+        return { id: vs._id as Types.ObjectId, name: vs.vidhanSabhaName };
+      }
+    }
+    if (dto.vidhanSabha?.trim()) {
+      const vs = await this.vidhanSabhaModel
+        .findOne({
+          isDeleted: false,
+          vidhanSabhaName: new RegExp(
+            `^${dto.vidhanSabha.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+            'i',
+          ),
+        })
+        .exec();
+      if (vs) {
+        return { id: vs._id as Types.ObjectId, name: vs.vidhanSabhaName };
+      }
+    }
+    return null;
   }
 
   async findAll(query: LandQueryDto = {}): Promise<Land[]> {

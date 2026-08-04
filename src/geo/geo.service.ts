@@ -2,11 +2,13 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { buildPoint } from '../common/utils/geo.util';
+import { MasterGeographyService } from '../master-geography/master-geography.service';
 import {
   VidhanSabha,
   VidhanSabhaDocument,
@@ -14,16 +16,19 @@ import {
 import { BoundaryLookupDto } from './dto/boundary-lookup.dto';
 import { ReverseGeocodeDto } from './dto/reverse-geocode.dto';
 
+type GeoBoundary = {
+  type: 'Polygon' | 'MultiPolygon';
+  coordinates: number[][][] | number[][][][];
+};
+
 export interface BoundaryLookupResult {
+  id?: string;
   name: string;
   state?: string;
   district?: string;
-  source: 'database' | 'nominatim' | 'nominatim_bbox';
+  source: 'database' | 'master';
   center?: { lat: number; lng: number };
-  boundary: {
-    type: 'Polygon' | 'MultiPolygon';
-    coordinates: number[][][] | number[][][][];
-  };
+  boundary: GeoBoundary;
   message?: string;
 }
 
@@ -79,7 +84,52 @@ export class GeoService {
   constructor(
     @InjectModel(VidhanSabha.name)
     private readonly vidhanSabhaModel: Model<VidhanSabhaDocument>,
+    private readonly masterGeography: MasterGeographyService,
   ) {}
+
+  async listCountries() {
+    const rows = await this.masterGeography.listCountries();
+    return rows.map((r) => ({ id: r.code.toLowerCase(), name: r.name }));
+  }
+
+  listStates(country?: string) {
+    return this.masterGeography.listStates(country?.trim() || 'India');
+  }
+
+  listDistricts(state: string, country?: string) {
+    return this.masterGeography.listDistricts(
+      state,
+      country?.trim() || 'India',
+    );
+  }
+
+  listConstituencies(state?: string, district?: string, country?: string) {
+    if (!district?.trim() && !state?.trim()) {
+      throw new BadRequestException('Provide district (and optionally state)');
+    }
+    return this.masterGeography.listConstituencies({
+      country: country?.trim() || 'India',
+      state: state?.trim(),
+      district: district?.trim(),
+    });
+  }
+
+  getConstituencyBoundary(id: string) {
+    return this.masterGeography.getBoundary(id);
+  }
+
+  async findConstituencyById(id: string) {
+    const row = await this.masterGeography.findByMasterId(id);
+    if (!row) return null;
+    return {
+      id: row.masterId,
+      country: row.country,
+      state: row.state,
+      district: row.district,
+      name: row.name,
+      boundary: (row.boundary as GeoBoundary | null) || null,
+    };
+  }
 
   async reverse(dto: ReverseGeocodeDto): Promise<ReverseGeocodeResult> {
     const latitude = Number(dto.latitude);
@@ -189,158 +239,63 @@ export class GeoService {
   }
 
   /**
-   * Auto-load a constituency / place boundary:
-   * 1) Existing Vidhan Sabha in DB with same name (+ district/state)
-   * 2) Nominatim search with polygon_geojson
-   * 3) Fallback: bounding-box rectangle as a simple Polygon
+   * Name-based boundary lookup (legacy). Prefer GET /constituencies/:id/boundary.
    */
   async lookupBoundary(dto: BoundaryLookupDto): Promise<BoundaryLookupResult> {
     const state = dto.state?.trim();
     const district = dto.district?.trim();
     const name = dto.name?.trim();
 
-    if (!name && !district && !state) {
+    if (!name) {
       throw new BadRequestException(
-        'Provide at least state, district, or Vidhan Sabha name',
+        'Provide Vidhan Sabha name, or use /geo/constituencies/:id/boundary',
       );
     }
 
-    // 1) Database match
-    if (name) {
-      const filter: Record<string, unknown> = {
-        isDeleted: false,
-        vidhanSabhaName: new RegExp(`^${escapeRegex(name)}$`, 'i'),
-        boundary: { $exists: true, $ne: null },
-      };
-      if (district) filter.district = new RegExp(`^${escapeRegex(district)}$`, 'i');
-      if (state) filter.state = new RegExp(`^${escapeRegex(state)}$`, 'i');
-
-      const existing = await this.vidhanSabhaModel.findOne(filter as any).exec();
-      if (existing?.boundary?.coordinates) {
-        return {
-          name: existing.vidhanSabhaName,
-          state: existing.state,
-          district: existing.district,
-          source: 'database',
-          boundary: existing.boundary,
-          message: 'Loaded saved boundary from database',
-        };
-      }
-    }
-
-    // 2) Nominatim place search
-    const queryParts = [name, district, state, dto.country || 'India'].filter(
-      Boolean,
-    );
-    const query = queryParts.join(', ');
-    const place = await this.searchNominatimPlace(query);
-
-    if (!place) {
-      throw new BadRequestException(
-        `No boundary found for "${query}". Try Draw Polygon on the map.`,
-      );
-    }
-
-    const center = {
-      lat: Number(place.lat),
-      lng: Number(place.lon),
-    };
-
-    if (
-      place.geojson &&
-      (place.geojson.type === 'Polygon' ||
-        place.geojson.type === 'MultiPolygon') &&
-      place.geojson.coordinates
-    ) {
+    const master = await this.masterGeography.findByName(name, state, district);
+    if (master?.boundary?.type && master.boundary.coordinates) {
       return {
-        name: place.display_name?.split(',')[0] || name || district || state || 'Place',
-        state,
-        district,
-        source: 'nominatim',
-        center,
-        boundary: {
-          type: place.geojson.type,
-          coordinates: place.geojson.coordinates,
-        },
+        id: master.masterId,
+        name: master.name,
+        state: master.state,
+        district: master.district,
+        source: 'master',
+        center: centerFromBoundary(master.boundary as GeoBoundary),
+        boundary: master.boundary as GeoBoundary,
         message:
-          'Auto-loaded from OpenStreetMap. You can edit vertices, then save.',
+          'Loaded from MongoDB master_constituencies. Edit if needed, then save.',
       };
     }
 
-    // 3) Bounding box → rectangle polygon (south, north, west, east)
-    if (place.boundingbox?.length === 4) {
-      const [south, north, west, east] = place.boundingbox.map(Number);
-      const ring: number[][] = [
-        [west, south],
-        [east, south],
-        [east, north],
-        [west, north],
-        [west, south],
-      ];
-      return {
-        name: place.display_name?.split(',')[0] || name || district || state || 'Place',
-        state,
-        district,
-        source: 'nominatim_bbox',
-        center,
-        boundary: { type: 'Polygon', coordinates: [ring] },
-        message:
-          'Approximate boundary from map bbox — please edit to match the real constituency.',
-      };
-    }
-
-    throw new BadRequestException(
-      `No usable boundary geometry for "${query}". Draw the polygon manually.`,
-    );
-  }
-
-  private async searchNominatimPlace(query: string): Promise<{
-    lat: string;
-    lon: string;
-    display_name?: string;
-    boundingbox?: string[];
-    geojson?: {
-      type?: string;
-      coordinates?: number[][][] | number[][][][];
+    const filter: Record<string, unknown> = {
+      isDeleted: false,
+      vidhanSabhaName: new RegExp(`^${escapeRegex(name)}$`, 'i'),
+      boundary: { $exists: true, $ne: null },
     };
-  } | null> {
-    const url = new URL('https://nominatim.openstreetmap.org/search');
-    url.searchParams.set('q', query);
-    url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '1');
-    url.searchParams.set('countrycodes', 'in');
-    url.searchParams.set('polygon_geojson', '1');
-    url.searchParams.set('addressdetails', '1');
-    url.searchParams.set('accept-language', 'en');
-
-    try {
-      const response = await fetch(url.toString(), {
-        headers: {
-          Accept: 'application/json',
-          'User-Agent': 'ParyavaranPrahri/1.0 (boundary-lookup)',
-        },
-      });
-      if (!response.ok) {
-        throw new ServiceUnavailableException(
-          'Boundary lookup service is temporarily unavailable',
-        );
-      }
-      const rows = (await response.json()) as Array<{
-        lat: string;
-        lon: string;
-        display_name?: string;
-        boundingbox?: string[];
-        geojson?: {
-          type?: string;
-          coordinates?: number[][][] | number[][][][];
-        };
-      }>;
-      return rows[0] || null;
-    } catch (err) {
-      if (err instanceof ServiceUnavailableException) throw err;
-      this.logger.error('Nominatim place search failed', err as Error);
-      throw new ServiceUnavailableException('Failed to look up place boundary');
+    if (district) {
+      filter.district = new RegExp(`^${escapeRegex(district)}$`, 'i');
     }
+    if (state) {
+      filter.state = new RegExp(`^${escapeRegex(state)}$`, 'i');
+    }
+
+    const existing = await this.vidhanSabhaModel.findOne(filter as any).exec();
+    if (existing?.boundary?.coordinates) {
+      return {
+        name: existing.vidhanSabhaName,
+        state: existing.state,
+        district: existing.district,
+        source: 'database',
+        center: centerFromBoundary(existing.boundary as GeoBoundary),
+        boundary: existing.boundary as GeoBoundary,
+        message: 'Loaded saved boundary from database',
+      };
+    }
+
+    const label = [name, district, state].filter(Boolean).join(', ');
+    throw new NotFoundException(
+      `Boundary not found for "${label}". Please draw the boundary manually on the map.`,
+    );
   }
 
   private async resolveVidhanSabha(
@@ -370,4 +325,36 @@ export class GeoService {
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function centerFromBoundary(boundary?: {
+  type?: string;
+  coordinates?: number[][][] | number[][][][];
+}): { lat: number; lng: number } | undefined {
+  if (!boundary?.coordinates) return undefined;
+  try {
+    let ring: number[][] | undefined;
+    if (boundary.type === 'Polygon') {
+      ring = (boundary.coordinates as number[][][])[0];
+    } else if (boundary.type === 'MultiPolygon') {
+      ring = (boundary.coordinates as number[][][][])[0]?.[0];
+    }
+    if (!ring?.length) return undefined;
+    let lngSum = 0;
+    let latSum = 0;
+    let n = 0;
+    for (const pt of ring) {
+      if (!Array.isArray(pt) || pt.length < 2) continue;
+      lngSum += Number(pt[0]);
+      latSum += Number(pt[1]);
+      n += 1;
+    }
+    if (!n) return undefined;
+    return {
+      lng: Math.round((lngSum / n) * 1e6) / 1e6,
+      lat: Math.round((latSum / n) * 1e6) / 1e6,
+    };
+  } catch {
+    return undefined;
+  }
 }

@@ -1,0 +1,2072 @@
+[
+  {
+    "id": "mp-1-sheopur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sheopur",
+    "name": "Sheopur",
+    "assemblyNumber": 1,
+    "boundary": null
+  },
+  {
+    "id": "mp-2-vijaypur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sheopur",
+    "name": "Vijaypur",
+    "assemblyNumber": 2,
+    "boundary": null
+  },
+  {
+    "id": "mp-3-sabalgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Sabalgarh",
+    "assemblyNumber": 3,
+    "boundary": null
+  },
+  {
+    "id": "mp-4-joura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Joura",
+    "assemblyNumber": 4,
+    "boundary": null
+  },
+  {
+    "id": "mp-5-sumawali",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Sumawali",
+    "assemblyNumber": 5,
+    "boundary": null
+  },
+  {
+    "id": "mp-6-morena",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Morena",
+    "assemblyNumber": 6,
+    "boundary": null
+  },
+  {
+    "id": "mp-7-dimani",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Dimani",
+    "assemblyNumber": 7,
+    "boundary": null
+  },
+  {
+    "id": "mp-8-ambah",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Morena",
+    "name": "Ambah",
+    "assemblyNumber": 8,
+    "boundary": null
+  },
+  {
+    "id": "mp-9-ater",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "name": "Ater",
+    "assemblyNumber": 9,
+    "boundary": null
+  },
+  {
+    "id": "mp-10-bhind",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "name": "Bhind",
+    "assemblyNumber": 10,
+    "boundary": null
+  },
+  {
+    "id": "mp-11-lahar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "name": "Lahar",
+    "assemblyNumber": 11,
+    "boundary": null
+  },
+  {
+    "id": "mp-12-mehgaon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "name": "Mehgaon",
+    "assemblyNumber": 12,
+    "boundary": null
+  },
+  {
+    "id": "mp-13-gohad",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhind",
+    "name": "Gohad",
+    "assemblyNumber": 13,
+    "boundary": null
+  },
+  {
+    "id": "mp-14-gwalior-rural",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Gwalior Rural",
+    "assemblyNumber": 14,
+    "boundary": null
+  },
+  {
+    "id": "mp-15-gwalior",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Gwalior",
+    "assemblyNumber": 15,
+    "boundary": null
+  },
+  {
+    "id": "mp-16-gwalior-east",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Gwalior East",
+    "assemblyNumber": 16,
+    "boundary": null
+  },
+  {
+    "id": "mp-17-gwalior-south",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Gwalior South",
+    "assemblyNumber": 17,
+    "boundary": null
+  },
+  {
+    "id": "mp-18-bhitarwar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Bhitarwar",
+    "assemblyNumber": 18,
+    "boundary": null
+  },
+  {
+    "id": "mp-19-dabra",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Gwalior",
+    "name": "Dabra",
+    "assemblyNumber": 19,
+    "boundary": null
+  },
+  {
+    "id": "mp-20-sewda",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Datia",
+    "name": "Sewda",
+    "assemblyNumber": 20,
+    "boundary": null
+  },
+  {
+    "id": "mp-21-bhander",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Datia",
+    "name": "Bhander",
+    "assemblyNumber": 21,
+    "boundary": null
+  },
+  {
+    "id": "mp-22-datia",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Datia",
+    "name": "Datia",
+    "assemblyNumber": 22,
+    "boundary": null
+  },
+  {
+    "id": "mp-23-karera",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "name": "Karera",
+    "assemblyNumber": 23,
+    "boundary": null
+  },
+  {
+    "id": "mp-24-pohari",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "name": "Pohari",
+    "assemblyNumber": 24,
+    "boundary": null
+  },
+  {
+    "id": "mp-25-shivpuri",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "name": "Shivpuri",
+    "assemblyNumber": 25,
+    "boundary": null
+  },
+  {
+    "id": "mp-26-pichhore",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "name": "Pichhore",
+    "assemblyNumber": 26,
+    "boundary": null
+  },
+  {
+    "id": "mp-27-kolaras",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shivpuri",
+    "name": "Kolaras",
+    "assemblyNumber": 27,
+    "boundary": null
+  },
+  {
+    "id": "mp-28-bamori",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Guna",
+    "name": "Bamori",
+    "assemblyNumber": 28,
+    "boundary": null
+  },
+  {
+    "id": "mp-29-guna",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Guna",
+    "name": "Guna",
+    "assemblyNumber": 29,
+    "boundary": null
+  },
+  {
+    "id": "mp-30-chachoura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Guna",
+    "name": "Chachoura",
+    "assemblyNumber": 30,
+    "boundary": null
+  },
+  {
+    "id": "mp-31-raghogarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Guna",
+    "name": "Raghogarh",
+    "assemblyNumber": 31,
+    "boundary": null
+  },
+  {
+    "id": "mp-32-ashok-nagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ashoknagar",
+    "name": "Ashok Nagar",
+    "assemblyNumber": 32,
+    "boundary": null
+  },
+  {
+    "id": "mp-33-chanderi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ashoknagar",
+    "name": "Chanderi",
+    "assemblyNumber": 33,
+    "boundary": null
+  },
+  {
+    "id": "mp-34-mungaoli",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ashoknagar",
+    "name": "Mungaoli",
+    "assemblyNumber": 34,
+    "boundary": null
+  },
+  {
+    "id": "mp-35-bina",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Bina",
+    "assemblyNumber": 35,
+    "boundary": null
+  },
+  {
+    "id": "mp-36-khurai",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Khurai",
+    "assemblyNumber": 36,
+    "boundary": null
+  },
+  {
+    "id": "mp-37-surkhi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Surkhi",
+    "assemblyNumber": 37,
+    "boundary": null
+  },
+  {
+    "id": "mp-38-deori",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Deori",
+    "assemblyNumber": 38,
+    "boundary": null
+  },
+  {
+    "id": "mp-39-rehli",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Rehli",
+    "assemblyNumber": 39,
+    "boundary": null
+  },
+  {
+    "id": "mp-40-naryoli",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Naryoli",
+    "assemblyNumber": 40,
+    "boundary": null
+  },
+  {
+    "id": "mp-41-sagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Sagar",
+    "assemblyNumber": 41,
+    "boundary": null
+  },
+  {
+    "id": "mp-42-banda",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sagar",
+    "name": "Banda",
+    "assemblyNumber": 42,
+    "boundary": null
+  },
+  {
+    "id": "mp-43-tikamgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Tikamgarh",
+    "name": "Tikamgarh",
+    "assemblyNumber": 43,
+    "boundary": null
+  },
+  {
+    "id": "mp-44-jatara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Tikamgarh",
+    "name": "Jatara",
+    "assemblyNumber": 44,
+    "boundary": null
+  },
+  {
+    "id": "mp-45-prithvipur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Niwari",
+    "name": "Prithvipur",
+    "assemblyNumber": 45,
+    "boundary": null
+  },
+  {
+    "id": "mp-46-niwari",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Niwari",
+    "name": "Niwari",
+    "assemblyNumber": 46,
+    "boundary": null
+  },
+  {
+    "id": "mp-47-khargapur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Tikamgarh",
+    "name": "Khargapur",
+    "assemblyNumber": 47,
+    "boundary": null
+  },
+  {
+    "id": "mp-48-maharajpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Maharajpur",
+    "assemblyNumber": 48,
+    "boundary": null
+  },
+  {
+    "id": "mp-49-chandla",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Chandla",
+    "assemblyNumber": 49,
+    "boundary": null
+  },
+  {
+    "id": "mp-50-rajnagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Rajnagar",
+    "assemblyNumber": 50,
+    "boundary": null
+  },
+  {
+    "id": "mp-51-chhatarpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Chhatarpur",
+    "assemblyNumber": 51,
+    "boundary": null
+  },
+  {
+    "id": "mp-52-bijawar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Bijawar",
+    "assemblyNumber": 52,
+    "boundary": null
+  },
+  {
+    "id": "mp-53-malhara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhatarpur",
+    "name": "Malhara",
+    "assemblyNumber": 53,
+    "boundary": null
+  },
+  {
+    "id": "mp-54-pathariya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Damoh",
+    "name": "Pathariya",
+    "assemblyNumber": 54,
+    "boundary": null
+  },
+  {
+    "id": "mp-55-damoh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Damoh",
+    "name": "Damoh",
+    "assemblyNumber": 55,
+    "boundary": null
+  },
+  {
+    "id": "mp-56-jabera",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Damoh",
+    "name": "Jabera",
+    "assemblyNumber": 56,
+    "boundary": null
+  },
+  {
+    "id": "mp-57-hatta",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Damoh",
+    "name": "Hatta",
+    "assemblyNumber": 57,
+    "boundary": null
+  },
+  {
+    "id": "mp-58-pawai",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Panna",
+    "name": "Pawai",
+    "assemblyNumber": 58,
+    "boundary": null
+  },
+  {
+    "id": "mp-59-gunnaor",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Panna",
+    "name": "Gunnaor",
+    "assemblyNumber": 59,
+    "boundary": null
+  },
+  {
+    "id": "mp-60-panna",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Panna",
+    "name": "Panna",
+    "assemblyNumber": 60,
+    "boundary": null
+  },
+  {
+    "id": "mp-61-chitrakoot",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Chitrakoot",
+    "assemblyNumber": 61,
+    "boundary": null
+  },
+  {
+    "id": "mp-62-raigaon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Raigaon",
+    "assemblyNumber": 62,
+    "boundary": null
+  },
+  {
+    "id": "mp-63-satna",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Satna",
+    "assemblyNumber": 63,
+    "boundary": null
+  },
+  {
+    "id": "mp-64-nagod",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Nagod",
+    "assemblyNumber": 64,
+    "boundary": null
+  },
+  {
+    "id": "mp-65-maihar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Maihar",
+    "assemblyNumber": 65,
+    "boundary": null
+  },
+  {
+    "id": "mp-66-amarpatan",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Amarpatan",
+    "assemblyNumber": 66,
+    "boundary": null
+  },
+  {
+    "id": "mp-67-rampur-baghelan",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Satna",
+    "name": "Rampur-Baghelan",
+    "assemblyNumber": 67,
+    "boundary": null
+  },
+  {
+    "id": "mp-68-sirmour",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Sirmour",
+    "assemblyNumber": 68,
+    "boundary": null
+  },
+  {
+    "id": "mp-69-semariya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Semariya",
+    "assemblyNumber": 69,
+    "boundary": null
+  },
+  {
+    "id": "mp-70-teonthar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Teonthar",
+    "assemblyNumber": 70,
+    "boundary": null
+  },
+  {
+    "id": "mp-71-mauganj",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mauganj",
+    "name": "Mauganj",
+    "assemblyNumber": 71,
+    "boundary": null
+  },
+  {
+    "id": "mp-72-deotalab",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mauganj",
+    "name": "Deotalab",
+    "assemblyNumber": 72,
+    "boundary": null
+  },
+  {
+    "id": "mp-73-mangawan",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Mangawan",
+    "assemblyNumber": 73,
+    "boundary": null
+  },
+  {
+    "id": "mp-74-rewa",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Rewa",
+    "assemblyNumber": 74,
+    "boundary": null
+  },
+  {
+    "id": "mp-75-gurh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rewa",
+    "name": "Gurh",
+    "assemblyNumber": 75,
+    "boundary": null
+  },
+  {
+    "id": "mp-76-churhat",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sidhi",
+    "name": "Churhat",
+    "assemblyNumber": 76,
+    "boundary": null
+  },
+  {
+    "id": "mp-77-sidhi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sidhi",
+    "name": "Sidhi",
+    "assemblyNumber": 77,
+    "boundary": null
+  },
+  {
+    "id": "mp-78-sihawal",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sidhi",
+    "name": "Sihawal",
+    "assemblyNumber": 78,
+    "boundary": null
+  },
+  {
+    "id": "mp-79-chitrangi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Singrauli",
+    "name": "Chitrangi",
+    "assemblyNumber": 79,
+    "boundary": null
+  },
+  {
+    "id": "mp-80-singrauli",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Singrauli",
+    "name": "Singrauli",
+    "assemblyNumber": 80,
+    "boundary": null
+  },
+  {
+    "id": "mp-81-devsar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Singrauli",
+    "name": "Devsar",
+    "assemblyNumber": 81,
+    "boundary": null
+  },
+  {
+    "id": "mp-82-dhauhani",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sidhi",
+    "name": "Dhauhani",
+    "assemblyNumber": 82,
+    "boundary": null
+  },
+  {
+    "id": "mp-83-beohari",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shahdol",
+    "name": "Beohari",
+    "assemblyNumber": 83,
+    "boundary": null
+  },
+  {
+    "id": "mp-84-jaisingnagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shahdol",
+    "name": "Jaisingnagar",
+    "assemblyNumber": 84,
+    "boundary": null
+  },
+  {
+    "id": "mp-85-jaitpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shahdol",
+    "name": "Jaitpur",
+    "assemblyNumber": 85,
+    "boundary": null
+  },
+  {
+    "id": "mp-86-kotma",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Anuppur",
+    "name": "Kotma",
+    "assemblyNumber": 86,
+    "boundary": null
+  },
+  {
+    "id": "mp-87-anuppur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Anuppur",
+    "name": "Anuppur",
+    "assemblyNumber": 87,
+    "boundary": null
+  },
+  {
+    "id": "mp-88-pushprajgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Anuppur",
+    "name": "Pushprajgarh",
+    "assemblyNumber": 88,
+    "boundary": null
+  },
+  {
+    "id": "mp-89-bandhavgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Umaria",
+    "name": "Bandhavgarh",
+    "assemblyNumber": 89,
+    "boundary": null
+  },
+  {
+    "id": "mp-90-manpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Umaria",
+    "name": "Manpur",
+    "assemblyNumber": 90,
+    "boundary": null
+  },
+  {
+    "id": "mp-91-barwara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Katni",
+    "name": "Barwara",
+    "assemblyNumber": 91,
+    "boundary": null
+  },
+  {
+    "id": "mp-92-vijayraghavgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Katni",
+    "name": "Vijayraghavgarh",
+    "assemblyNumber": 92,
+    "boundary": null
+  },
+  {
+    "id": "mp-93-murwara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Katni",
+    "name": "Murwara",
+    "assemblyNumber": 93,
+    "boundary": null
+  },
+  {
+    "id": "mp-94-bahoriband",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Katni",
+    "name": "Bahoriband",
+    "assemblyNumber": 94,
+    "boundary": null
+  },
+  {
+    "id": "mp-95-patan",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Patan",
+    "assemblyNumber": 95,
+    "boundary": null
+  },
+  {
+    "id": "mp-96-bargi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Bargi",
+    "assemblyNumber": 96,
+    "boundary": null
+  },
+  {
+    "id": "mp-97-jabalpur-east",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Jabalpur East",
+    "assemblyNumber": 97,
+    "boundary": null
+  },
+  {
+    "id": "mp-98-jabalpur-north",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Jabalpur North",
+    "assemblyNumber": 98,
+    "boundary": null
+  },
+  {
+    "id": "mp-99-jabalpur-cantonment",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Jabalpur Cantonment",
+    "assemblyNumber": 99,
+    "boundary": null
+  },
+  {
+    "id": "mp-100-jabalpur-west",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Jabalpur West",
+    "assemblyNumber": 100,
+    "boundary": null
+  },
+  {
+    "id": "mp-101-panagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Panagar",
+    "assemblyNumber": 101,
+    "boundary": null
+  },
+  {
+    "id": "mp-102-sihora",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jabalpur",
+    "name": "Sihora",
+    "assemblyNumber": 102,
+    "boundary": null
+  },
+  {
+    "id": "mp-103-shahpura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dindori",
+    "name": "Shahpura",
+    "assemblyNumber": 103,
+    "boundary": null
+  },
+  {
+    "id": "mp-104-dindori",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dindori",
+    "name": "Dindori",
+    "assemblyNumber": 104,
+    "boundary": null
+  },
+  {
+    "id": "mp-105-bichhiya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandla",
+    "name": "Bichhiya",
+    "assemblyNumber": 105,
+    "boundary": null
+  },
+  {
+    "id": "mp-106-niwas",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandla",
+    "name": "Niwas",
+    "assemblyNumber": 106,
+    "boundary": null
+  },
+  {
+    "id": "mp-107-mandla",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandla",
+    "name": "Mandla",
+    "assemblyNumber": 107,
+    "boundary": null
+  },
+  {
+    "id": "mp-108-baihar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Baihar",
+    "assemblyNumber": 108,
+    "boundary": null
+  },
+  {
+    "id": "mp-109-lanji",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Lanji",
+    "assemblyNumber": 109,
+    "boundary": null
+  },
+  {
+    "id": "mp-110-paraswada",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Paraswada",
+    "assemblyNumber": 110,
+    "boundary": null
+  },
+  {
+    "id": "mp-111-balaghat",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Balaghat",
+    "assemblyNumber": 111,
+    "boundary": null
+  },
+  {
+    "id": "mp-112-waraseoni",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Waraseoni",
+    "assemblyNumber": 112,
+    "boundary": null
+  },
+  {
+    "id": "mp-113-katangi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Balaghat",
+    "name": "Katangi",
+    "assemblyNumber": 113,
+    "boundary": null
+  },
+  {
+    "id": "mp-114-barghat",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Seoni",
+    "name": "Barghat",
+    "assemblyNumber": 114,
+    "boundary": null
+  },
+  {
+    "id": "mp-115-seoni",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Seoni",
+    "name": "Seoni",
+    "assemblyNumber": 115,
+    "boundary": null
+  },
+  {
+    "id": "mp-116-keolari",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Seoni",
+    "name": "Keolari",
+    "assemblyNumber": 116,
+    "boundary": null
+  },
+  {
+    "id": "mp-117-lakhnadon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Seoni",
+    "name": "Lakhnadon",
+    "assemblyNumber": 117,
+    "boundary": null
+  },
+  {
+    "id": "mp-118-gotegaon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Narsinghpur",
+    "name": "Gotegaon",
+    "assemblyNumber": 118,
+    "boundary": null
+  },
+  {
+    "id": "mp-119-narsingpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Narsinghpur",
+    "name": "Narsingpur",
+    "assemblyNumber": 119,
+    "boundary": null
+  },
+  {
+    "id": "mp-120-tendukheda",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Narsinghpur",
+    "name": "Tendukheda",
+    "assemblyNumber": 120,
+    "boundary": null
+  },
+  {
+    "id": "mp-121-gadarwara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Narsinghpur",
+    "name": "Gadarwara",
+    "assemblyNumber": 121,
+    "boundary": null
+  },
+  {
+    "id": "mp-122-junnardeo",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Junnardeo",
+    "assemblyNumber": 122,
+    "boundary": null
+  },
+  {
+    "id": "mp-123-amarwara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Amarwara",
+    "assemblyNumber": 123,
+    "boundary": null
+  },
+  {
+    "id": "mp-124-chourai",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Chourai",
+    "assemblyNumber": 124,
+    "boundary": null
+  },
+  {
+    "id": "mp-125-saunsar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Saunsar",
+    "assemblyNumber": 125,
+    "boundary": null
+  },
+  {
+    "id": "mp-126-chhindwara",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Chhindwara",
+    "assemblyNumber": 126,
+    "boundary": null
+  },
+  {
+    "id": "mp-127-parasia",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Parasia",
+    "assemblyNumber": 127,
+    "boundary": null
+  },
+  {
+    "id": "mp-128-pandhurna",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Chhindwara",
+    "name": "Pandhurna",
+    "assemblyNumber": 128,
+    "boundary": null
+  },
+  {
+    "id": "mp-129-multai",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "name": "Multai",
+    "assemblyNumber": 129,
+    "boundary": null
+  },
+  {
+    "id": "mp-130-amla",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "name": "Amla",
+    "assemblyNumber": 130,
+    "boundary": null
+  },
+  {
+    "id": "mp-131-betul",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "name": "Betul",
+    "assemblyNumber": 131,
+    "boundary": null
+  },
+  {
+    "id": "mp-132-ghoradongri",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "name": "Ghoradongri",
+    "assemblyNumber": 132,
+    "boundary": null
+  },
+  {
+    "id": "mp-133-bhainsdehi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Betul",
+    "name": "Bhainsdehi",
+    "assemblyNumber": 133,
+    "boundary": null
+  },
+  {
+    "id": "mp-134-timarni",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Harda",
+    "name": "Timarni",
+    "assemblyNumber": 134,
+    "boundary": null
+  },
+  {
+    "id": "mp-135-harda",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Harda",
+    "name": "Harda",
+    "assemblyNumber": 135,
+    "boundary": null
+  },
+  {
+    "id": "mp-136-seoni-malwa",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Hoshangabad (Narmadapuram)",
+    "name": "Seoni-Malwa",
+    "assemblyNumber": 136,
+    "boundary": null
+  },
+  {
+    "id": "mp-137-narmadapuram",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Hoshangabad (Narmadapuram)",
+    "name": "Narmadapuram",
+    "assemblyNumber": 137,
+    "boundary": null
+  },
+  {
+    "id": "mp-138-sohagpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Hoshangabad (Narmadapuram)",
+    "name": "Sohagpur",
+    "assemblyNumber": 138,
+    "boundary": null
+  },
+  {
+    "id": "mp-139-pipariya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Hoshangabad (Narmadapuram)",
+    "name": "Pipariya",
+    "assemblyNumber": 139,
+    "boundary": null
+  },
+  {
+    "id": "mp-140-udaipura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Raisen",
+    "name": "Udaipura",
+    "assemblyNumber": 140,
+    "boundary": null
+  },
+  {
+    "id": "mp-141-bhojpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Raisen",
+    "name": "Bhojpur",
+    "assemblyNumber": 141,
+    "boundary": null
+  },
+  {
+    "id": "mp-142-sanchi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Raisen",
+    "name": "Sanchi",
+    "assemblyNumber": 142,
+    "boundary": null
+  },
+  {
+    "id": "mp-143-silwani",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Raisen",
+    "name": "Silwani",
+    "assemblyNumber": 143,
+    "boundary": null
+  },
+  {
+    "id": "mp-144-vidisha",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "name": "Vidisha",
+    "assemblyNumber": 144,
+    "boundary": null
+  },
+  {
+    "id": "mp-145-basoda",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "name": "Basoda",
+    "assemblyNumber": 145,
+    "boundary": null
+  },
+  {
+    "id": "mp-146-kurwai",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "name": "Kurwai",
+    "assemblyNumber": 146,
+    "boundary": null
+  },
+  {
+    "id": "mp-147-sironj",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "name": "Sironj",
+    "assemblyNumber": 147,
+    "boundary": null
+  },
+  {
+    "id": "mp-148-shamshabad",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Vidisha",
+    "name": "Shamshabad",
+    "assemblyNumber": 148,
+    "boundary": null
+  },
+  {
+    "id": "mp-149-berasia",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Berasia",
+    "assemblyNumber": 149,
+    "boundary": null
+  },
+  {
+    "id": "mp-150-bhopal-uttar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Bhopal Uttar",
+    "assemblyNumber": 150,
+    "boundary": null
+  },
+  {
+    "id": "mp-151-narela",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Narela",
+    "assemblyNumber": 151,
+    "boundary": null
+  },
+  {
+    "id": "mp-152-bhopal-dakshin-paschim",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Bhopal Dakshin-Paschim",
+    "assemblyNumber": 152,
+    "boundary": null
+  },
+  {
+    "id": "mp-153-bhopal-madhya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Bhopal Madhya",
+    "assemblyNumber": 153,
+    "boundary": null
+  },
+  {
+    "id": "mp-154-govindpura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Govindpura",
+    "assemblyNumber": 154,
+    "boundary": null
+  },
+  {
+    "id": "mp-155-huzur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Bhopal",
+    "name": "Huzur",
+    "assemblyNumber": 155,
+    "boundary": null
+  },
+  {
+    "id": "mp-156-budhni",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "name": "Budhni",
+    "assemblyNumber": 156,
+    "boundary": null
+  },
+  {
+    "id": "mp-157-ashta",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "name": "Ashta",
+    "assemblyNumber": 157,
+    "boundary": null
+  },
+  {
+    "id": "mp-158-ichhawar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "name": "Ichhawar",
+    "assemblyNumber": 158,
+    "boundary": null
+  },
+  {
+    "id": "mp-159-sehore",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Sehore",
+    "name": "Sehore",
+    "assemblyNumber": 159,
+    "boundary": null
+  },
+  {
+    "id": "mp-160-narsinghgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "name": "Narsinghgarh",
+    "assemblyNumber": 160,
+    "boundary": null
+  },
+  {
+    "id": "mp-161-biaora",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "name": "Biaora",
+    "assemblyNumber": 161,
+    "boundary": null
+  },
+  {
+    "id": "mp-162-rajgarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "name": "Rajgarh",
+    "assemblyNumber": 162,
+    "boundary": null
+  },
+  {
+    "id": "mp-163-khilchipur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "name": "Khilchipur",
+    "assemblyNumber": 163,
+    "boundary": null
+  },
+  {
+    "id": "mp-164-sarangpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Rajgarh",
+    "name": "Sarangpur",
+    "assemblyNumber": 164,
+    "boundary": null
+  },
+  {
+    "id": "mp-165-susner",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Agar Malwa",
+    "name": "Susner",
+    "assemblyNumber": 165,
+    "boundary": null
+  },
+  {
+    "id": "mp-166-agar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Agar Malwa",
+    "name": "Agar",
+    "assemblyNumber": 166,
+    "boundary": null
+  },
+  {
+    "id": "mp-167-shajapur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shajapur",
+    "name": "Shajapur",
+    "assemblyNumber": 167,
+    "boundary": null
+  },
+  {
+    "id": "mp-168-shujalpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shajapur",
+    "name": "Shujalpur",
+    "assemblyNumber": 168,
+    "boundary": null
+  },
+  {
+    "id": "mp-169-kalapipal",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Shajapur",
+    "name": "Kalapipal",
+    "assemblyNumber": 169,
+    "boundary": null
+  },
+  {
+    "id": "mp-170-sonkatch",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "name": "Sonkatch",
+    "assemblyNumber": 170,
+    "boundary": null
+  },
+  {
+    "id": "mp-171-dewas",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "name": "Dewas",
+    "assemblyNumber": 171,
+    "boundary": null
+  },
+  {
+    "id": "mp-172-hatpipliya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "name": "Hatpipliya",
+    "assemblyNumber": 172,
+    "boundary": null
+  },
+  {
+    "id": "mp-173-khategaon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "name": "Khategaon",
+    "assemblyNumber": 173,
+    "boundary": null
+  },
+  {
+    "id": "mp-174-bagli",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dewas",
+    "name": "Bagli",
+    "assemblyNumber": 174,
+    "boundary": null
+  },
+  {
+    "id": "mp-175-mandhata",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khandwa",
+    "name": "Mandhata",
+    "assemblyNumber": 175,
+    "boundary": null
+  },
+  {
+    "id": "mp-176-harsud",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khandwa",
+    "name": "Harsud",
+    "assemblyNumber": 176,
+    "boundary": null
+  },
+  {
+    "id": "mp-177-khandwa",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khandwa",
+    "name": "Khandwa",
+    "assemblyNumber": 177,
+    "boundary": null
+  },
+  {
+    "id": "mp-178-pandhana",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khandwa",
+    "name": "Pandhana",
+    "assemblyNumber": 178,
+    "boundary": null
+  },
+  {
+    "id": "mp-179-nepanagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Burhanpur",
+    "name": "Nepanagar",
+    "assemblyNumber": 179,
+    "boundary": null
+  },
+  {
+    "id": "mp-180-burhanpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Burhanpur",
+    "name": "Burhanpur",
+    "assemblyNumber": 180,
+    "boundary": null
+  },
+  {
+    "id": "mp-181-bhikangaon",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Bhikangaon",
+    "assemblyNumber": 181,
+    "boundary": null
+  },
+  {
+    "id": "mp-182-badwaha",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Badwaha",
+    "assemblyNumber": 182,
+    "boundary": null
+  },
+  {
+    "id": "mp-183-maheshwar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Maheshwar",
+    "assemblyNumber": 183,
+    "boundary": null
+  },
+  {
+    "id": "mp-184-kasrawad",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Kasrawad",
+    "assemblyNumber": 184,
+    "boundary": null
+  },
+  {
+    "id": "mp-185-khargone",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Khargone",
+    "assemblyNumber": 185,
+    "boundary": null
+  },
+  {
+    "id": "mp-186-bhagwanpura",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Khargone",
+    "name": "Bhagwanpura",
+    "assemblyNumber": 186,
+    "boundary": null
+  },
+  {
+    "id": "mp-187-sendhawa",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Barwani",
+    "name": "Sendhawa",
+    "assemblyNumber": 187,
+    "boundary": null
+  },
+  {
+    "id": "mp-188-rajpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Barwani",
+    "name": "Rajpur",
+    "assemblyNumber": 188,
+    "boundary": null
+  },
+  {
+    "id": "mp-189-pansemal",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Barwani",
+    "name": "Pansemal",
+    "assemblyNumber": 189,
+    "boundary": null
+  },
+  {
+    "id": "mp-190-barwani",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Barwani",
+    "name": "Barwani",
+    "assemblyNumber": 190,
+    "boundary": null
+  },
+  {
+    "id": "mp-191-alirajpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Alirajpur",
+    "name": "Alirajpur",
+    "assemblyNumber": 191,
+    "boundary": null
+  },
+  {
+    "id": "mp-192-jobat",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Alirajpur",
+    "name": "Jobat",
+    "assemblyNumber": 192,
+    "boundary": null
+  },
+  {
+    "id": "mp-193-jhabua",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jhabua",
+    "name": "Jhabua",
+    "assemblyNumber": 193,
+    "boundary": null
+  },
+  {
+    "id": "mp-194-thandla",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jhabua",
+    "name": "Thandla",
+    "assemblyNumber": 194,
+    "boundary": null
+  },
+  {
+    "id": "mp-195-petlawad",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Jhabua",
+    "name": "Petlawad",
+    "assemblyNumber": 195,
+    "boundary": null
+  },
+  {
+    "id": "mp-196-sardarpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Sardarpur",
+    "assemblyNumber": 196,
+    "boundary": null
+  },
+  {
+    "id": "mp-197-gandhwani",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Gandhwani",
+    "assemblyNumber": 197,
+    "boundary": null
+  },
+  {
+    "id": "mp-198-kukshi",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Kukshi",
+    "assemblyNumber": 198,
+    "boundary": null
+  },
+  {
+    "id": "mp-199-manawar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Manawar",
+    "assemblyNumber": 199,
+    "boundary": null
+  },
+  {
+    "id": "mp-200-dharampuri",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Dharampuri",
+    "assemblyNumber": 200,
+    "boundary": null
+  },
+  {
+    "id": "mp-201-dhar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Dhar",
+    "assemblyNumber": 201,
+    "boundary": null
+  },
+  {
+    "id": "mp-202-badnawar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Dhar",
+    "name": "Badnawar",
+    "assemblyNumber": 202,
+    "boundary": null
+  },
+  {
+    "id": "mp-203-depalpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Depalpur",
+    "assemblyNumber": 203,
+    "boundary": null
+  },
+  {
+    "id": "mp-204-indore-1",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Indore-1",
+    "assemblyNumber": 204,
+    "boundary": null
+  },
+  {
+    "id": "mp-205-indore-2",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Indore-2",
+    "assemblyNumber": 205,
+    "boundary": null
+  },
+  {
+    "id": "mp-206-indore-3",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Indore-3",
+    "assemblyNumber": 206,
+    "boundary": null
+  },
+  {
+    "id": "mp-207-indore-4",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Indore-4",
+    "assemblyNumber": 207,
+    "boundary": null
+  },
+  {
+    "id": "mp-208-indore-5",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Indore-5",
+    "assemblyNumber": 208,
+    "boundary": null
+  },
+  {
+    "id": "mp-209-dr-ambedkar-nagar-mhow",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Dr. Ambedkar Nagar-Mhow",
+    "assemblyNumber": 209,
+    "boundary": null
+  },
+  {
+    "id": "mp-210-rau",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Rau",
+    "assemblyNumber": 210,
+    "boundary": null
+  },
+  {
+    "id": "mp-211-sanwer",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Indore",
+    "name": "Sanwer",
+    "assemblyNumber": 211,
+    "boundary": null
+  },
+  {
+    "id": "mp-212-nagda-khachrod",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Nagda-Khachrod",
+    "assemblyNumber": 212,
+    "boundary": null
+  },
+  {
+    "id": "mp-213-mahidpur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Mahidpur",
+    "assemblyNumber": 213,
+    "boundary": null
+  },
+  {
+    "id": "mp-214-tarana",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Tarana",
+    "assemblyNumber": 214,
+    "boundary": null
+  },
+  {
+    "id": "mp-215-ghatiya",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Ghatiya",
+    "assemblyNumber": 215,
+    "boundary": null
+  },
+  {
+    "id": "mp-216-ujjain-north",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Ujjain North",
+    "assemblyNumber": 216,
+    "boundary": null
+  },
+  {
+    "id": "mp-217-ujjain-south",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Ujjain South",
+    "assemblyNumber": 217,
+    "boundary": null
+  },
+  {
+    "id": "mp-218-badnagar",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ujjain",
+    "name": "Badnagar",
+    "assemblyNumber": 218,
+    "boundary": null
+  },
+  {
+    "id": "mp-219-ratlam-rural",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "name": "Ratlam Rural",
+    "assemblyNumber": 219,
+    "boundary": null
+  },
+  {
+    "id": "mp-220-ratlam-city",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "name": "Ratlam City",
+    "assemblyNumber": 220,
+    "boundary": null
+  },
+  {
+    "id": "mp-221-sailana",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "name": "Sailana",
+    "assemblyNumber": 221,
+    "boundary": null
+  },
+  {
+    "id": "mp-222-jaora",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "name": "Jaora",
+    "assemblyNumber": 222,
+    "boundary": null
+  },
+  {
+    "id": "mp-223-alot",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Ratlam",
+    "name": "Alot",
+    "assemblyNumber": 223,
+    "boundary": null
+  },
+  {
+    "id": "mp-224-mandsaur",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandsaur",
+    "name": "Mandsaur",
+    "assemblyNumber": 224,
+    "boundary": null
+  },
+  {
+    "id": "mp-225-malhargarh",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandsaur",
+    "name": "Malhargarh",
+    "assemblyNumber": 225,
+    "boundary": null
+  },
+  {
+    "id": "mp-226-suwasra",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandsaur",
+    "name": "Suwasra",
+    "assemblyNumber": 226,
+    "boundary": null
+  },
+  {
+    "id": "mp-227-garoth",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Mandsaur",
+    "name": "Garoth",
+    "assemblyNumber": 227,
+    "boundary": null
+  },
+  {
+    "id": "mp-228-manasa",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Neemuch",
+    "name": "Manasa",
+    "assemblyNumber": 228,
+    "boundary": null
+  },
+  {
+    "id": "mp-229-neemuch",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Neemuch",
+    "name": "Neemuch",
+    "assemblyNumber": 229,
+    "boundary": null
+  },
+  {
+    "id": "mp-230-jawad",
+    "country": "India",
+    "state": "Madhya Pradesh",
+    "district": "Neemuch",
+    "name": "Jawad",
+    "assemblyNumber": 230,
+    "boundary": null
+  }
+]

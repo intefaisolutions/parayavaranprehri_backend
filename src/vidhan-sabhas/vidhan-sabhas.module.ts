@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LandsModule } from '../lands/lands.module';
+import {
+  Plantation,
+  PlantationSchema,
+} from '../plantations/schemas/plantation.schema';
 import { Tree, TreeSchema } from '../trees/schemas/tree.schema';
 import { VidhanSabhaRepository } from './repositories/vidhan-sabha.repository';
 import {
@@ -15,6 +19,7 @@ import { VidhanSabhasService } from './vidhan-sabhas.service';
     MongooseModule.forFeature([
       { name: VidhanSabha.name, schema: VidhanSabhaSchema },
       { name: Tree.name, schema: TreeSchema },
+      { name: Plantation.name, schema: PlantationSchema },
     ]),
     LandsModule,
   ],

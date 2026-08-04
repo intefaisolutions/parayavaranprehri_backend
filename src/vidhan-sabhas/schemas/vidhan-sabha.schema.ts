@@ -39,6 +39,14 @@ export class VidhanSabha extends BaseSchema {
     coordinates: number[][][] | number[][][][];
   };
 
+  /** Cached from boundary polygon (km²). Recalculated on boundary save. */
+  @Prop({ type: Number, default: null, min: 0 })
+  areaKm2?: number | null;
+
+  /** Cached from boundary polygon (km). Recalculated on boundary save. */
+  @Prop({ type: Number, default: null, min: 0 })
+  perimeterKm?: number | null;
+
   @Prop({ default: 0, min: 0 })
   totalPersons!: number;
 

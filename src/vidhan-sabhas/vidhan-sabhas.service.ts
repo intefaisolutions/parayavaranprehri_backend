@@ -7,9 +7,18 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
-import { normalizeBoundaryInput } from '../common/utils/geo.util';
+import {
+  acresToKm2,
+  computeBoundaryMetrics,
+  normalizeBoundaryInput,
+} from '../common/utils/geo.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
 import { LandsService } from '../lands/lands.service';
+import {
+  Plantation,
+  PlantationDocument,
+  PlantationStatus,
+} from '../plantations/schemas/plantation.schema';
 import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
 import { CreateVidhanSabhaDto } from './dto/create-vidhan-sabha.dto';
 import { UpdateVidhanSabhaDto } from './dto/update-vidhan-sabha.dto';
@@ -20,11 +29,19 @@ import {
   VidhanSabhaDocument,
 } from './schemas/vidhan-sabha.schema';
 
-export type VidhanSabhaWithLandStats = VidhanSabha & {
+export type VidhanSabhaListItem = VidhanSabha & {
+  hasBoundary: boolean;
+  areaKm2: number | null;
+  perimeterKm: number | null;
+  greenCoverPercent: number | null;
+  totalLands: number;
+  pendingPlantationRequests: number;
   governmentLandAcres?: number;
   privateLandAcres?: number;
   remainingPlantationCapacity?: number;
   estimatedOxygenTonsPerYear?: number;
+  estimatedCo2TonsPerYear?: number;
+  villageCount?: number;
 };
 
 @Injectable()
@@ -32,11 +49,12 @@ export class VidhanSabhasService implements OnModuleInit {
   constructor(
     private readonly vidhanSabhaRepository: VidhanSabhaRepository,
     @InjectModel(Tree.name) private readonly treeModel: Model<TreeDocument>,
+    @InjectModel(Plantation.name)
+    private readonly plantationModel: Model<PlantationDocument>,
     private readonly landsService: LandsService,
   ) {}
 
   async onModuleInit() {
-    // Keep constituency tree/O₂ counters in sync with live tree docs
     await this.refreshAllTreeOxygenStats();
   }
 
@@ -90,6 +108,26 @@ export class VidhanSabhasService implements OnModuleInit {
     }
   }
 
+  private boundaryPatch(boundaryInput: unknown): {
+    boundary?: ReturnType<typeof normalizeBoundaryInput> | null;
+    areaKm2?: number | null;
+    perimeterKm?: number | null;
+  } {
+    if (boundaryInput === null || boundaryInput === '') {
+      return { boundary: null, areaKm2: null, perimeterKm: null };
+    }
+    const boundary = normalizeBoundaryInput(boundaryInput);
+    if (!boundary) {
+      return {};
+    }
+    const metrics = computeBoundaryMetrics(boundary);
+    return {
+      boundary,
+      areaKm2: metrics?.areaKm2 ?? null,
+      perimeterKm: metrics?.perimeterKm ?? null,
+    };
+  }
+
   async create(dto: CreateVidhanSabhaDto): Promise<VidhanSabha> {
     const exists = await this.vidhanSabhaRepository.existsByName(
       dto.vidhanSabhaName,
@@ -99,44 +137,126 @@ export class VidhanSabhasService implements OnModuleInit {
         `A Vidhan Sabha named "${dto.vidhanSabhaName}" already exists`,
       );
     }
-    const boundary = normalizeBoundaryInput(dto.boundary);
+    const geo = this.boundaryPatch(dto.boundary);
     const created = await this.vidhanSabhaRepository.create({
       ...dto,
       country: dto.country?.trim() || 'India',
-      ...(boundary ? { boundary } : { boundary: undefined }),
+      ...geo,
     } as unknown as Partial<VidhanSabhaDocument>);
 
-    if (boundary) {
+    if (geo.boundary) {
       await this.landsService.remapAllLandsWithCoordinates();
     }
     return created;
   }
 
-  private async attachLandStats(
-    entry: VidhanSabha,
-  ): Promise<VidhanSabhaWithLandStats> {
+  private async countPendingPlantations(vidhanSabhaName: string): Promise<number> {
+    if (!vidhanSabhaName) return 0;
+    return this.plantationModel
+      .countDocuments({
+        isDeleted: false,
+        status: PlantationStatus.PENDING,
+        vidhanSabha: vidhanSabhaName,
+      })
+      .exec();
+  }
+
+  private computeGreenCoverPercent(
+    areaKm2: number | null,
+    governmentAcres: number,
+    privateAcres: number,
+    plantedTrees: number,
+    maxTreeCapacity: number,
+  ): number | null {
+    // Prefer plantation capacity fill rate when lands exist
+    if (maxTreeCapacity > 0) {
+      return Math.min(
+        100,
+        Math.round((plantedTrees / maxTreeCapacity) * 1000) / 10,
+      );
+    }
+    // Fallback: registered land area vs constituency polygon area
+    if (areaKm2 && areaKm2 > 0) {
+      const landKm2 = acresToKm2(governmentAcres + privateAcres);
+      return Math.min(100, Math.round((landKm2 / areaKm2) * 1000) / 10);
+    }
+    return null;
+  }
+
+  private async attachStats(entry: VidhanSabha): Promise<VidhanSabhaListItem> {
     const plain =
       typeof (entry as any).toObject === 'function'
         ? (entry as any).toObject()
         : { ...(entry as any) };
+
+    const hasBoundary = !!(
+      plain.boundary?.type &&
+      plain.boundary?.coordinates &&
+      Array.isArray(plain.boundary.coordinates) &&
+      plain.boundary.coordinates.length > 0
+    );
+
+    let areaKm2: number | null =
+      plain.areaKm2 != null ? Number(plain.areaKm2) : null;
+    let perimeterKm: number | null =
+      plain.perimeterKm != null ? Number(plain.perimeterKm) : null;
+
+    if (hasBoundary && (areaKm2 == null || perimeterKm == null)) {
+      const metrics = computeBoundaryMetrics(plain.boundary);
+      if (metrics) {
+        areaKm2 = metrics.areaKm2;
+        perimeterKm = metrics.perimeterKm;
+        // Best-effort cache backfill (ignore errors)
+        void this.vidhanSabhaRepository.updateById(String(plain._id), {
+          areaKm2,
+          perimeterKm,
+        } as Partial<VidhanSabhaDocument>);
+      }
+    }
+
     const land = await this.landsService.statsForVidhanSabha(
       plain.vidhanSabhaName,
       String(plain._id),
     );
+    const pendingPlantationRequests = await this.countPendingPlantations(
+      plain.vidhanSabhaName,
+    );
+
     const oxygenKg = Number(plain.totalAnnualOxygenKg || 0);
+    const estimatedOxygenTonsPerYear =
+      Math.round((oxygenKg / 1000) * 100) / 100;
+    // Photosynthesis mass ratio CO₂:O₂ ≈ 44:32
+    const estimatedCo2TonsPerYear =
+      Math.round(((oxygenKg * 44) / 32 / 1000) * 100) / 100;
+
+    const greenCoverPercent = this.computeGreenCoverPercent(
+      areaKm2,
+      land.governmentAreaAcres,
+      land.privateAreaAcres,
+      land.plantedTrees,
+      land.maxTreeCapacity,
+    );
+
     return {
       ...plain,
+      hasBoundary,
+      areaKm2: hasBoundary ? areaKm2 : null,
+      perimeterKm: hasBoundary ? perimeterKm : null,
+      greenCoverPercent,
+      totalLands: land.totalLand,
+      pendingPlantationRequests,
       governmentLandAcres: land.governmentAreaAcres,
       privateLandAcres: land.privateAreaAcres,
       remainingPlantationCapacity: land.remainingPlantationCapacity,
-      estimatedOxygenTonsPerYear:
-        Math.round((oxygenKg / 1000) * 100) / 100,
+      estimatedOxygenTonsPerYear,
+      estimatedCo2TonsPerYear,
+      villageCount: land.villageCount,
     };
   }
 
   async findAll(
     query: VidhanSabhaQueryDto,
-  ): Promise<PaginatedResult<VidhanSabhaWithLandStats>> {
+  ): Promise<PaginatedResult<VidhanSabhaListItem>> {
     const options = PaginationUtil.parse(query);
     const baseFilter: Record<string, unknown> = {};
     if (query.district !== undefined) {
@@ -153,17 +273,17 @@ export class VidhanSabhasService implements OnModuleInit {
     );
 
     const items = await Promise.all(
-      result.items.map((item) => this.attachLandStats(item)),
+      result.items.map((item) => this.attachStats(item)),
     );
     return { items, meta: result.meta };
   }
 
-  async findOne(id: string): Promise<VidhanSabhaWithLandStats> {
+  async findOne(id: string): Promise<VidhanSabhaListItem> {
     const entry = await this.vidhanSabhaRepository.findById(id);
     if (!entry) {
       throw new NotFoundException(`Vidhan Sabha "${id}" not found`);
     }
-    return this.attachLandStats(entry);
+    return this.attachStats(entry);
   }
 
   async update(
@@ -184,11 +304,13 @@ export class VidhanSabhasService implements OnModuleInit {
 
     const patch: Record<string, unknown> = { ...dto };
     if (dto.boundary !== undefined) {
-      const boundary = normalizeBoundaryInput(dto.boundary);
-      if (boundary) {
-        patch.boundary = boundary;
-      } else if (dto.boundary === null || dto.boundary === '') {
+      const geo = this.boundaryPatch(dto.boundary);
+      if (geo.boundary === null) {
         patch.boundary = null;
+        patch.areaKm2 = null;
+        patch.perimeterKm = null;
+      } else if (geo.boundary) {
+        Object.assign(patch, geo);
       } else {
         delete patch.boundary;
       }

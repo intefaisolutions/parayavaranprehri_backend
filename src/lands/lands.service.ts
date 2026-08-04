@@ -431,6 +431,9 @@ export class LandsService {
     totalTrees: number;
     remainingPlantationCapacity: number;
     totalLand: number;
+    villageCount: number;
+    plantedTrees: number;
+    maxTreeCapacity: number;
   }> {
     const or: Record<string, unknown>[] = [{ vidhanSabha }];
     if (vidhanSabhaId && Types.ObjectId.isValid(vidhanSabhaId)) {
@@ -439,7 +442,7 @@ export class LandsService {
     const lands = await this.landModel
       .find({ isDeleted: false, $or: or })
       .select(
-        'ownershipType totalAreaAcres plantedTrees availableCapacity',
+        'ownershipType totalAreaAcres plantedTrees availableCapacity maxTreeCapacity villageOrCity village',
       )
       .lean()
       .exec();
@@ -448,6 +451,9 @@ export class LandsService {
     let privateAreaAcres = 0;
     let totalTrees = 0;
     let remainingPlantationCapacity = 0;
+    let plantedTrees = 0;
+    let maxTreeCapacity = 0;
+    const villages = new Set<string>();
 
     for (const land of lands) {
       const acres = land.totalAreaAcres || 0;
@@ -457,7 +463,13 @@ export class LandsService {
         privateAreaAcres += acres;
       }
       totalTrees += land.plantedTrees || 0;
+      plantedTrees += land.plantedTrees || 0;
       remainingPlantationCapacity += land.availableCapacity || 0;
+      maxTreeCapacity += land.maxTreeCapacity || 0;
+      const village = String(
+        (land as any).villageOrCity || (land as any).village || '',
+      ).trim();
+      if (village) villages.add(village.toLowerCase());
     }
 
     return {
@@ -466,6 +478,9 @@ export class LandsService {
       totalTrees,
       remainingPlantationCapacity,
       totalLand: lands.length,
+      villageCount: villages.size,
+      plantedTrees,
+      maxTreeCapacity,
     };
   }
 }

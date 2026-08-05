@@ -5,11 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model, Types } from 'mongoose';
+import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { GlobalIdentityService } from '../common/services/global-identity.service';
 import {
   normalizeEmail,
   normalizeMobile,
 } from '../common/utils/identity.util';
+import { UsersService } from '../modules/users/users.service';
 import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
 import { CreateMitraDto } from './dto/create-mitra.dto';
 import { UpdateMitraDto } from './dto/update-mitra.dto';
@@ -32,6 +34,7 @@ export class MitrasService {
     @InjectModel(Mitra.name) private readonly mitraModel: Model<MitraDocument>,
     @InjectModel(Tree.name) private readonly treeModel: Model<TreeDocument>,
     private readonly globalIdentity: GlobalIdentityService,
+    private readonly usersService: UsersService,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -142,6 +145,29 @@ export class MitrasService {
     return this.mitraModel
       .findOne({ mobile: normalized, isDeleted: false })
       .exec();
+  }
+
+  /**
+   * Citizen: Mitra profile linked to the logged-in user's phone.
+   * No special mitras:read permission — own profile only.
+   */
+  async findMe(user: JwtPayload): Promise<Mitra> {
+    const account = await this.usersService.findOne(user.sub);
+    const rawPhone =
+      account.phone != null ? String(account.phone) : undefined;
+    const phone =
+      normalizeMobile(rawPhone) ||
+      normalizeMobile((user as JwtPayload & { phone?: string }).phone);
+    if (!phone) {
+      throw new NotFoundException(
+        'No phone on account — cannot resolve Mitra profile',
+      );
+    }
+    const mitra = await this.findByMobile(phone);
+    if (!mitra) {
+      throw new NotFoundException('No Mitra profile for this account');
+    }
+    return mitra;
   }
 
   async update(id: string, dto: UpdateMitraDto): Promise<Mitra> {

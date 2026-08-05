@@ -12,6 +12,10 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  CurrentUser,
+  type JwtPayload,
+} from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -50,6 +54,15 @@ export class MitrasController {
   })
   selfRegister(@Body() dto: CreateMitraDto) {
     return this.mitrasService.selfRegister(dto);
+  }
+
+  @Get('me')
+  @ApiOperation({
+    summary:
+      'Citizen: Mitra profile for the logged-in user (matched by account phone)',
+  })
+  getMe(@CurrentUser() user: JwtPayload) {
+    return this.mitrasService.findMe(user);
   }
 
   @Get()

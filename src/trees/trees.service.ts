@@ -20,6 +20,7 @@ import {
 import { AssignMitraDto } from './dto/assign-mitra.dto';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
+import { oxygenToCo2Kg } from '../common/utils/carbon.util';
 import { Tree, TreeDocument } from './schemas/tree.schema';
 import { computeTreeOxygen } from './utils/oxygen.util';
 
@@ -206,6 +207,35 @@ export class TreesService {
       throw new NotFoundException(`Tree with ID ${id} not found`);
     }
     return tree;
+  }
+
+  /**
+   * Citizen analytics snapshot for a single tree.
+   * Progress: blend of age (years/10 capped) + height (m/5 capped).
+   */
+  async getAnalytics(id: string) {
+    const tree = await this.findOne(id);
+    const oxygenKg = tree.annualOxygenProductionKg ?? 0;
+    const ageYears = tree.treeAgeYears ?? 0;
+    const heightM = Number(tree.height) || 0;
+    const ageScore = Math.min(1, ageYears / 10);
+    const heightScore = Math.min(1, heightM / 5);
+    const progress = Math.round(((ageScore + heightScore) / 2) * 100);
+
+    return {
+      treeId: tree.treeId,
+      species: tree.species || tree.treeName,
+      status: tree.status,
+      plantedDate: tree.plantedDate,
+      height: tree.height ?? null,
+      oxygenKg,
+      co2Kg: oxygenToCo2Kg(oxygenKg),
+      monthlyPhotos: tree.image ? [tree.image] : [],
+      progress,
+      vehicleNumber: tree.vehicleNumber || null,
+      vidhanSabha: tree.vidhanSabha || null,
+      treeAgeYears: ageYears,
+    };
   }
 
   async findByUserMobile(mobile: string): Promise<any[]> {

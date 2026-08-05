@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Patch, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Put,
+  Delete,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { SystemRole } from '../common/enums/role.enum';
 import { TreesService } from './trees.service';
@@ -6,7 +16,8 @@ import { AssignMitraDto } from './dto/assign-mitra.dto';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
 
-@Controller('trees')
+@ApiTags('Trees')
+@Controller({ path: 'trees', version: '1' })
 export class TreesController {
   constructor(private readonly treesService: TreesService) {}
 
@@ -19,10 +30,19 @@ export class TreesController {
   findAll() {
     return this.treesService.findAll();
   }
-  
+
   @Get('user/:mobile')
   findByUserMobile(@Param('mobile') mobile: string) {
     return this.treesService.findByUserMobile(mobile);
+  }
+
+  @Get(':id/analytics')
+  @ApiOperation({
+    summary:
+      'Tree analytics: species, height, CO₂/O₂, monthly photos, progress %',
+  })
+  getAnalytics(@Param('id') id: string) {
+    return this.treesService.getAnalytics(id);
   }
 
   @Get(':id')

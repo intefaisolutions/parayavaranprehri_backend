@@ -5,7 +5,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Connection, Model } from 'mongoose';
+import { Connection, Model, Types } from 'mongoose';
 import { JwtPayload } from '../common/decorators/current-user.decorator';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
 import { GlobalIdentityService } from '../common/services/global-identity.service';
@@ -13,11 +13,13 @@ import {
   normalizeEmail,
   normalizeMobile,
 } from '../common/utils/identity.util';
+import { oxygenToCo2Kg } from '../common/utils/carbon.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
 import {
   User,
   UserDocument,
 } from '../modules/users/schemas/user.schema';
+import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { PersonQueryDto } from './dto/person-query.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
@@ -57,6 +59,7 @@ export class PersonsService implements OnModuleInit {
     private readonly personRepository: PersonRepository,
     private readonly globalIdentity: GlobalIdentityService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(Tree.name) private readonly treeModel: Model<TreeDocument>,
     @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -572,6 +575,173 @@ export class PersonsService implements OnModuleInit {
   async findByMobile(mobile: string): Promise<Person | null> {
     const normalized = normalizeMobile(mobile) ?? mobile;
     return this.personRepository.findByMobile(normalized);
+  }
+
+  /**
+   * Resolve the Person record for the logged-in user (soft-link by phone/email).
+   */
+  async findMe(user: JwtPayload): Promise<Record<string, unknown>> {
+    const person = await this.resolvePersonForUser(user);
+    const stats = await this.computePersonStats(person);
+    const plain = this.toPlain(person);
+    return {
+      ...plain,
+      personId: plain.personId,
+      name: plain.name,
+      mobile: plain.mobile,
+      address: plain.address ?? null,
+      city: plain.city ?? null,
+      state: plain.state ?? null,
+      vidhanSabha: stats.vidhanSabha,
+      linkedVehicles: stats.linkedVehicles,
+      treesAssigned: stats.treesAssigned,
+      co2OffsetKg: stats.co2OffsetKg,
+      joinedAt: plain.registrationDate ?? plain.createdAt ?? null,
+    };
+  }
+
+  async getMyStats(user: JwtPayload): Promise<{
+    personId: string;
+    name: string;
+    mobile: string;
+    address: string | null;
+    vidhanSabha: string | null;
+    linkedVehicles: number;
+    treesAssigned: number;
+    co2OffsetKg: number;
+    joinedAt: Date | string | null;
+  }> {
+    const person = await this.resolvePersonForUser(user);
+    const stats = await this.computePersonStats(person);
+    const plain = this.toPlain(person);
+    return {
+      personId: String(plain.personId || ''),
+      name: String(plain.name || ''),
+      mobile: String(plain.mobile || ''),
+      address: (plain.address as string) || null,
+      vidhanSabha: stats.vidhanSabha,
+      linkedVehicles: stats.linkedVehicles,
+      treesAssigned: stats.treesAssigned,
+      co2OffsetKg: stats.co2OffsetKg,
+      joinedAt: (plain.registrationDate as Date) ??
+        (plain.createdAt as Date) ??
+        null,
+    };
+  }
+
+  async resolvePersonForUser(user: JwtPayload): Promise<PersonDocument> {
+    const account = await this.userModel
+      .findById(user.sub)
+      .select('phone email')
+      .lean()
+      .exec();
+
+    const mobile =
+      normalizeMobile(account?.phone) ||
+      normalizeMobile((user as JwtPayload & { phone?: string }).phone);
+    const email =
+      normalizeEmail(account?.email) || normalizeEmail(user.email);
+
+    let person: PersonDocument | null = null;
+    if (mobile) {
+      person = await this.personRepository.findByMobile(mobile);
+    }
+    if (!person && email) {
+      person = await this.personRepository.findByEmail(email);
+    }
+    if (!person) {
+      throw new NotFoundException(
+        'No Person profile linked to this account. Complete person registration first.',
+      );
+    }
+    return person;
+  }
+
+  private async computePersonStats(person: Person | PersonDocument): Promise<{
+    linkedVehicles: number;
+    treesAssigned: number;
+    co2OffsetKg: number;
+    vidhanSabha: string | null;
+  }> {
+    const id = String((person as PersonDocument)._id);
+    const mobile = normalizeMobile(person.mobile) ?? person.mobile;
+
+    const insurance = await this.fetchInsuranceVehicles(mobile);
+    if (insurance.ok) {
+      await this.personRepository.updateById(id, {
+        vehiclesLinked: insurance.vehiclesLinked,
+        insuranceVerified: insurance.verified,
+        insuranceCheckedAt: new Date(),
+      } as Partial<PersonDocument>);
+    }
+
+    const treeFilter: Record<string, unknown> = {
+      $or: [
+        { personId: new Types.ObjectId(id) },
+        ...(mobile ? [{ mobile }] : []),
+      ],
+    };
+
+    const [agg] = await this.treeModel
+      .aggregate<{
+        treesAssigned: number;
+        totalOxygenKg: number;
+        vidhanSabha: string | null;
+      }>([
+        { $match: treeFilter },
+        {
+          $group: {
+            _id: null,
+            treesAssigned: { $sum: 1 },
+            totalOxygenKg: {
+              $sum: { $ifNull: ['$annualOxygenProductionKg', 0] },
+            },
+            vidhanSabhas: {
+              $push: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ['$vidhanSabha', null] },
+                      { $ne: ['$vidhanSabha', ''] },
+                    ],
+                  },
+                  '$vidhanSabha',
+                  '$$REMOVE',
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            treesAssigned: 1,
+            totalOxygenKg: 1,
+            vidhanSabha: {
+              $arrayElemAt: ['$vidhanSabhas', 0],
+            },
+          },
+        },
+      ])
+      .exec();
+
+    const treesAssigned = agg?.treesAssigned ?? 0;
+    const totalOxygenKg = agg?.totalOxygenKg ?? 0;
+
+    // Keep denormalized counter roughly in sync for admin list views
+    if (person.treesAssigned !== treesAssigned) {
+      await this.personRepository.updateById(id, {
+        treesAssigned,
+      } as Partial<PersonDocument>);
+    }
+
+    return {
+      linkedVehicles: insurance.ok
+        ? insurance.vehiclesLinked
+        : person.vehiclesLinked || 0,
+      treesAssigned,
+      co2OffsetKg: oxygenToCo2Kg(totalOxygenKg),
+      vidhanSabha: agg?.vidhanSabha ?? null,
+    };
   }
 
   async update(

@@ -76,6 +76,24 @@ export class PersonsController {
     return this.personsService.listLinkedVehicles();
   }
 
+  @Get('me')
+  @ApiOperation({
+    summary:
+      'Citizen: Person profile linked to the logged-in user (by phone/email)',
+  })
+  getMe(@CurrentUser() user: JwtPayload) {
+    return this.personsService.findMe(user);
+  }
+
+  @Get('me/stats')
+  @ApiOperation({
+    summary:
+      'Citizen: aggregates — trees, CO₂ offset, linked vehicles, joined date',
+  })
+  getMyStats(@CurrentUser() user: JwtPayload) {
+    return this.personsService.getMyStats(user);
+  }
+
   @Get(':id/vehicles')
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.READ}`)
   @ApiOperation({

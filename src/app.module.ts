@@ -52,6 +52,8 @@ import { GeoModule } from './geo/geo.module';
 import { MasterGeographyModule } from './master-geography/master-geography.module';
 import { TreeMastersModule } from './tree-masters/tree-masters.module';
 import { PlantationsModule } from './plantations/plantations.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { MissionProgressModule } from './mission-progress/mission-progress.module';
 
 @Module({
   imports: [
@@ -79,6 +81,8 @@ import { PlantationsModule } from './plantations/plantations.module';
     GamificationModule,
     PersonsModule,
     TreesModule,
+    LeaderboardModule,
+    MissionProgressModule,
     LandsModule,
     MasterGeographyModule,
     GeoModule,

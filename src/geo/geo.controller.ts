@@ -29,6 +29,9 @@ const GEO_ROLES = [
   SystemRole.GOVERNMENT_OFFICER,
 ] as const;
 
+/** Staff + citizen app (register / profile GPS). */
+const GEO_CITIZEN_ROLES = [...GEO_ROLES, SystemRole.CUSTOMER] as const;
+
 @ApiTags('Geo')
 @ApiBearerAuth()
 @UseGuards(RolesGuard)
@@ -59,9 +62,10 @@ export class GeoController {
   }
 
   @Get('constituencies')
-  @Roles(...GEO_ROLES)
+  @Roles(...GEO_CITIZEN_ROLES)
   @ApiOperation({
-    summary: 'Master catalog: Vidhan Sabha / AC list for a district',
+    summary:
+      'Master catalog: Vidhan Sabha / AC list for a district (staff + customer)',
   })
   listConstituencies(@Query() query: ConstituenciesQueryDto) {
     return this.geoService.listConstituencies(
@@ -81,10 +85,10 @@ export class GeoController {
   }
 
   @Post('reverse')
-  @Roles(...GEO_ROLES)
+  @Roles(...GEO_CITIZEN_ROLES)
   @ApiOperation({
     summary:
-      'Reverse-geocode lat/lng (OSM) and auto-detect Vidhan Sabha from polygon',
+      'Reverse-geocode lat/lng (OSM) and auto-detect Vidhan Sabha (staff + customer)',
   })
   reverse(@Body() dto: ReverseGeocodeDto) {
     return this.geoService.reverse(dto);

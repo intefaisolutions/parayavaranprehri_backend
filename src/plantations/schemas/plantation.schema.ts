@@ -48,6 +48,17 @@ export class Plantation extends BaseSchema {
   @Prop({ type: Types.ObjectId, ref: 'Person', default: null })
   personId?: Types.ObjectId | null;
 
+  /** Selected vehicle registration (owner may have multiple) */
+  @Prop({ trim: true, index: true })
+  vehicleNumber?: string;
+
+  @Prop({ trim: true })
+  policyNumber?: string;
+
+  /** ACTIVE | EXPIRED | NOT_INSURED — only ACTIVE may proceed to plant */
+  @Prop({ trim: true, uppercase: true, index: true })
+  insuranceStatus?: string;
+
   @Prop({ type: Date, required: true })
   plantationDate!: Date;
 

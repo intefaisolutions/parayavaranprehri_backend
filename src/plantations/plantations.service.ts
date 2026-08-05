@@ -67,9 +67,27 @@ export class PlantationsService {
     return master;
   }
 
+  private assertActivePolicy(dto: {
+    vehicleNumber?: string;
+    insuranceStatus?: string;
+  }) {
+    if (!dto.vehicleNumber?.trim()) {
+      throw new BadRequestException(
+        'Select a vehicle for the planter. Tree plantation requires a linked vehicle.',
+      );
+    }
+    const status = String(dto.insuranceStatus || '').toUpperCase();
+    if (status !== 'ACTIVE') {
+      throw new BadRequestException(
+        'Selected vehicle does not have an Active policy. Only Active-policy vehicles can plant trees.',
+      );
+    }
+  }
+
   async create(dto: CreatePlantationDto): Promise<Plantation> {
     const master = await this.resolveTreeMaster(dto.treeMasterId);
     const land = await this.landsService.findOne(dto.landId);
+    this.assertActivePolicy(dto);
 
     const plantationId = await this.generateId();
     const created = new this.plantationModel({
@@ -85,6 +103,11 @@ export class PlantationsService {
       userName: dto.userName,
       mobile: dto.mobile,
       personId: dto.personId ? new Types.ObjectId(dto.personId) : null,
+      vehicleNumber: dto.vehicleNumber,
+      policyNumber: dto.policyNumber,
+      insuranceStatus: dto.insuranceStatus
+        ? String(dto.insuranceStatus).toUpperCase()
+        : undefined,
       plantationDate: new Date(dto.plantationDate),
       count: Math.floor(dto.count),
       images: dto.images || [],
@@ -168,6 +191,15 @@ export class PlantationsService {
     }
     if (dto.count != null) patch.count = Math.floor(dto.count);
     if (dto.personId) patch.personId = new Types.ObjectId(dto.personId);
+    if (dto.insuranceStatus) {
+      patch.insuranceStatus = String(dto.insuranceStatus).toUpperCase();
+    }
+    this.assertActivePolicy({
+      vehicleNumber:
+        dto.vehicleNumber ?? existing.vehicleNumber ?? undefined,
+      insuranceStatus:
+        dto.insuranceStatus ?? existing.insuranceStatus ?? undefined,
+    });
 
     // Re-submit after edit
     patch.status = PlantationStatus.PENDING;

@@ -31,6 +31,18 @@ export class CreatePlantationDto {
   @IsString()
   personId?: string;
 
+  @IsOptional()
+  @IsString()
+  vehicleNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  policyNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  insuranceStatus?: string;
+
   @IsDateString()
   plantationDate!: string;
 

@@ -10,6 +10,8 @@ export enum AchievementType {
   RECORD = 'record',
   DOCTORATE = 'doctorate',
   INTERNATIONAL = 'international',
+  MILESTONE = 'milestone',
+  CERTIFICATION = 'certification',
 }
 
 @Schema({ timestamps: true, collection: 'journey_achievements' })

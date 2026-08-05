@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MitrasModule } from '../mitras/mitras.module';
 import { UsersModule } from '../modules/users/users.module';
+import { TreesModule } from '../trees/trees.module';
 import { MaintenanceLogsController } from './maintenance-logs.controller';
 import { MaintenanceLogsService } from './maintenance-logs.service';
 import {
@@ -16,6 +17,7 @@ import {
     ]),
     UsersModule,
     MitrasModule,
+    TreesModule,
   ],
   controllers: [MaintenanceLogsController],
   providers: [MaintenanceLogsService],

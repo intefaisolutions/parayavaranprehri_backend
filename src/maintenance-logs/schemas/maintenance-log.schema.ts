@@ -6,11 +6,12 @@ export type MaintenanceLogDocument = HydratedDocument<MaintenanceLog>;
 
 export enum MaintenanceActivity {
   WATERING = 'Watering',
-  TREE_GUARD = 'Tree Guard',
   FERTILIZER = 'Fertilizer',
   PRUNING = 'Pruning',
-  REPLACED = 'Replaced',
-  SOIL = 'Soil',
+  WEEDING = 'Weeding',
+  PEST_CONTROL = 'Pest Control',
+  MULCHING = 'Mulching',
+  INSPECTION = 'Inspection',
   OTHER = 'Other',
 }
 

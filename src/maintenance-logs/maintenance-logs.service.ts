@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { JwtPayload } from '../common/decorators/current-user.decorator';
 import { SystemRole } from '../common/enums/role.enum';
 import { MitrasService } from '../mitras/mitras.service';
 import { UsersService } from '../modules/users/users.service';
+import { TreesService } from '../trees/trees.service';
 import { CreateMaintenanceLogDto } from './dto/create-maintenance-log.dto';
 import {
   MaintenanceLog,
@@ -18,9 +23,17 @@ export class MaintenanceLogsService {
     private readonly logModel: Model<MaintenanceLogDocument>,
     private readonly usersService: UsersService,
     private readonly mitrasService: MitrasService,
+    private readonly treesService: TreesService,
   ) {}
 
   async create(dto: CreateMaintenanceLogDto, user: JwtPayload) {
+    const tree = await this.treesService.findByTreeId(dto.treeCode);
+    if (!tree) {
+      throw new BadRequestException(
+        `Tree code "${dto.treeCode}" was not found. Select a tree from Tree Management.`,
+      );
+    }
+
     const me = (await this.usersService.findOne(user.sub)) as {
       phone?: string;
       firstName?: string;
@@ -34,6 +47,7 @@ export class MaintenanceLogsService {
 
     return this.logModel.create({
       ...dto,
+      treeCode: tree.treeId,
       mitraId,
       createdByUserId: user.sub,
       createdByName: [me.firstName, me.lastName].filter(Boolean).join(' '),

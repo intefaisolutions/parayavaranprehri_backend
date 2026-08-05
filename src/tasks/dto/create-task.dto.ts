@@ -6,7 +6,12 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { TaskPriority, TaskStatus, TaskType } from '../schemas/task.schema';
+import {
+  TaskPriority,
+  TaskStatus,
+  TaskTreeAssignment,
+  TaskType,
+} from '../schemas/task.schema';
 
 export class CreateTaskDto {
   @IsString()
@@ -27,15 +32,35 @@ export class CreateTaskDto {
 
   @IsString()
   @IsOptional()
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  district?: string;
+
+  @IsString()
+  @IsOptional()
   vidhanSabha?: string;
 
   @IsString()
   @IsOptional()
-  zone?: string;
+  landId?: string;
 
   @IsString()
   @IsOptional()
-  sector?: string;
+  landName?: string;
+
+  @IsEnum(TaskTreeAssignment)
+  @IsOptional()
+  treeAssignment?: TaskTreeAssignment;
+
+  @IsString()
+  @IsOptional()
+  assignedTreeId?: string;
+
+  @IsString()
+  @IsOptional()
+  assignedTreeName?: string;
 
   @Type(() => String)
   @IsDateString()

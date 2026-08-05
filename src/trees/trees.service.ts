@@ -201,6 +201,12 @@ export class TreesService {
     return this.treeModel.find().sort({ createdAt: -1 }).exec();
   }
 
+  async findByTreeId(treeId: string): Promise<Tree | null> {
+    return this.treeModel
+      .findOne({ treeId: String(treeId).trim() })
+      .exec();
+  }
+
   async findOne(id: string): Promise<Tree> {
     const tree = await this.treeModel.findById(id).exec();
     if (!tree) {

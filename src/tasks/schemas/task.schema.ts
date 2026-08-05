@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from '../../common/schemas/base.schema';
 
 export type TaskDocument = HydratedDocument<Task>;
@@ -22,6 +22,12 @@ export enum TaskStatus {
   COMPLETED = 'Completed',
 }
 
+export enum TaskTreeAssignment {
+  NONE = 'NONE',
+  ALL = 'ALL',
+  SINGLE = 'SINGLE',
+}
+
 @Schema({ timestamps: true, collection: 'tasks' })
 export class Task extends BaseSchema {
   @Prop({ required: true, trim: true })
@@ -37,13 +43,31 @@ export class Task extends BaseSchema {
   assignedMitra?: string;
 
   @Prop({ trim: true, index: true })
+  state?: string;
+
+  @Prop({ trim: true, index: true })
+  district?: string;
+
+  @Prop({ trim: true, index: true })
   vidhanSabha?: string;
 
-  @Prop({ trim: true })
-  zone?: string;
+  @Prop({ type: Types.ObjectId, ref: 'Land', default: null })
+  landId?: Types.ObjectId | null;
 
   @Prop({ trim: true })
-  sector?: string;
+  landName?: string;
+
+  @Prop({
+    enum: TaskTreeAssignment,
+    default: TaskTreeAssignment.NONE,
+  })
+  treeAssignment!: TaskTreeAssignment;
+
+  @Prop({ type: Types.ObjectId, ref: 'Tree', default: null })
+  assignedTreeId?: Types.ObjectId | null;
+
+  @Prop({ trim: true })
+  assignedTreeName?: string;
 
   @Prop({ type: Date, required: true })
   dueDate!: Date;
@@ -60,7 +84,9 @@ export const TaskSchema = SchemaFactory.createForClass(Task);
 TaskSchema.index({
   taskTitle: 'text',
   assignedMitra: 'text',
+  state: 'text',
+  district: 'text',
   vidhanSabha: 'text',
-  zone: 'text',
-  sector: 'text',
+  landName: 'text',
+  assignedTreeName: 'text',
 });

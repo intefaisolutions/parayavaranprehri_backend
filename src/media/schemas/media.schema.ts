@@ -12,11 +12,18 @@ export enum MediaType {
 }
 
 export enum MediaUsageModule {
+  HOME_BANNER = 'Home Banner',
   NEWS = 'News',
+  EVENTS = 'Events',
+  PLANTATION = 'Plantation',
+  MAINTENANCE = 'Maintenance',
   GALLERY = 'Gallery',
-  PERSON = 'Person',
-  VEHICLE = 'Vehicle',
-  MAP = 'Map',
+  CAMPAIGNS = 'Campaigns',
+  ACHIEVEMENTS = 'Achievements',
+  CITIZEN_APP = 'Citizen App',
+  ABOUT_US = 'About Us',
+  CERTIFICATES = 'Certificates',
+  VOLUNTEERS = 'Volunteers',
 }
 
 export enum MediaStatus {

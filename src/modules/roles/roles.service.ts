@@ -94,7 +94,9 @@ export class RolesService implements OnModuleInit {
   async create(dto: CreateRoleDto): Promise<RoleDocument> {
     const existing = await this.roleRepository.findByName(dto.name);
     if (existing) {
-      throw new ConflictException(`Role "${dto.name}" already exists`);
+      throw new ConflictException(
+        `Role "${dto.name}" already exists. Open Role & Permissions and edit that role instead of creating it again.`,
+      );
     }
 
     const permissions = await this.permissionRepository.findByKeys(

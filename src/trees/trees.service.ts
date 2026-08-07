@@ -245,7 +245,19 @@ export class TreesService {
   }
 
   async findByUserMobile(mobile: string): Promise<any[]> {
-    const trees = await this.treeModel.find({ mobile }).exec();
+    const digits = String(mobile || '').replace(/\D/g, '');
+    const last10 = digits.slice(-10);
+    const variants = Array.from(
+      new Set(
+        [mobile, digits, last10, last10 ? `91${last10}` : '', last10 ? `+91${last10}` : '']
+          .map(v => String(v || '').trim())
+          .filter(Boolean),
+      ),
+    );
+
+    const trees = await this.treeModel
+      .find({ mobile: { $in: variants } })
+      .exec();
 
     const grouped = trees.reduce(
       (acc, tree) => {

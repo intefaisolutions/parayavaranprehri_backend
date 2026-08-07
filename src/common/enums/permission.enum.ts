@@ -29,6 +29,8 @@ export enum PermissionResource {
   CERTIFICATES = 'certificates',
   MITRAS = 'mitras',
   RASHI_TREES = 'rashi_trees',
+  RASHI_PLANT_REQUESTS = 'rashi_plant_requests',
+
   NOTIFICATIONS = 'notifications',
   REPORTS = 'reports',
   CMS = 'cms',

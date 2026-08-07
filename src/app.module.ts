@@ -43,6 +43,8 @@ import { SettingsModule } from './settings/settings.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { RashiTreesModule } from './rashi-trees/rashi-trees.module';
+import { RashiPlantRequestsModule } from './rashi-plant-requests/rashi-plant-requests.module';
+
 import { JourneyModule } from './journey/journey.module';
 import { MitraEventsModule } from './mitra-events/mitra-events.module';
 import { FieldIssuesModule } from './field-issues/field-issues.module';
@@ -107,6 +109,7 @@ import { MissionProgressModule } from './mission-progress/mission-progress.modul
     AuditLogsModule,
     UploadsModule,
     RashiTreesModule,
+    RashiPlantRequestsModule,
     JourneyModule,
     MitraEventsModule,
     FieldIssuesModule,

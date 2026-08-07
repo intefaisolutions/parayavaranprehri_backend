@@ -40,7 +40,11 @@ export class UploadsController {
     summary:
       'Upload an image/PDF to S3. Returns permanent `url` (store in DB) and temporary `signedUrl` (use for preview).',
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
+    }),
+  )
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Query('category') category?: string,

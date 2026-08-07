@@ -175,10 +175,23 @@ export class UsersService {
       dto.phone !== undefined
         ? normalizeMobile(dto.phone)
         : normalizeMobile(existing.phone);
-    const nextEmail = normalizeEmail(existing.email);
+    const nextEmail =
+      dto.email !== undefined
+        ? normalizeEmail(dto.email)
+        : normalizeEmail(existing.email);
+
+    if (dto.email !== undefined) {
+      if (!nextEmail) {
+        throw new ConflictException('A valid email address is required');
+      }
+      updateData.email = nextEmail;
+    }
 
     if (dto.phone !== undefined) {
       updateData.phone = nextPhone;
+    }
+
+    if (dto.email !== undefined || dto.phone !== undefined) {
       await this.globalIdentity.assertAvailable({
         as: 'user',
         mobile: nextPhone,

@@ -60,7 +60,8 @@ export class UsersController {
 
   @Patch('me')
   @ApiOperation({
-    summary: 'Update own profile (name, phone, avatar, district, state)',
+    summary:
+      'Update own profile (name, email, phone, avatar, district, state)',
   })
   updateMe(
     @CurrentUser() user: JwtPayload,

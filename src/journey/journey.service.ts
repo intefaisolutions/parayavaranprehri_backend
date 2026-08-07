@@ -1,6 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import {
+  resequenceDisplayOrdersIfDuplicated,
+  resolveUniqueDisplayOrder,
+} from '../common/utils/display-order.util';
 import { CreateJourneyAchievementDto } from './dto/create-journey-achievement.dto';
 import { UpdateJourneyAchievementDto } from './dto/update-journey-achievement.dto';
 import { UpdateJourneyProfileDto } from './dto/update-journey-profile.dto';
@@ -14,13 +23,26 @@ import {
 } from './schemas/journey-profile.schema';
 
 @Injectable()
-export class JourneyService {
+export class JourneyService implements OnModuleInit {
+  private readonly logger = new Logger(JourneyService.name);
+
   constructor(
     @InjectModel(JourneyAchievement.name)
     private readonly achievementModel: Model<JourneyAchievementDocument>,
     @InjectModel(JourneyProfile.name)
     private readonly profileModel: Model<JourneyProfileDocument>,
   ) {}
+
+  async onModuleInit() {
+    const changed = await resequenceDisplayOrdersIfDuplicated(
+      this.achievementModel as Model<any>,
+    );
+    if (changed > 0) {
+      this.logger.log(
+        `Normalized journey achievement displayOrder for ${changed} rows`,
+      );
+    }
+  }
 
   async getPublicTimeline() {
     const profile = await this.getOrCreateProfile();
@@ -95,7 +117,12 @@ export class JourneyService {
   }
 
   async createAchievement(dto: CreateJourneyAchievementDto) {
-    return this.achievementModel.create(dto);
+    const displayOrder = await resolveUniqueDisplayOrder(
+      this.achievementModel as Model<any>,
+      dto.displayOrder,
+      { label: 'Display order' },
+    );
+    return this.achievementModel.create({ ...dto, displayOrder });
   }
 
   async findAchievement(id: string) {
@@ -109,8 +136,16 @@ export class JourneyService {
   }
 
   async updateAchievement(id: string, dto: UpdateJourneyAchievementDto) {
+    const payload: UpdateJourneyAchievementDto = { ...dto };
+    if (dto.displayOrder !== undefined) {
+      payload.displayOrder = await resolveUniqueDisplayOrder(
+        this.achievementModel as Model<any>,
+        dto.displayOrder,
+        { excludeId: id, label: 'Display order' },
+      );
+    }
     const updated = await this.achievementModel
-      .findOneAndUpdate({ _id: id, isDeleted: false }, dto, { new: true })
+      .findOneAndUpdate({ _id: id, isDeleted: false }, payload, { new: true })
       .exec();
     if (!updated) {
       throw new NotFoundException(`Journey achievement "${id}" not found`);

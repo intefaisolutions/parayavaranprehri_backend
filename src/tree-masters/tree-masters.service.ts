@@ -1,10 +1,16 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
+import {
+  resequenceDisplayOrdersIfDuplicated,
+  resolveUniqueDisplayOrder,
+} from '../common/utils/display-order.util';
 import { CreateTreeMasterDto } from './dto/create-tree-master.dto';
 import { TreeMasterQueryDto } from './dto/tree-master-query.dto';
 import { UpdateTreeMasterDto } from './dto/update-tree-master.dto';
@@ -15,12 +21,25 @@ import {
 } from './schemas/tree-master.schema';
 
 @Injectable()
-export class TreeMastersService {
+export class TreeMastersService implements OnModuleInit {
+  private readonly logger = new Logger(TreeMastersService.name);
+
   constructor(
     @InjectModel(TreeMaster.name)
     private readonly treeMasterModel: Model<TreeMasterDocument>,
     @InjectConnection() private readonly connection: Connection,
   ) {}
+
+  async onModuleInit() {
+    const changed = await resequenceDisplayOrdersIfDuplicated(
+      this.treeMasterModel as Model<any>,
+    );
+    if (changed > 0) {
+      this.logger.log(
+        `Normalized tree master displayOrder for ${changed} rows`,
+      );
+    }
+  }
 
   private async generateId(): Promise<string> {
     const result = await this.connection.collection('counters').findOneAndUpdate(
@@ -42,6 +61,11 @@ export class TreeMastersService {
     }
 
     const treeMasterId = await this.generateId();
+    const displayOrder = await resolveUniqueDisplayOrder(
+      this.treeMasterModel as Model<any>,
+      dto.displayOrder,
+      { label: 'Display order' },
+    );
     const created = new this.treeMasterModel({
       ...dto,
       name,
@@ -51,7 +75,7 @@ export class TreeMastersService {
       co2RateKgPerYear: dto.co2RateKgPerYear ?? 0,
       availability: dto.availability ?? TreeAvailability.AVAILABLE,
       isActive: dto.isActive ?? true,
-      displayOrder: dto.displayOrder ?? 0,
+      displayOrder,
       benefits: dto.benefits || [],
     });
     return created.save();
@@ -113,18 +137,23 @@ export class TreeMastersService {
       }
     }
 
+    const payload: Record<string, unknown> = {
+      ...dto,
+      ...(dto.name ? { name: dto.name.trim() } : {}),
+      ...(dto.species !== undefined
+        ? { species: dto.species?.trim() || undefined }
+        : {}),
+    };
+    if (dto.displayOrder !== undefined) {
+      payload.displayOrder = await resolveUniqueDisplayOrder(
+        this.treeMasterModel as Model<any>,
+        dto.displayOrder,
+        { excludeId: id, label: 'Display order' },
+      );
+    }
+
     const updated = await this.treeMasterModel
-      .findOneAndUpdate(
-        { _id: id, isDeleted: false },
-        {
-          ...dto,
-          ...(dto.name ? { name: dto.name.trim() } : {}),
-          ...(dto.species !== undefined
-            ? { species: dto.species?.trim() || undefined }
-            : {}),
-        },
-        { new: true },
-      )
+      .findOneAndUpdate({ _id: id, isDeleted: false }, payload, { new: true })
       .exec();
     if (!updated) throw new NotFoundException(`Tree Master "${id}" not found`);
     return updated;

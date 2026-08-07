@@ -18,6 +18,7 @@ export class Leader extends BaseSchema {
   @Prop({ trim: true })
   photo?: string;
 
+  /** Unique among non-deleted leaders (enforced in service + startup resequence). */
   @Prop({ default: 0, index: true })
   displayOrder!: number;
 

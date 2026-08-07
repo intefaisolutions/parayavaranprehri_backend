@@ -24,6 +24,7 @@ export const updateUserSchema = createUserSchema
 export const updateMeSchema = z.object({
   firstName: z.string().min(2).max(50).optional(),
   lastName: z.string().min(2).max(50).optional(),
+  email: z.string().email().optional(),
   phone: z.string().min(10).max(15).optional(),
   avatar: z.string().url().optional().or(z.literal('')),
   district: z.string().optional(),

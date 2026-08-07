@@ -4,7 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
+import { resolveUniqueDisplayOrder } from '../common/utils/display-order.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
 import { CreateRashiTreeDto } from './dto/create-rashi-tree.dto';
 import { RashiTreeQueryDto } from './dto/rashi-tree-query.dto';
@@ -45,7 +48,11 @@ export interface PublicRashiTreeResponse {
 
 @Injectable()
 export class RashiTreesService {
-  constructor(private readonly rashiTreeRepository: RashiTreeRepository) {}
+  constructor(
+    private readonly rashiTreeRepository: RashiTreeRepository,
+    @InjectModel(RashiTree.name)
+    private readonly rashiTreeModel: Model<RashiTreeDocument>,
+  ) {}
 
   private toTreeItem(entry: RashiTree): PublicRashiTreeItem {
     return {
@@ -91,7 +98,18 @@ export class RashiTreesService {
         `"${dto.recommendedTree}" is already recommended for ${dto.rashiName}. Choose a different tree.`,
       );
     }
-    return this.rashiTreeRepository.create(dto as Partial<RashiTreeDocument>);
+    const displayOrder = await resolveUniqueDisplayOrder(
+      this.rashiTreeModel as Model<any>,
+      dto.displayOrder,
+      {
+        baseFilter: { zodiacNumber: dto.zodiacNumber },
+        label: 'Display order',
+      },
+    );
+    return this.rashiTreeRepository.create({
+      ...dto,
+      displayOrder,
+    } as Partial<RashiTreeDocument>);
   }
 
   async findAll(
@@ -138,10 +156,22 @@ export class RashiTreesService {
       );
     }
 
-    const updated = await this.rashiTreeRepository.updateById(
-      id,
-      dto as Partial<RashiTreeDocument>,
-    );
+    const payload: Partial<RashiTreeDocument> = {
+      ...(dto as Partial<RashiTreeDocument>),
+    };
+    if (dto.displayOrder !== undefined) {
+      payload.displayOrder = await resolveUniqueDisplayOrder(
+        this.rashiTreeModel as Model<any>,
+        dto.displayOrder,
+        {
+          excludeId: id,
+          baseFilter: { zodiacNumber },
+          label: 'Display order',
+        },
+      );
+    }
+
+    const updated = await this.rashiTreeRepository.updateById(id, payload);
     if (!updated) {
       throw new NotFoundException(`Rashi tree entry "${id}" not found`);
     }

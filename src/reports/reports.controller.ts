@@ -7,11 +7,13 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -48,6 +50,23 @@ export class ReportsController {
   @ApiOperation({ summary: 'List Reports (paginated, searchable, sortable)' })
   findAll(@Query() query: ReportQueryDto) {
     return this.reportsService.findAll(query);
+  }
+
+  @Get(':id/download')
+  @ApiBearerAuth()
+  @Permissions(`${PermissionResource.REPORTS}:${PermissionAction.READ}`)
+  @ApiOperation({
+    summary: 'Download a generated Report file (PDF or CSV/Excel)',
+  })
+  async download(@Param('id') id: string, @Res() res: Response) {
+    const file = await this.reportsService.buildDownload(id);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${file.filename}"`,
+    );
+    res.setHeader('Content-Length', String(file.buffer.length));
+    res.send(file.buffer);
   }
 
   @Get(':id')

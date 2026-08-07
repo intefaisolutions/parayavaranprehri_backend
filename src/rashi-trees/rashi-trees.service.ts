@@ -13,10 +13,26 @@ import { RashiTreeRepository } from './repositories/rashi-tree.repository';
 import { RashiTree, RashiTreeDocument } from './schemas/rashi-tree.schema';
 import { getZodiacFromDate } from './utils/zodiac.util';
 
+export interface PublicRashiTreeItem {
+  tree: string;
+  scientificName?: string;
+  localName?: string;
+  description?: string;
+  benefits: string[];
+  careInstructions?: string;
+  image?: string;
+  galleryImages: string[];
+  displayOrder?: number;
+}
+
+/** Public lookup — supports multiple trees per Rashi. */
 export interface PublicRashiTreeResponse {
   rashi: string;
   rashiHindi: string;
   zodiacNumber: number;
+  /** All recommended trees for this Rashi (sorted by displayOrder). */
+  trees: PublicRashiTreeItem[];
+  /** Legacy single-tree fields (first / primary recommendation). */
   tree: string;
   scientificName?: string;
   localName?: string;
@@ -31,11 +47,8 @@ export interface PublicRashiTreeResponse {
 export class RashiTreesService {
   constructor(private readonly rashiTreeRepository: RashiTreeRepository) {}
 
-  private toPublicResponse(entry: RashiTree): PublicRashiTreeResponse {
+  private toTreeItem(entry: RashiTree): PublicRashiTreeItem {
     return {
-      rashi: entry.rashiName,
-      rashiHindi: entry.rashiNameHindi,
-      zodiacNumber: entry.zodiacNumber,
       tree: entry.recommendedTree,
       scientificName: entry.scientificName,
       localName: entry.localName,
@@ -44,17 +57,38 @@ export class RashiTreesService {
       careInstructions: entry.careInstructions,
       image: entry.image,
       galleryImages: entry.galleryImages ?? [],
+      displayOrder: entry.displayOrder,
+    };
+  }
+
+  private toPublicResponse(entries: RashiTree[]): PublicRashiTreeResponse {
+    const primary = entries[0];
+    const trees = entries.map((e) => this.toTreeItem(e));
+    return {
+      rashi: primary.rashiName,
+      rashiHindi: primary.rashiNameHindi,
+      zodiacNumber: primary.zodiacNumber,
+      trees,
+      tree: primary.recommendedTree,
+      scientificName: primary.scientificName,
+      localName: primary.localName,
+      description: primary.description,
+      benefits: primary.benefits ?? [],
+      careInstructions: primary.careInstructions,
+      image: primary.image,
+      galleryImages: primary.galleryImages ?? [],
     };
   }
 
   async create(dto: CreateRashiTreeDto): Promise<RashiTree> {
-    const exists = await this.rashiTreeRepository.existsByRashiOrNumber(
+    const duplicate = await this.rashiTreeRepository.existsByRashiAndTree(
       dto.rashiName,
       dto.zodiacNumber,
+      dto.recommendedTree,
     );
-    if (exists) {
+    if (duplicate) {
       throw new ConflictException(
-        `A Rashi tree entry for "${dto.rashiName}" or zodiac number ${dto.zodiacNumber} already exists`,
+        `"${dto.recommendedTree}" is already recommended for ${dto.rashiName}. Choose a different tree.`,
       );
     }
     return this.rashiTreeRepository.create(dto as Partial<RashiTreeDocument>);
@@ -88,18 +122,20 @@ export class RashiTreesService {
 
   async update(id: string, dto: UpdateRashiTreeDto): Promise<RashiTree> {
     const current = await this.findOne(id);
+    const rashiName = dto.rashiName ?? current.rashiName;
+    const zodiacNumber = dto.zodiacNumber ?? current.zodiacNumber;
+    const recommendedTree = dto.recommendedTree ?? current.recommendedTree;
 
-    if (dto.rashiName !== undefined || dto.zodiacNumber !== undefined) {
-      const exists = await this.rashiTreeRepository.existsByRashiOrNumber(
-        dto.rashiName ?? current.rashiName,
-        dto.zodiacNumber ?? current.zodiacNumber,
-        id,
+    const duplicate = await this.rashiTreeRepository.existsByRashiAndTree(
+      rashiName,
+      zodiacNumber,
+      recommendedTree,
+      id,
+    );
+    if (duplicate) {
+      throw new ConflictException(
+        `"${recommendedTree}" is already recommended for ${rashiName}. Choose a different tree.`,
       );
-      if (exists) {
-        throw new ConflictException(
-          'Another Rashi tree entry already uses this rashi name or zodiac number',
-        );
-      }
     }
 
     const updated = await this.rashiTreeRepository.updateById(
@@ -130,18 +166,21 @@ export class RashiTreesService {
   }
 
   async findByRashiPublic(rashiName: string): Promise<PublicRashiTreeResponse> {
-    const entry = await this.rashiTreeRepository.findByRashiName(rashiName);
-    if (!entry) {
+    const entries =
+      await this.rashiTreeRepository.findAllByRashiName(rashiName);
+    if (!entries.length) {
       throw new NotFoundException(
         `No tree recommendation found for rashi "${rashiName}"`,
       );
     }
-    return this.toPublicResponse(entry);
+    return this.toPublicResponse(entries);
   }
 
   async findByDobPublic(dob: string): Promise<PublicRashiTreeResponse> {
     if (!dob) {
-      throw new BadRequestException('dob query parameter is required (YYYY-MM-DD)');
+      throw new BadRequestException(
+        'dob query parameter is required (YYYY-MM-DD)',
+      );
     }
 
     const date = new Date(dob);
@@ -150,14 +189,14 @@ export class RashiTreesService {
     }
 
     const zodiac = getZodiacFromDate(date);
-    const entry = await this.rashiTreeRepository.findByZodiacNumber(
+    const entries = await this.rashiTreeRepository.findAllByZodiacNumber(
       zodiac.zodiacNumber,
     );
-    if (!entry) {
+    if (!entries.length) {
       throw new NotFoundException(
         `No tree recommendation configured yet for ${zodiac.rashiName} (zodiac #${zodiac.zodiacNumber})`,
       );
     }
-    return this.toPublicResponse(entry);
+    return this.toPublicResponse(entries);
   }
 }

@@ -6,13 +6,15 @@ export type RashiTreeDocument = HydratedDocument<RashiTree>;
 
 @Schema({ timestamps: true, collection: 'rashi_trees' })
 export class RashiTree extends BaseSchema {
-  @Prop({ required: true, unique: true, trim: true })
+  /** Multiple trees may share the same Rashi. */
+  @Prop({ required: true, trim: true, index: true })
   rashiName!: string;
 
   @Prop({ required: true, trim: true })
   rashiNameHindi!: string;
 
-  @Prop({ required: true, unique: true, min: 1, max: 12 })
+  /** 1–12. Not unique — one zodiac can have many recommended trees. */
+  @Prop({ required: true, min: 1, max: 12, index: true })
   zodiacNumber!: number;
 
   @Prop({ required: true, trim: true })
@@ -47,6 +49,16 @@ export class RashiTree extends BaseSchema {
 }
 
 export const RashiTreeSchema = SchemaFactory.createForClass(RashiTree);
+
+/** Same tree cannot be recommended twice for the same Rashi. */
+RashiTreeSchema.index(
+  { zodiacNumber: 1, recommendedTree: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: false },
+    collation: { locale: 'en', strength: 2 },
+  },
+);
 
 RashiTreeSchema.index({
   rashiName: 'text',

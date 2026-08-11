@@ -15,6 +15,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type {} from 'multer';
+import { Public } from '../common/decorators/public.decorator';
 import {
   S3UploadService,
   UploadCategory,
@@ -62,10 +63,11 @@ export class UploadsController {
     return this.s3UploadService.uploadFile(file, resolvedCategory);
   }
 
+  @Public()
   @Get('signed')
   @ApiOperation({
     summary:
-      'Get a temporary signed URL so a private S3 object can be previewed in the browser',
+      'Get a temporary signed URL so a private S3 object can be previewed (app / admin)',
   })
   async signed(@Query('url') url?: string, @Query('key') key?: string) {
     const target = url || key;

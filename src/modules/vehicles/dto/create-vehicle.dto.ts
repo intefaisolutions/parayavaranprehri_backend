@@ -10,8 +10,8 @@ export class CreateVehicleDto {
   name!: string;
 
   @IsString()
-  @IsNotEmpty()
-  vhId!: string;
+  @IsOptional()
+  vhId?: string;
 
   @IsString()
   @IsNotEmpty()

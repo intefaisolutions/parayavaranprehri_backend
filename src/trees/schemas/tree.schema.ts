@@ -125,6 +125,16 @@ export class Tree {
 
   @Prop()
   image!: string;
+
+  /** Set when a Mitra verifies the tree in the field */
+  @Prop({ type: Date, default: null })
+  verifiedAt?: Date | null;
+
+  @Prop({ type: Types.ObjectId, ref: 'Mitra', default: null })
+  verifiedByMitraId?: Types.ObjectId | null;
+
+  @Prop({ type: String, trim: true, default: null })
+  verifiedByMitraName?: string | null;
 }
 
 export const TreeSchema = SchemaFactory.createForClass(Tree);

@@ -608,6 +608,8 @@ export class PersonsService implements OnModuleInit {
     vidhanSabha: string | null;
     linkedVehicles: number;
     treesAssigned: number;
+    aliveTrees: number;
+    survivalPct: number;
     co2OffsetKg: number;
     joinedAt: Date | string | null;
   }> {
@@ -622,6 +624,8 @@ export class PersonsService implements OnModuleInit {
       vidhanSabha: stats.vidhanSabha,
       linkedVehicles: stats.linkedVehicles,
       treesAssigned: stats.treesAssigned,
+      aliveTrees: stats.aliveTrees,
+      survivalPct: stats.survivalPct,
       co2OffsetKg: stats.co2OffsetKg,
       joinedAt: (plain.registrationDate as Date) ??
         (plain.createdAt as Date) ??
@@ -660,6 +664,8 @@ export class PersonsService implements OnModuleInit {
   private async computePersonStats(person: Person | PersonDocument): Promise<{
     linkedVehicles: number;
     treesAssigned: number;
+    aliveTrees: number;
+    survivalPct: number;
     co2OffsetKg: number;
     vidhanSabha: string | null;
   }> {
@@ -685,6 +691,7 @@ export class PersonsService implements OnModuleInit {
     const [agg] = await this.treeModel
       .aggregate<{
         treesAssigned: number;
+        aliveTrees: number;
         totalOxygenKg: number;
         vidhanSabha: string | null;
       }>([
@@ -693,6 +700,20 @@ export class PersonsService implements OnModuleInit {
           $group: {
             _id: null,
             treesAssigned: { $sum: 1 },
+            aliveTrees: {
+              $sum: {
+                $cond: [
+                  {
+                    $ne: [
+                      { $toUpper: { $ifNull: ['$status', ''] } },
+                      'DEAD',
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
             totalOxygenKg: {
               $sum: { $ifNull: ['$annualOxygenProductionKg', 0] },
             },
@@ -715,6 +736,7 @@ export class PersonsService implements OnModuleInit {
         {
           $project: {
             treesAssigned: 1,
+            aliveTrees: 1,
             totalOxygenKg: 1,
             vidhanSabha: {
               $arrayElemAt: ['$vidhanSabhas', 0],
@@ -725,7 +747,12 @@ export class PersonsService implements OnModuleInit {
       .exec();
 
     const treesAssigned = agg?.treesAssigned ?? 0;
+    const aliveTrees = agg?.aliveTrees ?? 0;
     const totalOxygenKg = agg?.totalOxygenKg ?? 0;
+    const survivalPct =
+      treesAssigned > 0
+        ? Math.round((aliveTrees / treesAssigned) * 100)
+        : 0;
 
     // Keep denormalized counter roughly in sync for admin list views
     if (person.treesAssigned !== treesAssigned) {
@@ -739,6 +766,8 @@ export class PersonsService implements OnModuleInit {
         ? insurance.vehiclesLinked
         : person.vehiclesLinked || 0,
       treesAssigned,
+      aliveTrees,
+      survivalPct,
       co2OffsetKg: oxygenToCo2Kg(totalOxygenKg),
       vidhanSabha: agg?.vidhanSabha ?? null,
     };

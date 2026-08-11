@@ -41,6 +41,24 @@ export class RashiTree extends BaseSchema {
   @Prop({ type: [String], default: [] })
   galleryImages!: string[];
 
+  /** Ruling deity for this Rashi recommendation (CMS). */
+  @Prop({ trim: true })
+  deity?: string;
+
+  /** Associated nakshatras (CMS). */
+  @Prop({ type: [String], default: [] })
+  nakshatras!: string[];
+
+  /** Display bonuses shown on Rashi Van reveal (CMS, percent points). */
+  @Prop({ type: Number, min: 0, max: 100 })
+  karmaBonus?: number;
+
+  @Prop({ type: Number, min: 0, max: 100 })
+  vitalityBonus?: number;
+
+  @Prop({ type: Number, min: 0, max: 100 })
+  harmonyBonus?: number;
+
   @Prop({ default: true, index: true })
   isActive!: boolean;
 

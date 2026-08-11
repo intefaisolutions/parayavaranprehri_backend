@@ -26,6 +26,7 @@ import { NotificationQueryDto } from './dto/notification-query.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { NotificationsService } from './notifications.service';
 
+/** Admin / CMS notification management (permission-gated). */
 @ApiTags('Notifications')
 @ApiBearerAuth()
 @UseGuards(RolesGuard, PermissionsGuard)

@@ -137,6 +137,7 @@ export class StaticDataService {
       support: {
         email: 'support@paryavaranprehri.org',
         phone: '+91-1800-123-4567',
+        whatsapp: '+919644884141',
         address: '123 Green Avenue, New Delhi, India 110001',
         faq: [
           {
@@ -149,6 +150,50 @@ export class StaticDataService {
             answer: 'Yes, volunteering is completely free.',
           },
         ],
+        prahri: {
+          email: 'support@paryavaranprehri.org',
+          phone: '+91-1800-123-4567',
+          whatsapp: '+919644884141',
+          faq: [
+            {
+              question: 'How are trees assigned to my vehicle?',
+              answer:
+                'Trees are assigned based on your vehicle type, fuel category, and verified registration. Each vehicle receives a unique tree ID linked to your Person Identity.',
+            },
+            {
+              question: 'Can I add multiple vehicles?',
+              answer:
+                'Yes — your Person Identity can link multiple vehicles, each with its own tree assignment.',
+            },
+            {
+              question: 'How is CO₂ offset calculated?',
+              answer:
+                'CO₂ offset uses your vehicle fuel type, annual mileage, and emission factors configured by the district environmental board.',
+            },
+          ],
+        },
+        mitra: {
+          email: 'mitra@paryavaranprehri.org',
+          phone: '+91-1800-123-4568',
+          whatsapp: '+919644884141',
+          faq: [
+            {
+              question: 'How do I become a Paryavaran Mitra?',
+              answer:
+                'Register from the Mitra section in the app. After admin approval you can plant, verify, and report trees in your zone.',
+            },
+            {
+              question: 'How do I verify a planted tree?',
+              answer:
+                'Open Mitra Dashboard → Verify Tree, capture the geo-tagged photo, and submit. Status updates after review.',
+            },
+            {
+              question: 'Who do I contact for field issues?',
+              answer:
+                'Use Mitra Support WhatsApp or call the Mitra helpline listed above for plantation and verification issues.',
+            },
+          ],
+        },
       },
     };
   }

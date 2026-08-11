@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -44,12 +45,31 @@ export class ReportsController {
     return this.reportsService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.REPORTS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List Reports (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List Reports (public metadata for admin preview)',
+  })
   findAll(@Query() query: ReportQueryDto) {
     return this.reportsService.findAll(query);
+  }
+
+  @Public()
+  @Get('monthly-plantations')
+  @ApiOperation({
+    summary:
+      'Monthly plantation counts (for Admin Preview / Mitra charts). Query: months, vidhanSabha, mitraId',
+  })
+  monthlyPlantations(
+    @Query('months') months?: string,
+    @Query('vidhanSabha') vidhanSabha?: string,
+    @Query('mitraId') mitraId?: string,
+  ) {
+    return this.reportsService.getMonthlyPlantations({
+      months: months ? Number(months) : 6,
+      vidhanSabha,
+      mitraId,
+    });
   }
 
   @Get(':id/download')

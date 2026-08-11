@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,16 +43,18 @@ export class PartnersController {
     return this.partnersService.create(dto);
   }
 
+  @Public()
   @Get()
-  @Permissions(`${PermissionResource.PARTNERS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List channel partners (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List channel partners (public — app uses status=Active)',
+  })
   findAll(@Query() query: PartnerQueryDto) {
     return this.partnersService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @Permissions(`${PermissionResource.PARTNERS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get a channel partner by ID' })
+  @ApiOperation({ summary: 'Get a channel partner by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.partnersService.findOne(id);
   }

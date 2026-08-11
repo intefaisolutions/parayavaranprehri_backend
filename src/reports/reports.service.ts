@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
 import { PaginationUtil } from '../common/utils/pagination.util';
 import {
@@ -325,5 +325,102 @@ export class ReportsService {
         };
       }
     }
+  }
+
+  /**
+   * Monthly plantation counts for Admin Preview / Mitra charts.
+   * Groups trees by calendar month of plantedDate (fallback: createdAt).
+   */
+  async getMonthlyPlantations(query: {
+    months?: number;
+    vidhanSabha?: string;
+    mitraId?: string;
+  }) {
+    const months = Math.min(Math.max(Number(query.months) || 6, 1), 24);
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+
+    const match: Record<string, unknown> = {
+      $or: [
+        { plantedDate: { $gte: start } },
+        {
+          plantedDate: { $exists: false },
+          createdAt: { $gte: start },
+        },
+        {
+          plantedDate: null,
+          createdAt: { $gte: start },
+        },
+      ],
+    };
+    if (query.vidhanSabha?.trim()) {
+      match.vidhanSabha = query.vidhanSabha.trim();
+    }
+    if (query.mitraId?.trim()) {
+      const id = query.mitraId.trim();
+      match.assignedMitraId = Types.ObjectId.isValid(id)
+        ? new Types.ObjectId(id)
+        : id;
+    }
+
+    const trees = await this.treeModel
+      .find(match)
+      .select('plantedDate createdAt status')
+      .lean()
+      .exec();
+
+    const buckets: Array<{
+      key: string;
+      label: string;
+      year: number;
+      month: number;
+      count: number;
+      alive: number;
+      dead: number;
+    }> = [];
+
+    for (let i = 0; i < months; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      buckets.push({
+        key,
+        label: d.toLocaleString('en-GB', { month: 'short' }),
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        count: 0,
+        alive: 0,
+        dead: 0,
+      });
+    }
+
+    const byKey = new Map(buckets.map((b) => [b.key, b]));
+
+    for (const tree of trees) {
+      const raw = (tree as any).plantedDate || (tree as any).createdAt;
+      if (!raw) continue;
+      const date = new Date(raw);
+      if (Number.isNaN(date.getTime()) || date < start) continue;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const bucket = byKey.get(key);
+      if (!bucket) continue;
+      bucket.count += 1;
+      const status = String((tree as any).status || '').toUpperCase();
+      if (status === 'DEAD') bucket.dead += 1;
+      else bucket.alive += 1;
+    }
+
+    const total = buckets.reduce((sum, b) => sum + b.count, 0);
+    const maxCount = Math.max(...buckets.map((b) => b.count), 1);
+
+    return {
+      months: buckets.map((b) => ({
+        ...b,
+        /** 0–100 bar height helper for charts */
+        heightPct: Math.round((b.count / maxCount) * 100),
+      })),
+      total,
+      from: start.toISOString(),
+      to: now.toISOString(),
+    };
   }
 }

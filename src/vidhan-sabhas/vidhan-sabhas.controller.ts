@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,18 +43,18 @@ export class VidhanSabhasController {
     return this.vidhanSabhasService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.VIDHAN_SABHAS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List Vidhan Sabhas (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List Vidhan Sabhas (public — rankings / admin preview)',
+  })
   findAll(@Query() query: VidhanSabhaQueryDto) {
     return this.vidhanSabhasService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.VIDHAN_SABHAS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get a Vidhan Sabha by ID' })
+  @ApiOperation({ summary: 'Get a Vidhan Sabha by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.vidhanSabhasService.findOne(id);
   }

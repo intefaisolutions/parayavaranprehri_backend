@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -16,6 +17,7 @@ import {
   type JwtPayload,
 } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
   PermissionAction,
@@ -29,7 +31,6 @@ import { ReviewRashiPlantRequestDto } from './dto/review-rashi-plant-request.dto
 import { RashiPlantRequestsService } from './rashi-plant-requests.service';
 
 @ApiTags('Rashi Plant Requests')
-@ApiBearerAuth()
 @UseGuards(RolesGuard, PermissionsGuard)
 @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
 @Controller({ path: 'rashi-plant-requests', version: '1' })
@@ -38,6 +39,7 @@ export class RashiPlantRequestsController {
     private readonly rashiPlantRequestsService: RashiPlantRequestsService,
   ) {}
 
+  @Public()
   @Post()
   @ApiOperation({
     summary:
@@ -45,11 +47,13 @@ export class RashiPlantRequestsController {
   })
   create(
     @Body() dto: CreateRashiPlantRequestDto,
-    @CurrentUser() user: JwtPayload,
+    @Req() req: { user?: JwtPayload },
   ) {
-    return this.rashiPlantRequestsService.create(dto, user);
+    // Optional JWT: when present (logged-in app user), profile fills gaps
+    return this.rashiPlantRequestsService.create(dto, req.user ?? null);
   }
 
+  @ApiBearerAuth()
   @Get()
   @ApiOperation({
     summary: 'List sacred-tree plant requests (own by default; admins see all)',
@@ -62,12 +66,14 @@ export class RashiPlantRequestsController {
     return this.rashiPlantRequestsService.findAll(user, { status, mine });
   }
 
+  @ApiBearerAuth()
   @Get(':id')
   @ApiOperation({ summary: 'Get a sacred-tree plant request by ID' })
   findOne(@Param('id') id: string) {
     return this.rashiPlantRequestsService.findOne(id);
   }
 
+  @ApiBearerAuth()
   @Patch(':id/review')
   @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
   @Permissions(

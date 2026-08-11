@@ -6,18 +6,18 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
-  Request,
 } from '@nestjs/common';
 import { GreenSelfiesService } from './green-selfies.service';
 import { CreateGreenSelfieDto } from './dto/create-green-selfie.dto';
 import { UpdateGreenSelfieDto } from './dto/update-green-selfie.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  CurrentUser,
+  type JwtPayload,
+} from '../../common/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('green-selfies')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller('green-selfies')
 export class GreenSelfiesController {
   constructor(private readonly greenSelfiesService: GreenSelfiesService) {}
@@ -25,14 +25,14 @@ export class GreenSelfiesController {
   @Post()
   create(
     @Body() createGreenSelfieDto: CreateGreenSelfieDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return this.greenSelfiesService.create(createGreenSelfieDto, req.user._id);
+    return this.greenSelfiesService.create(createGreenSelfieDto, user.sub);
   }
 
   @Get()
-  findAll(@Request() req: any) {
-    return this.greenSelfiesService.findAll(req.user._id);
+  findAll(@CurrentUser() user: JwtPayload) {
+    return this.greenSelfiesService.findAll(user.sub);
   }
 
   @Get(':id')

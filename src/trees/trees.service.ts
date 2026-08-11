@@ -20,9 +20,11 @@ import {
 import { AssignMitraDto } from './dto/assign-mitra.dto';
 import { CreateTreeDto } from './dto/create-tree.dto';
 import { UpdateTreeDto } from './dto/update-tree.dto';
+import { VerifyTreeDto } from './dto/verify-tree.dto';
 import { oxygenToCo2Kg } from '../common/utils/carbon.util';
 import { Tree, TreeDocument } from './schemas/tree.schema';
 import { computeTreeOxygen } from './utils/oxygen.util';
+import { JwtPayload } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class TreesService {
@@ -218,6 +220,8 @@ export class TreesService {
   /**
    * Citizen analytics snapshot for a single tree.
    * Progress: blend of age (years/10 capped) + height (m/5 capped).
+   * monthlySeries: real calendar months since plantedDate (not fake M1–M4).
+   * Photos: only uploaded tree.image URLs — never placeholders.
    */
   async getAnalytics(id: string) {
     const tree = await this.findOne(id);
@@ -227,6 +231,16 @@ export class TreesService {
     const ageScore = Math.min(1, ageYears / 10);
     const heightScore = Math.min(1, heightM / 5);
     const progress = Math.round(((ageScore + heightScore) / 2) * 100);
+    const photoUrl =
+      typeof tree.image === 'string' && tree.image.trim()
+        ? tree.image.trim()
+        : null;
+
+    const monthlySeries = this.buildMonthlySeries(
+      tree.plantedDate,
+      progress,
+      photoUrl,
+    );
 
     return {
       treeId: tree.treeId,
@@ -236,12 +250,102 @@ export class TreesService {
       height: tree.height ?? null,
       oxygenKg,
       co2Kg: oxygenToCo2Kg(oxygenKg),
-      monthlyPhotos: tree.image ? [tree.image] : [],
+      /** @deprecated prefer monthlySeries[].photoUrl — kept for older clients */
+      monthlyPhotos: photoUrl ? [photoUrl] : [],
+      monthlySeries,
       progress,
       vehicleNumber: tree.vehicleNumber || null,
       vidhanSabha: tree.vidhanSabha || null,
       treeAgeYears: ageYears,
+      image: photoUrl,
     };
+  }
+
+  /** Calendar-month progress points from plantation → now (max 12). */
+  private buildMonthlySeries(
+    plantedDate: Date | undefined | null,
+    currentProgress: number,
+    photoUrl: string | null,
+  ): Array<{ label: string; progress: number; photoUrl?: string }> {
+    const end = new Date();
+    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    let startMonth: Date;
+    if (plantedDate) {
+      const planted = new Date(plantedDate);
+      if (Number.isNaN(planted.getTime())) {
+        return [
+          {
+            label: 'Now',
+            progress: currentProgress,
+            ...(photoUrl ? { photoUrl } : {}),
+          },
+        ];
+      }
+      startMonth = new Date(planted.getFullYear(), planted.getMonth(), 1);
+    } else {
+      return [
+        {
+          label: 'Now',
+          progress: currentProgress,
+          ...(photoUrl ? { photoUrl } : {}),
+        },
+      ];
+    }
+
+    if (startMonth > endMonth) {
+      startMonth = endMonth;
+    }
+
+    const totalMonths =
+      (endMonth.getFullYear() - startMonth.getFullYear()) * 12 +
+      (endMonth.getMonth() - startMonth.getMonth()) +
+      1;
+    const seriesStart =
+      totalMonths > 12
+        ? new Date(endMonth.getFullYear(), endMonth.getMonth() - 11, 1)
+        : startMonth;
+    const seriesTotal =
+      (endMonth.getFullYear() - seriesStart.getFullYear()) * 12 +
+      (endMonth.getMonth() - seriesStart.getMonth()) +
+      1;
+
+    const points: Array<{
+      label: string;
+      progress: number;
+      photoUrl?: string;
+    }> = [];
+    for (let i = 0; i < seriesTotal; i++) {
+      const cursor = new Date(
+        seriesStart.getFullYear(),
+        seriesStart.getMonth() + i,
+        1,
+      );
+      const monthsFromPlant =
+        (cursor.getFullYear() - startMonth.getFullYear()) * 12 +
+        (cursor.getMonth() - startMonth.getMonth()) +
+        1;
+      const ratio = Math.min(1, monthsFromPlant / Math.max(totalMonths, 1));
+      const monthProgress = Math.round(ratio * currentProgress);
+      const label = cursor.toLocaleString('en-GB', {
+        month: 'short',
+        year: '2-digit',
+      });
+      const isLatest = i === seriesTotal - 1;
+      points.push({
+        label,
+        progress: monthProgress,
+        ...(isLatest && photoUrl ? { photoUrl } : {}),
+      });
+    }
+
+    // Ensure last point reflects live progress
+    if (points.length > 0) {
+      points[points.length - 1].progress = currentProgress;
+      if (photoUrl) points[points.length - 1].photoUrl = photoUrl;
+    }
+
+    return points;
   }
 
   async findByUserMobile(mobile: string): Promise<any[]> {
@@ -352,6 +456,56 @@ export class TreesService {
     await this.syncLandCounts(previousLandId, nextLandId);
 
     return existingTree;
+  }
+
+  async verifyTree(
+    id: string,
+    dto: VerifyTreeDto,
+    user: JwtPayload,
+  ): Promise<Tree> {
+    const tree = await this.treeModel.findById(id).exec();
+    if (!tree) {
+      throw new NotFoundException(`Tree with ID ${id} not found`);
+    }
+
+    // Resolve Mitra by email first, then leave name on tree if assigned
+    let verifier = user.email
+      ? await this.mitraModel
+          .findOne({
+            email: user.email.toLowerCase().trim(),
+            isDeleted: false,
+          })
+          .exec()
+      : null;
+
+    if (!verifier && tree.assignedMitraId) {
+      verifier = await this.mitraModel.findById(tree.assignedMitraId).exec();
+    }
+
+    const status = dto.status || 'HEALTHY';
+    const patch: Record<string, unknown> = {
+      status,
+      verifiedAt: new Date(),
+      remarks: dto.remarks ?? tree.remarks,
+      image: dto.image ?? tree.image,
+    };
+    if (verifier) {
+      patch.verifiedByMitraId = verifier._id;
+      patch.verifiedByMitraName = verifier.name;
+    } else {
+      patch.verifiedByMitraName = user.email || 'Mitra';
+    }
+
+    const updated = await this.treeModel
+      .findByIdAndUpdate(id, patch, { new: true })
+      .exec();
+    if (!updated) {
+      throw new NotFoundException(`Tree with ID ${id} not found`);
+    }
+    if (updated.vidhanSabha) {
+      await this.syncVidhanSabhaTreeStats(updated.vidhanSabha);
+    }
+    return updated;
   }
 
   async assignMitra(id: string, dto: AssignMitraDto): Promise<Tree> {

@@ -26,6 +26,11 @@ export interface PublicRashiTreeItem {
   image?: string;
   galleryImages: string[];
   displayOrder?: number;
+  deity?: string;
+  nakshatras: string[];
+  karmaBonus?: number;
+  vitalityBonus?: number;
+  harmonyBonus?: number;
 }
 
 /** Public lookup — supports multiple trees per Rashi. */
@@ -44,6 +49,11 @@ export interface PublicRashiTreeResponse {
   careInstructions?: string;
   image?: string;
   galleryImages: string[];
+  deity?: string;
+  nakshatras: string[];
+  karmaBonus?: number;
+  vitalityBonus?: number;
+  harmonyBonus?: number;
 }
 
 @Injectable()
@@ -65,6 +75,11 @@ export class RashiTreesService {
       image: entry.image,
       galleryImages: entry.galleryImages ?? [],
       displayOrder: entry.displayOrder,
+      deity: entry.deity,
+      nakshatras: entry.nakshatras ?? [],
+      karmaBonus: entry.karmaBonus,
+      vitalityBonus: entry.vitalityBonus,
+      harmonyBonus: entry.harmonyBonus,
     };
   }
 
@@ -84,6 +99,11 @@ export class RashiTreesService {
       careInstructions: primary.careInstructions,
       image: primary.image,
       galleryImages: primary.galleryImages ?? [],
+      deity: primary.deity,
+      nakshatras: primary.nakshatras ?? [],
+      karmaBonus: primary.karmaBonus,
+      vitalityBonus: primary.vitalityBonus,
+      harmonyBonus: primary.harmonyBonus,
     };
   }
 

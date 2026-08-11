@@ -44,67 +44,17 @@ export class JourneyService implements OnModuleInit {
     }
   }
 
+  /** Public feed — no auto-seed of Dr. Ram / default achievements. */
   async getPublicTimeline() {
-    const profile = await this.getOrCreateProfile();
-    await this.ensureDefaultAchievements();
+    const profile = await this.profileModel
+      .findOne({ isDeleted: false })
+      .sort({ createdAt: 1 })
+      .exec();
     const achievements = await this.achievementModel
       .find({ isDeleted: false, isActive: true })
       .sort({ year: 1, displayOrder: 1, createdAt: 1 })
       .exec();
     return { profile, achievements };
-  }
-
-  private async ensureDefaultAchievements() {
-    const count = await this.achievementModel
-      .countDocuments({ isDeleted: false })
-      .exec();
-    if (count > 0) return;
-
-    const defaults = [
-      {
-        year: '2002',
-        type: 'recognition',
-        title: 'State Level Farmer Recognition',
-        subtitle: 'Government of Madhya Pradesh',
-        displayOrder: 1,
-      },
-      {
-        year: '2003',
-        type: 'recognition',
-        title: 'District Level Environmental Award',
-        subtitle: 'Government of Madhya Pradesh',
-        displayOrder: 2,
-      },
-      {
-        year: '2011',
-        type: 'award',
-        title: 'Sarvottam Krishak Puraskar',
-        subtitle: 'Jaiv Praudyogiki Vibhag MP',
-        displayOrder: 3,
-      },
-      {
-        year: '2015',
-        type: 'record',
-        title: 'Golden Book of World Records',
-        subtitle: 'Golden Book of World Records',
-        displayOrder: 4,
-      },
-      {
-        year: '2018',
-        type: 'doctorate',
-        title: 'Honorary Doctorate in Environmental Science',
-        subtitle: 'Dr. Harisingh Gour University, Sagar',
-        displayOrder: 5,
-      },
-      {
-        year: '2018',
-        type: 'international',
-        title: 'Indo Global Education Excellence Award',
-        subtitle: 'Indo Global Chamber of Commerce',
-        displayOrder: 6,
-      },
-    ];
-    await this.achievementModel.insertMany(defaults);
   }
 
   async listAchievements(includeInactive = false) {
@@ -173,23 +123,11 @@ export class JourneyService implements OnModuleInit {
       .exec();
     if (!profile) {
       profile = await this.profileModel.create({
-        name: 'Dr. Ram Patidar',
+        name: '',
         subtitle: 'Journey & Achievements',
-        stats: [
-          { value: '1,00,000+', label: 'Trees Planted' },
-          { value: '3', label: 'World Records' },
-          { value: '30+', label: 'Awards Received' },
-          { value: '25+', label: 'Years of Service' },
-        ],
-        tags: [
-          'Environmentalist',
-          'Biodiversity Expert',
-          'Farmer Innovator',
-          'Social Reformer',
-          'World Record Holder',
-        ],
-        inspirationText:
-          'Paryavaran Prahri is inspired by the lifelong dedication of Dr. Ram Patidar towards environmental conservation, biodiversity protection, and community participation. His work in plantation, farmer innovation, and social reform continues to guide the vision of Mission 2047 and Net Zero Bharat.',
+        stats: [],
+        tags: [],
+        inspirationText: '',
       });
     }
     return profile;

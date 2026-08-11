@@ -1,7 +1,13 @@
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateRashiPlantRequestDto {
   @IsString()
+  @IsNotEmpty()
   rashiName!: string;
 
   @IsOptional()
@@ -9,6 +15,7 @@ export class CreateRashiPlantRequestDto {
   rashiNameHindi?: string;
 
   @IsString()
+  @IsNotEmpty()
   recommendedTree!: string;
 
   @IsOptional()
@@ -31,4 +38,29 @@ export class CreateRashiPlantRequestDto {
   @IsOptional()
   @IsString()
   remarks?: string;
+
+  /** Basic user details (required for admin review when called without JWT) */
+  @IsString()
+  @IsNotEmpty()
+  userName!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mobile!: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  district?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
 }

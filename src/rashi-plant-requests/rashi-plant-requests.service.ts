@@ -35,27 +35,55 @@ export class RashiPlantRequestsService {
     return `RPR-${seq.toString().padStart(6, '0')}`;
   }
 
-  async create(dto: CreateRashiPlantRequestDto, user: JwtPayload) {
-    const me = (await this.usersService.findOne(user.sub)) as {
-      phone?: string;
-      firstName?: string;
-      lastName?: string;
-      email?: string;
-      district?: string;
-      state?: string;
-    };
+  async create(dto: CreateRashiPlantRequestDto, user?: JwtPayload | null) {
+    let userName = dto.userName?.trim();
+    let mobile = dto.mobile?.trim();
+    let email = dto.email?.trim();
+    let district = dto.district?.trim();
+    let state = dto.state?.trim();
+    let userId = dto.userId?.trim() || user?.sub;
 
-    const userName = [me.firstName, me.lastName].filter(Boolean).join(' ').trim();
+    if (user?.sub) {
+      try {
+        const me = (await this.usersService.findOne(user.sub)) as {
+          phone?: string;
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+          district?: string;
+          state?: string;
+        };
+        const fromProfile = [me.firstName, me.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        userName = fromProfile || userName;
+        mobile = me.phone || mobile;
+        email = me.email || user.email || email;
+        district = me.district || district;
+        state = me.state || state;
+        userId = user.sub;
+      } catch {
+        // Fall back to body fields when profile lookup fails
+      }
+    }
+
+    if (!userName || !mobile) {
+      throw new BadRequestException(
+        'User name and mobile are required to create a plantation request.',
+      );
+    }
+
     const requestId = await this.generateId();
 
     return this.requestModel.create({
       requestId,
-      userId: user.sub,
-      userName: userName || undefined,
-      mobile: me.phone,
-      email: me.email || user.email,
-      district: me.district,
-      state: me.state,
+      userId,
+      userName,
+      mobile,
+      email,
+      district,
+      state,
       rashiName: dto.rashiName.trim(),
       rashiNameHindi: dto.rashiNameHindi?.trim(),
       recommendedTree: dto.recommendedTree.trim(),

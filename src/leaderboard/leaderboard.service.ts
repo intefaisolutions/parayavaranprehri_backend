@@ -16,6 +16,11 @@ import {
   PersonDocument,
 } from '../persons/schemas/person.schema';
 import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
+import {
+  VidhanSabha,
+  VidhanSabhaDocument,
+  VidhanSabhaStatus,
+} from '../vidhan-sabhas/schemas/vidhan-sabha.schema';
 import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
 
 export type LeaderboardRow = {
@@ -23,6 +28,10 @@ export type LeaderboardRow = {
   name: string;
   points: number;
   trees: number;
+  /** Alive trees (status !== DEAD) */
+  aliveTrees: number;
+  /** 0–100 survival rate from alive/total trees */
+  survivalPct: number;
   co2Kg: number;
   vidhanSabha: string | null;
   badge: string;
@@ -38,7 +47,69 @@ export class LeaderboardService {
     @InjectModel(Person.name)
     private readonly personModel: Model<PersonDocument>,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(VidhanSabha.name)
+    private readonly vidhanSabhaModel: Model<VidhanSabhaDocument>,
   ) {}
+
+  private cleanNames(values: Array<string | null | undefined>): string[] {
+    return Array.from(
+      new Set(
+        values
+          .map((v) => (typeof v === 'string' ? v.trim() : ''))
+          .filter(Boolean),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }
+
+  /** Chip options for ranks filters (admin CMS + live tree data). */
+  async getFilterOptions(): Promise<{
+    vidhanSabhas: string[];
+    states: string[];
+    cities: string[];
+  }> {
+    const [cmsRows, treeFacets] = await Promise.all([
+      this.vidhanSabhaModel
+        .find({
+          isDeleted: { $ne: true },
+          status: VidhanSabhaStatus.ACTIVE,
+        })
+        .select('vidhanSabhaName state district')
+        .lean()
+        .exec(),
+      this.treeModel
+        .aggregate<{
+          vidhanSabhas: string[];
+          states: string[];
+          cities: string[];
+        }>([
+          {
+            $group: {
+              _id: null,
+              vidhanSabhas: { $addToSet: '$vidhanSabha' },
+              states: { $addToSet: '$state' },
+              cities: { $addToSet: '$city' },
+            },
+          },
+        ])
+        .exec(),
+    ]);
+
+    const tree = treeFacets[0];
+    return {
+      vidhanSabhas: this.cleanNames([
+        ...cmsRows.map((r) => r.vidhanSabhaName),
+        ...(tree?.vidhanSabhas || []),
+      ]),
+      states: this.cleanNames([
+        ...cmsRows.map((r) => r.state),
+        ...(tree?.states || []),
+      ]),
+      cities: this.cleanNames([
+        ...cmsRows.map((r) => r.district),
+        ...(tree?.cities || []),
+      ]),
+    };
+  }
 
   private badgeForPoints(points: number): string {
     if (points >= 500) return 'Forest Champion';
@@ -147,6 +218,7 @@ export class LeaderboardService {
       .aggregate<{
         _id: { personId?: Types.ObjectId | null; mobile?: string };
         trees: number;
+        aliveTrees: number;
         totalOxygenKg: number;
         name: string;
         vidhanSabha: string | null;
@@ -161,6 +233,20 @@ export class LeaderboardService {
               mobile: '$mobile',
             },
             trees: { $sum: 1 },
+            aliveTrees: {
+              $sum: {
+                $cond: [
+                  {
+                    $ne: [
+                      { $toUpper: { $ifNull: ['$status', ''] } },
+                      'DEAD',
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
             totalOxygenKg: {
               $sum: { $ifNull: ['$annualOxygenProductionKg', 0] },
             },
@@ -181,6 +267,7 @@ export class LeaderboardService {
       {
         name: string;
         trees: number;
+        aliveTrees: number;
         totalOxygenKg: number;
         vidhanSabha: string | null;
         personId: string | null;
@@ -197,6 +284,7 @@ export class LeaderboardService {
       const existing = merged.get(key);
       if (existing) {
         existing.trees += row.trees;
+        existing.aliveTrees += row.aliveTrees;
         existing.totalOxygenKg += row.totalOxygenKg;
         if (!existing.vidhanSabha && row.vidhanSabha) {
           existing.vidhanSabha = row.vidhanSabha;
@@ -205,6 +293,7 @@ export class LeaderboardService {
         merged.set(key, {
           name: row.name || 'Citizen',
           trees: row.trees,
+          aliveTrees: row.aliveTrees,
           totalOxygenKg: row.totalOxygenKg,
           vidhanSabha: row.vidhanSabha || null,
           personId: row.personId ? String(row.personId) : null,
@@ -243,11 +332,17 @@ export class LeaderboardService {
     const limit = Math.min(query.limit ?? 50, 100);
     return sorted.slice(0, limit).map((row, index) => {
       const points = row.trees * 10 + Math.floor(row.totalOxygenKg);
+      const survivalPct =
+        row.trees > 0
+          ? Math.round((row.aliveTrees / row.trees) * 100)
+          : 0;
       return {
         rank: index + 1,
         name: row.name,
         points,
         trees: row.trees,
+        aliveTrees: row.aliveTrees,
+        survivalPct,
         co2Kg: oxygenToCo2Kg(row.totalOxygenKg),
         vidhanSabha: row.vidhanSabha,
         badge: this.badgeForPoints(points),
@@ -260,10 +355,14 @@ export class LeaderboardService {
 
   async getLeaderboard(
     query: LeaderboardQueryDto,
-    user: JwtPayload,
+    _user: JwtPayload,
   ): Promise<{ scope?: string; period?: string; items: LeaderboardRow[] }> {
-    const ctx = await this.resolveCallerContext(user);
-    const items = await this.buildRows(query, ctx);
+    // Explicit query filters only — do not lock list to caller's constituency
+    const items = await this.buildRows(query, {
+      vidhanSabha: query.vidhanSabha,
+      city: query.city,
+      state: query.state,
+    });
     return {
       scope: query.scope,
       period: query.period,
@@ -282,10 +381,17 @@ export class LeaderboardService {
       );
     }
 
+    // Prefer explicit filter; otherwise rank within caller's area for that scope
+    const scopeValue = {
+      vidhanSabha: query.vidhanSabha || ctx.vidhanSabha,
+      city: query.city || ctx.city,
+      state: query.state || ctx.state,
+    };
+
     // Build a large board for accurate rank
     const board = await this.buildRows(
       { ...query, limit: 100 },
-      ctx,
+      scopeValue,
     );
 
     const mine = board.find((row) => {
@@ -319,6 +425,7 @@ export class LeaderboardService {
     const [agg] = await this.treeModel
       .aggregate<{
         trees: number;
+        aliveTrees: number;
         totalOxygenKg: number;
         name: string;
         vidhanSabha: string | null;
@@ -328,6 +435,20 @@ export class LeaderboardService {
           $group: {
             _id: null,
             trees: { $sum: 1 },
+            aliveTrees: {
+              $sum: {
+                $cond: [
+                  {
+                    $ne: [
+                      { $toUpper: { $ifNull: ['$status', ''] } },
+                      'DEAD',
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
             totalOxygenKg: {
               $sum: { $ifNull: ['$annualOxygenProductionKg', 0] },
             },
@@ -339,6 +460,7 @@ export class LeaderboardService {
       .exec();
 
     const trees = agg?.trees ?? 0;
+    const aliveTrees = agg?.aliveTrees ?? 0;
     const totalOxygenKg = agg?.totalOxygenKg ?? 0;
     const points = trees * 10 + Math.floor(totalOxygenKg);
 
@@ -347,6 +469,8 @@ export class LeaderboardService {
       name: agg?.name || 'You',
       points,
       trees,
+      aliveTrees,
+      survivalPct: trees > 0 ? Math.round((aliveTrees / trees) * 100) : 0,
       co2Kg: oxygenToCo2Kg(totalOxygenKg),
       vidhanSabha: agg?.vidhanSabha ?? ctx.vidhanSabha,
       badge: this.badgeForPoints(points),

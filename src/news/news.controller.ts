@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,18 +43,19 @@ export class NewsController {
     return this.newsService.create(dto);
   }
 
+  @Public()
   @Get()
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.NEWS}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List news articles (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary:
+      'List news articles (public — app uses status=Published; admin may pass other filters when authenticated)',
+  })
   findAll(@Query() query: NewsQueryDto) {
     return this.newsService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
-  @ApiBearerAuth()
-  @Permissions(`${PermissionResource.NEWS}:${PermissionAction.READ}`)
-  @ApiOperation({ summary: 'Get a news article by ID' })
+  @ApiOperation({ summary: 'Get a news article by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.newsService.findOne(id);
   }

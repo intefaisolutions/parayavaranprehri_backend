@@ -62,6 +62,37 @@ export class CreateRashiTreeDto {
   @IsOptional()
   galleryImages?: string[];
 
+  @IsString()
+  @IsOptional()
+  deity?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(12)
+  @IsOptional()
+  nakshatras?: string[];
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  karmaBonus?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  vitalityBonus?: number;
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  harmonyBonus?: number;
+
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()

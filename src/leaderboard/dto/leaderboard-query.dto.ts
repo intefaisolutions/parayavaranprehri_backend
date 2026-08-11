@@ -1,10 +1,23 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class LeaderboardQueryDto {
   @IsOptional()
   @IsIn(['vidhan-sabha', 'city', 'state'])
   scope?: 'vidhan-sabha' | 'city' | 'state';
+
+  /** Optional constituency filter when scope=vidhan-sabha */
+  @IsOptional()
+  @IsString()
+  vidhanSabha?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  state?: string;
 
   @IsOptional()
   @IsIn(['month', 'year'])

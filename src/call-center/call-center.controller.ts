@@ -12,6 +12,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -42,9 +43,11 @@ export class CallCenterController {
     return this.callCenterService.create(dto);
   }
 
+  @Public()
   @Get()
-  @Permissions(`${PermissionResource.CALL_CENTER}:${PermissionAction.LIST}`)
-  @ApiOperation({ summary: 'List call center contacts (paginated, searchable, sortable)' })
+  @ApiOperation({
+    summary: 'List call center contacts (public — app Support screen)',
+  })
   findAll(@Query() query: CallCenterQueryDto) {
     return this.callCenterService.findAll(query);
   }

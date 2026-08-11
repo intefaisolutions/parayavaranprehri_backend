@@ -20,6 +20,15 @@ import { LeaderboardService } from './leaderboard.service';
 export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
+  @Get('filters')
+  @ApiOperation({
+    summary:
+      'Filter chip options for ranks (Vidhan Sabha / State / City from CMS + trees)',
+  })
+  getFilters() {
+    return this.leaderboardService.getFilterOptions();
+  }
+
   @Get()
   @ApiOperation({
     summary:

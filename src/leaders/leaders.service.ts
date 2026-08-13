@@ -23,10 +23,18 @@ const NON_SEED_FILTER = {
   leaderName: { $not: { $regex: /^__seed_/ } },
 };
 
-function isPrivateS3Url(url?: string): boolean {
+/** Strip query (incl. expired X-Amz signatures) → permanent object URL. */
+function permanentS3Url(url?: string): string {
+  if (!url) return '';
+  if (/amazonaws\.com|\.s3[.-]/i.test(url) || /[?&]X-Amz-/i.test(url)) {
+    return url.split('?')[0];
+  }
+  return url;
+}
+
+function isS3MediaUrl(url?: string): boolean {
   if (!url) return false;
-  if (/[?&]X-Amz-/i.test(url)) return false;
-  return /amazonaws\.com|\.s3[.-]/i.test(url);
+  return /amazonaws\.com|\.s3[.-]/i.test(url) || /[?&]X-Amz-/i.test(url);
 }
 
 @Injectable()
@@ -53,9 +61,9 @@ export class LeadersService implements OnModuleInit {
   }
 
   /**
-   * DB stores the permanent S3 object URL from Admin upload.
-   * Responses replace private S3 URLs with temporary signed GET URLs
-   * so the mobile app / browsers can load images. Public URLs pass through.
+   * DB should store the permanent S3 object URL.
+   * Responses always re-sign S3 URLs (even if an expired X-Amz URL was
+   * previously stored) so the mobile app can load private bucket images.
    */
   private async withDisplayPhoto(leader: Leader): Promise<Leader> {
     const plain =
@@ -63,12 +71,13 @@ export class LeadersService implements OnModuleInit {
         ? (leader as LeaderDocument).toObject()
         : { ...(leader as object) };
     const photo = String((plain as Leader).photo || '');
-    if (!isPrivateS3Url(photo)) {
+    if (!isS3MediaUrl(photo)) {
       return plain as Leader;
     }
+    const permanent = permanentS3Url(photo);
     try {
       const signedUrl = await this.s3UploadService.getSignedGetUrl(
-        photo,
+        permanent,
         60 * 60 * 6,
       );
       return { ...(plain as Leader), photo: signedUrl };
@@ -78,7 +87,7 @@ export class LeadersService implements OnModuleInit {
           error instanceof Error ? error.message : 'unknown'
         }`,
       );
-      return plain as Leader;
+      return { ...(plain as Leader), photo: permanent };
     }
   }
 
@@ -90,6 +99,7 @@ export class LeadersService implements OnModuleInit {
     );
     const created = await this.leaderRepository.create({
       ...dto,
+      photo: dto.photo ? permanentS3Url(dto.photo) : dto.photo,
       displayOrder,
     } as Partial<LeaderDocument>);
     return this.withDisplayPhoto(created);
@@ -127,6 +137,9 @@ export class LeadersService implements OnModuleInit {
     const payload: Partial<LeaderDocument> = {
       ...(dto as Partial<LeaderDocument>),
     };
+    if (dto.photo !== undefined) {
+      payload.photo = dto.photo ? permanentS3Url(dto.photo) : dto.photo;
+    }
     if (dto.displayOrder !== undefined) {
       payload.displayOrder = await resolveUniqueDisplayOrder(
         this.leaderModel as Model<any>,

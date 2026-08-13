@@ -7,7 +7,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { PaginatedResult } from '../common/interfaces/api-response.interface';
-import { S3UploadService } from '../common/services/s3-upload.service';
 import {
   resequenceDisplayOrdersIfDuplicated,
   resolveUniqueDisplayOrder,
@@ -43,7 +42,6 @@ export class LeadersService implements OnModuleInit {
 
   constructor(
     private readonly leaderRepository: LeaderRepository,
-    private readonly s3UploadService: S3UploadService,
     @InjectModel(Leader.name)
     private readonly leaderModel: Model<LeaderDocument>,
   ) {}
@@ -61,9 +59,12 @@ export class LeadersService implements OnModuleInit {
   }
 
   /**
-   * DB should store the permanent S3 object URL.
-   * Responses always re-sign S3 URLs (even if an expired X-Amz URL was
-   * previously stored) so the mobile app can load private bucket images.
+   * Return the permanent S3 object URL for app/admin display.
+   *
+   * Do NOT replace with signed URLs here: the current IAM key is under
+   * AWSCompromisedKeyQuarantineV3 (signed GET → 403), while public-read
+   * object URLs still return 200. Existing APK loads `photo` as-is.
+   * Strip any stored X-Amz query so clients never get an expired signature.
    */
   private async withDisplayPhoto(leader: Leader): Promise<Leader> {
     const plain =
@@ -74,21 +75,7 @@ export class LeadersService implements OnModuleInit {
     if (!isS3MediaUrl(photo)) {
       return plain as Leader;
     }
-    const permanent = permanentS3Url(photo);
-    try {
-      const signedUrl = await this.s3UploadService.getSignedGetUrl(
-        permanent,
-        60 * 60 * 6,
-      );
-      return { ...(plain as Leader), photo: signedUrl };
-    } catch (error) {
-      this.logger.warn(
-        `Could not sign leader photo: ${
-          error instanceof Error ? error.message : 'unknown'
-        }`,
-      );
-      return { ...(plain as Leader), photo: permanent };
-    }
+    return { ...(plain as Leader), photo: permanentS3Url(photo) };
   }
 
   async create(dto: CreateLeaderDto): Promise<Leader> {

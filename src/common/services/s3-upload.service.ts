@@ -23,7 +23,7 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
 ]);
 
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
 
 export type UploadCategory =
   | 'users'
@@ -215,7 +215,7 @@ export class S3UploadService implements OnModuleInit {
       );
     }
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      throw new BadRequestException('File is too large (max 25MB).');
+      throw new BadRequestException('File is too large (max 100MB).');
     }
 
     const { client, bucket, region } = this.getClient();

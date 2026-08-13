@@ -189,15 +189,69 @@ export class CertificatesService {
     return certificate;
   }
 
-  async verify(verificationCode: string): Promise<Certificate> {
+  /**
+   * Public verify payload for share links:
+   * https://…/certificate/{verificationCode}
+   */
+  async verify(verificationCode: string) {
+    const code = String(verificationCode || '').trim();
+    if (!code) {
+      throw new NotFoundException('Invalid or unknown verification code');
+    }
+
     const certificate = await this.certificateModel
-      .findOne({ verificationCode, isDeleted: false })
+      .findOne({
+        verificationCode: new RegExp(
+          `^${code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+          'i',
+        ),
+        isDeleted: false,
+      })
       .populate('templateId')
       .exec();
+
     if (!certificate) {
       throw new NotFoundException('Invalid or unknown verification code');
     }
-    return certificate;
+
+    const template = certificate.templateId as unknown as CertificateTemplate & {
+      _id?: unknown;
+    };
+
+    return {
+      valid: certificate.status === CertificateStatus.ISSUED,
+      status: certificate.status,
+      recipientName: certificate.recipientName,
+      title: certificate.title,
+      description: certificate.description || template?.description || '',
+      eventName: certificate.eventName || '',
+      issueDate: certificate.issueDate,
+      certificateNumber: certificate.certificateNumber,
+      verificationCode: certificate.verificationCode,
+      pdfUrl: certificate.pdfUrl || null,
+      treesPlanted: certificate.treesPlanted ?? null,
+      template: template
+        ? {
+            templateName: template.templateName,
+            certificateType: template.certificateType,
+            logoUrl: template.logoUrl || '',
+            signatureUrl: template.signatureUrl || '',
+            backgroundUrl: template.backgroundUrl || '',
+          }
+        : null,
+      publicUrlPath: `/certificate/${certificate.verificationCode}`,
+    };
+  }
+
+  buildPublicCertificateUrl(verificationCode: string): string {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL')?.replace(/\/$/, '') ||
+      this.configService.get<string>('ADMIN_URL')?.replace(/\/$/, '') ||
+      '';
+    if (!frontendUrl) {
+      return `/certificate/${verificationCode}`;
+    }
+    return `${frontendUrl}/certificate/${encodeURIComponent(verificationCode)}`;
   }
 
   async update(id: string, dto: UpdateCertificateDto): Promise<Certificate> {
@@ -231,22 +285,24 @@ export class CertificatesService {
       };
     }
 
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL')?.replace(/\/$/, '') ??
-      '';
-    const verifyLink = frontendUrl
-      ? `${frontendUrl}/verify-certificate/${certificate.verificationCode}`
-      : certificate.verificationCode;
+    const verifyLink = this.buildPublicCertificateUrl(
+      certificate.verificationCode,
+    );
 
     const message =
-      `Congratulations ${certificate.recipientName}! 🎉\n\n` +
-      `Your certificate "${certificate.title}" (${certificate.certificateNumber}) ` +
-      `from Paryavaran Prahri has been issued.\n\n` +
-      `Verify it here: ${verifyLink}`;
+      `🌱 Paryavaran Prahri Certificate\n\n` +
+      `Congratulations ${certificate.recipientName}!\n\n` +
+      `Your ${certificate.title} is ready.\n` +
+      (certificate.certificateNumber
+        ? `Certificate No: ${certificate.certificateNumber}\n`
+        : '') +
+      `\nView Certificate:\n${verifyLink}`;
 
-    return this.whatsappService.sendMessage(certificate.recipientMobile, message, {
-      pdfUrl: certificate.pdfUrl,
-    });
+    // URL share only — do not attach raw S3 PDF to WhatsApp payload
+    return this.whatsappService.sendMessage(
+      certificate.recipientMobile,
+      message,
+    );
   }
 
   async remove(id: string): Promise<void> {

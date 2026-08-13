@@ -81,9 +81,13 @@ export class S3UploadService implements OnModuleInit {
       this.cachedAccessKeyId !== accessKeyId;
 
     if (needsRefresh) {
+      // WHEN_REQUIRED avoids x-amz-checksum-mode on signed GET URLs,
+      // which breaks browser <img> / fetch preview for private objects.
       this.client = new S3Client({
         region,
         credentials: { accessKeyId, secretAccessKey },
+        requestChecksumCalculation: 'WHEN_REQUIRED',
+        responseChecksumValidation: 'WHEN_REQUIRED',
       });
       this.cachedRegion = region;
       this.cachedBucket = bucket;

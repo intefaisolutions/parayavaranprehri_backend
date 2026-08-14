@@ -88,7 +88,11 @@ export class LeadersService implements OnModuleInit {
   }
 
   async findAll(query: LeaderQueryDto): Promise<PaginatedResult<Leader>> {
-    const options = PaginationUtil.parse(query);
+    const options = PaginationUtil.parse({
+      ...query,
+      sortBy: query.sortBy || 'displayOrder',
+      sortOrder: query.sortOrder || 'asc',
+    });
     const baseFilter: Record<string, unknown> = {
       ...NON_SEED_FILTER,
     };

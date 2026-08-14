@@ -8,6 +8,7 @@ import { Person, PersonSchema } from '../persons/schemas/person.schema';
 import { NotificationRepository } from './repositories/notification.repository';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsInboxController } from './notifications-inbox.controller';
+import { UserNotificationsController } from './user-notifications.controller';
 import { NotificationsService } from './notifications.service';
 import { NotificationDispatchService } from './services/notification-dispatch.service';
 import { Notification, NotificationSchema } from './schemas/notification.schema';
@@ -28,7 +29,11 @@ import {
       { name: User.name, schema: UserSchema },
     ]),
   ],
-  controllers: [NotificationsInboxController, NotificationsController],
+  controllers: [
+    UserNotificationsController,
+    NotificationsInboxController,
+    NotificationsController,
+  ],
   providers: [
     NotificationsService,
     NotificationRepository,

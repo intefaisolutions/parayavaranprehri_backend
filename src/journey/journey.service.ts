@@ -53,7 +53,7 @@ export class JourneyService implements OnModuleInit {
       .exec();
     const achievementDocs = await this.achievementModel
       .find({ isDeleted: false, isActive: true })
-      .sort({ year: 1, displayOrder: 1, createdAt: 1 })
+      .sort({ displayOrder: 1, year: 1, createdAt: 1 })
       .exec();
 
     const profile = profileDoc
@@ -82,7 +82,7 @@ export class JourneyService implements OnModuleInit {
     if (!includeInactive) filter.isActive = true;
     return this.achievementModel
       .find(filter)
-      .sort({ year: 1, displayOrder: 1, createdAt: 1 })
+      .sort({ displayOrder: 1, year: 1, createdAt: 1 })
       .exec();
   }
 

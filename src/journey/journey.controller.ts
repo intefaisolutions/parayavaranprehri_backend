@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -36,6 +37,7 @@ export class JourneyController {
 
   @Public()
   @Get()
+  @Header('Cache-Control', 'no-store')
   @ApiOperation({
     summary: 'Public journey timeline (profile + achievements for the app)',
   })

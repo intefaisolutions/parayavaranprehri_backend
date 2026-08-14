@@ -17,24 +17,15 @@ import { LeaderQueryDto } from './dto/leader-query.dto';
 import { UpdateLeaderDto } from './dto/update-leader.dto';
 import { LeaderRepository } from './repositories/leader.repository';
 import { Leader, LeaderDocument } from './schemas/leader.schema';
+import {
+  isS3MediaUrl,
+  permanentS3Url,
+  withMediaCacheBust,
+} from '../common/utils/media-url.util';
 
 const NON_SEED_FILTER = {
   leaderName: { $not: { $regex: /^__seed_/ } },
 };
-
-/** Strip query (incl. expired X-Amz signatures) → permanent object URL. */
-function permanentS3Url(url?: string): string {
-  if (!url) return '';
-  if (/amazonaws\.com|\.s3[.-]/i.test(url) || /[?&]X-Amz-/i.test(url)) {
-    return url.split('?')[0];
-  }
-  return url;
-}
-
-function isS3MediaUrl(url?: string): boolean {
-  if (!url) return false;
-  return /amazonaws\.com|\.s3[.-]/i.test(url) || /[?&]X-Amz-/i.test(url);
-}
 
 @Injectable()
 export class LeadersService implements OnModuleInit {
@@ -75,7 +66,11 @@ export class LeadersService implements OnModuleInit {
     if (!isS3MediaUrl(photo)) {
       return plain as Leader;
     }
-    return { ...(plain as Leader), photo: permanentS3Url(photo) };
+    const updatedAt = (plain as Leader).updatedAt;
+    return {
+      ...(plain as Leader),
+      photo: withMediaCacheBust(photo, updatedAt),
+    };
   }
 
   async create(dto: CreateLeaderDto): Promise<Leader> {

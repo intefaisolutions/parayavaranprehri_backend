@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
@@ -45,6 +46,7 @@ export class LeadersController {
 
   @Public()
   @Get()
+  @Header('Cache-Control', 'no-store')
   @ApiOperation({
     summary: 'List initiative leaders (public — app swipe carousel)',
   })
@@ -54,6 +56,7 @@ export class LeadersController {
 
   @Public()
   @Get(':id')
+  @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Get an initiative leader by ID (public)' })
   findOne(@Param('id') id: string) {
     return this.leadersService.findOne(id);

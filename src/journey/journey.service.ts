@@ -21,6 +21,7 @@ import {
   JourneyProfile,
   JourneyProfileDocument,
 } from './schemas/journey-profile.schema';
+import { withMediaCacheBust } from '../common/utils/media-url.util';
 
 @Injectable()
 export class JourneyService implements OnModuleInit {
@@ -46,14 +47,33 @@ export class JourneyService implements OnModuleInit {
 
   /** Public feed — no auto-seed of Dr. Ram / default achievements. */
   async getPublicTimeline() {
-    const profile = await this.profileModel
+    const profileDoc = await this.profileModel
       .findOne({ isDeleted: false })
       .sort({ createdAt: 1 })
       .exec();
-    const achievements = await this.achievementModel
+    const achievementDocs = await this.achievementModel
       .find({ isDeleted: false, isActive: true })
       .sort({ year: 1, displayOrder: 1, createdAt: 1 })
       .exec();
+
+    const profile = profileDoc
+      ? {
+          ...profileDoc.toObject(),
+          photo: withMediaCacheBust(
+            profileDoc.photo,
+            profileDoc.updatedAt,
+          ),
+        }
+      : null;
+
+    const achievements = achievementDocs.map((item) => {
+      const plain = item.toObject();
+      return {
+        ...plain,
+        imageUrl: withMediaCacheBust(plain.imageUrl, plain.updatedAt),
+      };
+    });
+
     return { profile, achievements };
   }
 

@@ -52,6 +52,9 @@ export class User extends BaseSchema {
 
   @Prop({ trim: true })
   state?: string;
+
+  @Prop({ trim: true })
+  vidhanSabha?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

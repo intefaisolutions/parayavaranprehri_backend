@@ -64,6 +64,11 @@ export class MitrasService {
    * admin review before becoming Approved.
    */
   async selfRegister(dto: CreateMitraDto): Promise<Mitra> {
+    const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
+    const existing = await this.findByMobile(mobile);
+    if (existing) {
+      return existing;
+    }
     return this.createInternal(dto, MitraSource.APP, MitraStatus.PENDING, true);
   }
 

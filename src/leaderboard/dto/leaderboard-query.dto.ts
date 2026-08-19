@@ -20,8 +20,8 @@ export class LeaderboardQueryDto {
   state?: string;
 
   @IsOptional()
-  @IsIn(['month', 'year'])
-  period?: 'month' | 'year';
+  @IsString()
+  search?: string;
 
   @IsOptional()
   @Type(() => Number)

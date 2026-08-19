@@ -94,6 +94,15 @@ export class PersonsController {
     return this.personsService.getMyStats(user);
   }
 
+  @Patch('me')
+  @ApiOperation({ summary: 'Citizen: update own Person profile' })
+  updateMe(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdatePersonDto,
+  ) {
+    return this.personsService.updateMe(user, dto);
+  }
+
   @Get(':id/vehicles')
   @Permissions(`${PermissionResource.PERSONS}:${PermissionAction.READ}`)
   @ApiOperation({

@@ -330,7 +330,16 @@ export class LeaderboardService {
     });
 
     const limit = Math.min(query.limit ?? 50, 100);
-    return sorted.slice(0, limit).map((row, index) => {
+    const needle = query.search?.trim().toLowerCase();
+    const filtered = needle
+      ? sorted.filter(
+          (row) =>
+            row.name.toLowerCase().includes(needle) ||
+            (row.vidhanSabha || '').toLowerCase().includes(needle) ||
+            (row.mobile || '').includes(needle),
+        )
+      : sorted;
+    return filtered.slice(0, limit).map((row, index) => {
       const points = row.trees * 10 + Math.floor(row.totalOxygenKg);
       const survivalPct =
         row.trees > 0
@@ -355,7 +364,6 @@ export class LeaderboardService {
 
   async getLeaderboard(
     query: LeaderboardQueryDto,
-    _user: JwtPayload,
   ): Promise<{ scope?: string; period?: string; items: LeaderboardRow[] }> {
     // Explicit query filters only — do not lock list to caller's constituency
     const items = await this.buildRows(query, {

@@ -26,8 +26,8 @@ export class CreatePersonDto {
   mobile!: string;
 
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  @IsOptional()
+  email?: string;
 
   @Type(() => Date)
   @IsDate()

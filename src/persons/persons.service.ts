@@ -297,6 +297,11 @@ export class PersonsService implements OnModuleInit {
     dto: CreatePersonDto,
     actor?: JwtPayload | AuditActor,
   ): Promise<Person> {
+    const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
+    const existing = await this.personRepository.findByMobile(mobile);
+    if (existing) {
+      return existing;
+    }
     return this.createInternal(
       dto,
       PersonSource.APP,
@@ -598,6 +603,12 @@ export class PersonsService implements OnModuleInit {
       co2OffsetKg: stats.co2OffsetKg,
       joinedAt: plain.registrationDate ?? plain.createdAt ?? null,
     };
+  }
+
+  async updateMe(user: JwtPayload, dto: UpdatePersonDto): Promise<Person> {
+    const person = await this.resolvePersonForUser(user);
+    const id = String((person as PersonDocument)._id);
+    return this.update(id, dto, user);
   }
 
   async getMyStats(user: JwtPayload): Promise<{

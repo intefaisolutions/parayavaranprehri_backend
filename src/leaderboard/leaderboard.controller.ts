@@ -10,6 +10,7 @@ import {
   CurrentUser,
   JwtPayload,
 } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { LeaderboardQueryDto } from './dto/leaderboard-query.dto';
 import { LeaderboardService } from './leaderboard.service';
 
@@ -20,6 +21,7 @@ import { LeaderboardService } from './leaderboard.service';
 export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
+  @Public()
   @Get('filters')
   @ApiOperation({
     summary:
@@ -29,16 +31,14 @@ export class LeaderboardController {
     return this.leaderboardService.getFilterOptions();
   }
 
+  @Public()
   @Get()
   @ApiOperation({
     summary:
       'Live citizen leaderboard (trees → points). Optional scope + period filters.',
   })
-  getLeaderboard(
-    @Query() query: LeaderboardQueryDto,
-    @CurrentUser() user: JwtPayload,
-  ) {
-    return this.leaderboardService.getLeaderboard(query, user);
+  getLeaderboard(@Query() query: LeaderboardQueryDto) {
+    return this.leaderboardService.getLeaderboard(query);
   }
 
   @Get('me')

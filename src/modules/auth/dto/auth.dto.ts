@@ -3,12 +3,14 @@ import { z } from 'zod';
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  source: z.string().optional(),
 });
 
 export const otpRequestSchema = z
   .object({
     email: z.string().email().optional(),
     phone: z.string().min(10).max(15).optional(),
+    source: z.string().optional(),
   })
   .refine((data) => data.email || data.phone, {
     message: 'Either email or phone must be provided',
@@ -21,6 +23,7 @@ export const otpVerifySchema = z
     code: z
       .string({ message: 'Please enter your OTP' })
       .length(4, 'OTP must be exactly 4 digits'),
+    source: z.string().optional(),
   })
   .refine((data) => data.email || data.phone, {
     message: 'Either email or phone must be provided',

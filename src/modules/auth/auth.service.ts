@@ -219,6 +219,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
+      throw new UnauthorizedException("Only Super Admin can login to admin panel");
+    }
+
+    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+      throw new UnauthorizedException("Super admin can't login from app");
+    }
+
     if (!user.password) {
       throw new UnauthorizedException(
         'Password login not available. Use OTP login.',
@@ -252,10 +260,13 @@ export class AuthService {
       throw new UnauthorizedException('Please register first');
     }
 
-    if (user.role === SystemRole.SUPER_ADMIN) {
-      throw new UnauthorizedException("Super admin can't login here");
+    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
+      throw new UnauthorizedException("Only Super Admin can login to admin panel");
     }
 
+    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+      throw new UnauthorizedException("Super admin can't login from app");
+    }
     const code = this.generateOtp();
     const expiresMinutes =
       this.configService.get<number>('OTP_EXPIRES_IN_MINUTES') ?? 10;
@@ -331,6 +342,14 @@ export class AuthService {
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
+    }
+
+    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
+      throw new UnauthorizedException("Only Super Admin can login to admin panel");
+    }
+
+    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+      throw new UnauthorizedException("Super admin can't login from app");
     }
 
     await this.otpRepository.markUsed(otp._id.toString());

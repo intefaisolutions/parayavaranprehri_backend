@@ -14,6 +14,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -45,7 +46,7 @@ export class SettingsController {
   }
 
   @Get()
-  @Permissions(`${PermissionResource.SETTINGS}:${PermissionAction.LIST}`)
+  @Public()
   @ApiOperation({ summary: 'List system settings (paginated, searchable, sortable)' })
   findAll(@Query() query: SettingQueryDto) {
     return this.settingsService.findAll(query);

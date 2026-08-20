@@ -6,6 +6,10 @@ export class LeaderboardQueryDto {
   @IsIn(['vidhan-sabha', 'city', 'state'])
   scope?: 'vidhan-sabha' | 'city' | 'state';
 
+  @IsOptional()
+  @IsIn(['month', 'year'])
+  period?: 'month' | 'year';
+
   /** Optional constituency filter when scope=vidhan-sabha */
   @IsOptional()
   @IsString()

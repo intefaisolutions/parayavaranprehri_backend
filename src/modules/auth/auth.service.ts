@@ -252,6 +252,10 @@ export class AuthService {
       throw new UnauthorizedException('Please register first');
     }
 
+    if (user.role === SystemRole.SUPER_ADMIN) {
+      throw new UnauthorizedException("Super admin can't login here");
+    }
+
     const code = this.generateOtp();
     const expiresMinutes =
       this.configService.get<number>('OTP_EXPIRES_IN_MINUTES') ?? 10;

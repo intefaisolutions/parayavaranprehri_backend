@@ -17,6 +17,7 @@ import {
 } from '../../common/utils/identity.util';
 import { PersonGender } from '../../persons/schemas/person.schema';
 import { PersonsService } from '../../persons/persons.service';
+import { MitrasService } from '../../mitras/mitras.service';
 import { UserRepository } from '../users/repositories/user.repository';
 import { UsersService } from '../users/users.service';
 import { UserDocument } from '../users/schemas/user.schema';
@@ -39,6 +40,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly userRepository: UserRepository,
     private readonly personsService: PersonsService,
+    private readonly mitrasService: MitrasService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
@@ -150,6 +152,10 @@ export class AuthService {
       );
     }
 
+    // Check if they already self-registered as a Mitra before doing auth registration
+    const existingMitra = await this.mitrasService.findByMobile(mobile);
+    const assignedRole = existingMitra ? SystemRole.MITRA : SystemRole.CUSTOMER;
+
     // usersService.create enforces global unique email + mobile across
     // User / Person / Mitra / Partner (same mobile+email may already exist
     // as Person/Mitra — that is allowed as the same identity).
@@ -158,7 +164,7 @@ export class AuthService {
       lastName,
       email,
       phone: mobile,
-      role: SystemRole.CUSTOMER,
+      role: assignedRole,
       permissions: [],
       isActive: true,
     });

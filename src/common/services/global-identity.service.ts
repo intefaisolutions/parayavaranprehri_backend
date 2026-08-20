@@ -22,6 +22,7 @@ interface IdentityHit {
   mobile?: string;
   email?: string;
   label: string;
+  role?: string;
 }
 
 /**
@@ -75,6 +76,12 @@ export class GlobalIdentityService {
         );
       }
 
+      if (as === 'mitra' && hit.kind === 'user' && hit.role === 'customer') {
+        throw new ConflictException(
+          'This number is already registered as a Customer. Please register with another number.',
+        );
+      }
+
       const hitEmail = normalizeEmail(hit.email);
       // Cross-role same person (matching email) is allowed
       if (email && hitEmail && email === hitEmail) continue;
@@ -100,6 +107,12 @@ export class GlobalIdentityService {
         );
       }
 
+      if (as === 'mitra' && hit.kind === 'user' && hit.role === 'customer') {
+        throw new ConflictException(
+          'This email is already registered as a Customer. Please register with another email.',
+        );
+      }
+
       const hitMobile = normalizeMobile(hit.mobile);
       // Cross-role same person (matching mobile) is allowed
       if (mobile && hitMobile && mobile === hitMobile) continue;
@@ -118,7 +131,7 @@ export class GlobalIdentityService {
     const [users, persons, mitras, partners] = await Promise.all([
       this.userModel
         .find({ phone: mobile, isDeleted: false })
-        .select('_id phone email')
+        .select('_id phone email role')
         .lean()
         .exec(),
       this.personModel
@@ -149,6 +162,7 @@ export class GlobalIdentityService {
         mobile: u.phone,
         email: u.email,
         label: 'User',
+        role: u.role as string,
       });
     }
     for (const p of persons) {
@@ -195,7 +209,7 @@ export class GlobalIdentityService {
     const [users, persons, mitras, partners] = await Promise.all([
       this.userModel
         .find({ email, isDeleted: false })
-        .select('_id phone email')
+        .select('_id phone email role')
         .lean()
         .exec(),
       this.personModel
@@ -226,6 +240,7 @@ export class GlobalIdentityService {
         mobile: u.phone,
         email: u.email,
         label: 'User',
+        role: u.role as string,
       });
     }
     for (const p of persons) {

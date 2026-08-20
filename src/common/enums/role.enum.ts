@@ -6,6 +6,7 @@ export enum SystemRole {
   FIELD_OFFICER = 'field_officer',
   GOVERNMENT_OFFICER = 'government_officer',
   CUSTOMER = 'customer',
+  MITRA = 'mitra',
   AUDITOR = 'auditor',
 }
 

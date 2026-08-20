@@ -16,6 +16,7 @@ import {
   CurrentUser,
   type JwtPayload,
 } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
@@ -47,6 +48,7 @@ export class MitrasController {
     return this.mitrasService.create(dto);
   }
 
+  @Public()
   @Post('self-register')
   @ApiOperation({
     summary:

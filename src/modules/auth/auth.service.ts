@@ -48,7 +48,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
     private readonly whatsappService: WhatsappService,
-  ) {}
+  ) { }
 
   private generateOtp(): string {
     // STATIC_OTP_MODE=true → fixed code for local testing (skips SMS).
@@ -174,8 +174,8 @@ export class AuthService {
     const fullName = `${firstName} ${lastName}`.trim();
     const userId = String(
       (createdUser.id as string | undefined) ||
-        (createdUser._id as string | undefined) ||
-        '',
+      (createdUser._id as string | undefined) ||
+      '',
     ) || undefined;
 
     try {

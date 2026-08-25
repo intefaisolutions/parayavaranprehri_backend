@@ -213,9 +213,11 @@ export class MitraEventsService {
   }
 
   async listAttendance(eventId: string) {
-    await this.findOne(eventId);
+    const filter = Types.ObjectId.isValid(eventId)
+      ? { $or: [{ eventId: new Types.ObjectId(eventId) }, { eventId }], isDeleted: false }
+      : { eventId, isDeleted: false };
     return this.attendanceModel
-      .find({ eventId, isDeleted: false })
+      .find(filter)
       .sort({ attendedAt: -1 })
       .exec();
   }

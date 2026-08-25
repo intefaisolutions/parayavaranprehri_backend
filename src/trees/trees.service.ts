@@ -199,8 +199,9 @@ export class TreesService {
     return { id: mitra._id, name: mitra.name };
   }
 
-  async findAll(): Promise<Tree[]> {
-    return this.treeModel.find().sort({ createdAt: -1 }).exec();
+  async findAll(mitraId?: string): Promise<Tree[]> {
+    const filter = mitraId ? { assignedMitraId: mitraId } : {};
+    return this.treeModel.find(filter).sort({ createdAt: -1 }).exec();
   }
 
   async findByTreeId(treeId: string): Promise<Tree | null> {

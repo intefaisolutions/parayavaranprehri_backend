@@ -77,6 +77,12 @@ export class Task extends BaseSchema {
 
   @Prop({ enum: TaskStatus, default: TaskStatus.PENDING, index: true })
   status!: TaskStatus;
+
+  @Prop({ trim: true })
+  proofDescription?: string;
+
+  @Prop({ trim: true })
+  proofMediaUrl?: string;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

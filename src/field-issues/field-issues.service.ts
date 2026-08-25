@@ -22,23 +22,27 @@ export class FieldIssuesService {
     private readonly mitrasService: MitrasService,
   ) {}
 
-  async create(dto: CreateFieldIssueDto, user: JwtPayload) {
-    const me = (await this.usersService.findOne(user.sub)) as {
-      phone?: string;
-      firstName?: string;
-      lastName?: string;
-    };
+  async create(dto: CreateFieldIssueDto, user?: JwtPayload) {
+    let me: any = {};
+    if (user) {
+      me = (await this.usersService.findOne(user.sub).catch(() => ({}))) as {
+        phone?: string;
+        firstName?: string;
+        lastName?: string;
+      };
+    }
+    
     let mitraId = dto.mitraId;
     if (!mitraId && me.phone) {
-      const mitra = await this.mitrasService.findByMobile(me.phone);
+      const mitra = await this.mitrasService.findByMobile(me.phone).catch(() => null);
       mitraId = mitra?.mitraId;
     }
 
     return this.issueModel.create({
       ...dto,
       mitraId,
-      reportedByUserId: user.sub,
-      reportedByName: [me.firstName, me.lastName].filter(Boolean).join(' '),
+      reportedByUserId: user?.sub,
+      reportedByName: [me.firstName, me.lastName].filter(Boolean).join(' ') || 'Mitra App User',
       status: FieldIssueStatus.OPEN,
     });
   }

@@ -7,6 +7,7 @@ import {
   Patch,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
@@ -32,8 +33,8 @@ export class TreesController {
   }
 
   @Get()
-  findAll() {
-    return this.treesService.findAll();
+  findAll(@Query('mitraId') mitraId?: string) {
+    return this.treesService.findAll(mitraId);
   }
 
   @Get('user/:mobile')

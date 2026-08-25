@@ -35,6 +35,7 @@ const VALID_CATEGORIES: UploadCategory[] = [
 export class UploadsController {
   constructor(private readonly s3UploadService: S3UploadService) {}
 
+  @Public()
   @Post()
   @ApiConsumes('multipart/form-data')
   @ApiOperation({

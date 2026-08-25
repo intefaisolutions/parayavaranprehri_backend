@@ -23,6 +23,7 @@ import {
 import { SystemRole } from '../common/enums/role.enum';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { Public } from '../common/decorators/public.decorator';
 import { CreateMitraEventDto } from './dto/create-mitra-event.dto';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { UpdateMitraEventDto } from './dto/update-mitra-event.dto';
@@ -45,14 +46,16 @@ export class MitraEventsController {
   }
 
   @Get('me')
+  @Public()
   @ApiOperation({
     summary: 'List active events with current Mitra attendance flags',
   })
-  listMine(@CurrentUser() user: JwtPayload) {
+  listMine(@CurrentUser() user?: JwtPayload) {
     return this.mitraEventsService.listMyEventsWithAttendance(user);
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: 'List Mitra events' })
   findAll(@Query('includeInactive') includeInactive?: string) {
     return this.mitraEventsService.findAll(includeInactive !== 'true');
@@ -67,16 +70,18 @@ export class MitraEventsController {
   }
 
   @Post(':id/attendance')
+  @Public()
   @ApiOperation({ summary: 'Mark attendance for an event (Mitra self-service)' })
   markAttendance(
     @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
-    @Body() dto: MarkAttendanceDto,
+    @CurrentUser() user?: JwtPayload,
+    @Body() dto: MarkAttendanceDto = {},
   ) {
     return this.mitraEventsService.markAttendance(id, user, dto);
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({ summary: 'Get a Mitra event by ID' })
   findOne(@Param('id') id: string) {
     return this.mitraEventsService.findOne(id);

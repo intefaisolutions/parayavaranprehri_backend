@@ -72,6 +72,9 @@ export class TasksService {
     if (query.vidhanSabha !== undefined) {
       baseFilter.vidhanSabha = query.vidhanSabha;
     }
+    if ((query as any).assignedMitra !== undefined) {
+      baseFilter.assignedMitra = (query as any).assignedMitra;
+    }
 
     return this.taskRepository.findPaginated(options, baseFilter, [
       'taskTitle',
@@ -103,10 +106,17 @@ export class TasksService {
     return updated;
   }
 
-  async setStatus(id: string, status: TaskStatus): Promise<Task> {
-    const updated = await this.taskRepository.updateById(id, {
-      status,
-    } as Partial<TaskDocument>);
+  async setStatus(
+    id: string,
+    status: TaskStatus,
+    proofDescription?: string,
+    proofMediaUrl?: string,
+  ): Promise<Task> {
+    const updatePayload: Partial<TaskDocument> = { status };
+    if (proofDescription !== undefined) updatePayload.proofDescription = proofDescription;
+    if (proofMediaUrl !== undefined) updatePayload.proofMediaUrl = proofMediaUrl;
+
+    const updated = await this.taskRepository.updateById(id, updatePayload);
     if (!updated) {
       throw new NotFoundException(`Task "${id}" not found`);
     }

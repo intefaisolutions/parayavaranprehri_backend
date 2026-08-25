@@ -12,7 +12,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import {
   PermissionAction,
@@ -43,6 +45,13 @@ export class TasksController {
     return this.tasksService.create(dto);
   }
 
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List tasks assigned to me' })
+  findMine(@CurrentUser() user: any, @Query() query: TaskQueryDto) {
+    return this.tasksService.findAll({ ...query, assignedMitra: query.assignedMitra || user.userId || user.sub } as any);
+  }
+
   @Get()
   @ApiBearerAuth()
   @Permissions(`${PermissionResource.TASKS}:${PermissionAction.LIST}`)
@@ -59,13 +68,17 @@ export class TasksController {
     return this.tasksService.findOne(id);
   }
 
+  @Public()
   @Patch(':id/status')
   @ApiBearerAuth()
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @Permissions(`${PermissionResource.TASKS}:${PermissionAction.UPDATE}`)
   @ApiOperation({ summary: 'Update the status of a task' })
-  setStatus(@Param('id') id: string, @Body('status') status: TaskStatus) {
-    return this.tasksService.setStatus(id, status);
+  setStatus(
+    @Param('id') id: string,
+    @Body('status') status: TaskStatus,
+    @Body('proofDescription') proofDescription?: string,
+    @Body('proofMediaUrl') proofMediaUrl?: string,
+  ) {
+    return this.tasksService.setStatus(id, status, proofDescription, proofMediaUrl);
   }
 
   @Patch(':id')

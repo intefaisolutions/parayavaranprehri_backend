@@ -40,4 +40,8 @@ export class TaskQueryDto {
   @IsString()
   @IsOptional()
   vidhanSabha?: string;
+
+  @IsString()
+  @IsOptional()
+  assignedMitra?: string;
 }

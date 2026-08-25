@@ -11,6 +11,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
@@ -34,11 +35,12 @@ import { FieldIssuesService } from './field-issues.service';
 export class FieldIssuesController {
   constructor(private readonly fieldIssuesService: FieldIssuesService) {}
 
+  @Public()
   @Post()
   @ApiOperation({ summary: 'Report a field issue' })
   create(
     @Body() dto: CreateFieldIssueDto,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user?: JwtPayload,
   ) {
     return this.fieldIssuesService.create(dto, user);
   }

@@ -21,6 +21,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/gif',
   'image/svg+xml',
   'application/pdf',
+  'video/mp4',
+  'video/quicktime',
 ]);
 
 const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB

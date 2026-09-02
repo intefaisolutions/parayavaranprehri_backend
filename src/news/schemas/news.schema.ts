@@ -31,6 +31,9 @@ export class News extends BaseSchema {
   @Prop({ trim: true })
   image?: string;
 
+  @Prop({ trim: true })
+  url?: string;
+
   @Prop({ required: true, trim: true })
   author!: string;
 

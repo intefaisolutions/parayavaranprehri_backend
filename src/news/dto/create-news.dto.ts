@@ -30,6 +30,10 @@ export class CreateNewsDto {
   image?: string;
 
   @IsString()
+  @IsOptional()
+  url?: string;
+
+  @IsString()
   @IsNotEmpty()
   author!: string;
 

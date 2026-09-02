@@ -49,6 +49,7 @@ import { JourneyModule } from './journey/journey.module';
 import { MitraEventsModule } from './mitra-events/mitra-events.module';
 import { FieldIssuesModule } from './field-issues/field-issues.module';
 import { MaintenanceLogsModule } from './maintenance-logs/maintenance-logs.module';
+import { VehicleTreeRulesModule } from './vehicle-tree-rules/vehicle-tree-rules.module';
 import { LandsModule } from './lands/lands.module';
 import { GeoModule } from './geo/geo.module';
 import { MasterGeographyModule } from './master-geography/master-geography.module';
@@ -114,6 +115,7 @@ import { MissionProgressModule } from './mission-progress/mission-progress.modul
     MitraEventsModule,
     FieldIssuesModule,
     MaintenanceLogsModule,
+    VehicleTreeRulesModule,
   ],
   controllers: [AppController],
   providers: [

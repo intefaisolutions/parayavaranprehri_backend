@@ -57,6 +57,8 @@ import { TreeMastersModule } from './tree-masters/tree-masters.module';
 import { PlantationsModule } from './plantations/plantations.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { MissionProgressModule } from './mission-progress/mission-progress.module';
+import { ProkeralaModule } from './prokerala/prokerala.module';
+import { AstrologyModule } from './astrology/astrology.module';
 
 @Module({
   imports: [
@@ -116,6 +118,8 @@ import { MissionProgressModule } from './mission-progress/mission-progress.modul
     FieldIssuesModule,
     MaintenanceLogsModule,
     VehicleTreeRulesModule,
+    ProkeralaModule,
+    AstrologyModule,
   ],
   controllers: [AppController],
   providers: [

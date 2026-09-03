@@ -298,6 +298,42 @@ export class GeoService {
     );
   }
 
+  async geocode(address: string): Promise<{ latitude: number; longitude: number }> {
+    const url = new URL('https://nominatim.openstreetmap.org/search');
+    url.searchParams.set('q', address);
+    url.searchParams.set('format', 'json');
+    url.searchParams.set('limit', '1');
+
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'ParyavaranPrahri/1.0 (astrology geocode)',
+        },
+      });
+
+      if (!response.ok) {
+        throw new ServiceUnavailableException('Location lookup service is temporarily unavailable');
+      }
+
+      const data = await response.json();
+      if (!data || data.length === 0) {
+        throw new BadRequestException(`Could not find coordinates for place: ${address}`);
+      }
+
+      return {
+        latitude: parseFloat(data[0].lat),
+        longitude: parseFloat(data[0].lon),
+      };
+    } catch (err) {
+      if (err instanceof BadRequestException || err instanceof ServiceUnavailableException) {
+        throw err;
+      }
+      this.logger.error('Nominatim geocode failed', err as Error);
+      throw new ServiceUnavailableException('Failed to geocode address');
+    }
+  }
+
   private async resolveVidhanSabha(
     longitude: number,
     latitude: number,

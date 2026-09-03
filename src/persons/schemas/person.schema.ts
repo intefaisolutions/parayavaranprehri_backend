@@ -46,6 +46,27 @@ export class Person extends BaseSchema {
   @Prop({ type: Date })
   dob?: Date;
 
+  @Prop({ trim: true })
+  timeOfBirth?: string;
+
+  @Prop({ trim: true })
+  birthPlace?: string;
+
+  @Prop({ type: Number })
+  birthLatitude?: number;
+
+  @Prop({ type: Number })
+  birthLongitude?: number;
+
+  @Prop({ trim: true })
+  birthTimezone?: string;
+
+  @Prop({ trim: true })
+  rashi?: string;
+
+  @Prop({ trim: true })
+  rashiEnglish?: string;
+
   @Prop({ enum: PersonGender })
   gender?: PersonGender;
 

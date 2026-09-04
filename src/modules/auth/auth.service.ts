@@ -64,7 +64,7 @@ export class AuthService {
     return {
       sub: user._id.toString(),
       email: user.email,
-      role: user.role,
+      roles: user.roles,
       permissions: user.permissions ?? [],
     };
   }
@@ -126,7 +126,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
+        roles: user.roles,
         permissions: user.permissions ?? [],
       },
     };
@@ -154,7 +154,7 @@ export class AuthService {
 
     // Check if they already self-registered as a Mitra before doing auth registration
     const existingMitra = await this.mitrasService.findByMobile(mobile);
-    const assignedRole = existingMitra ? SystemRole.MITRA : SystemRole.CUSTOMER;
+    const assignedRole = existingMitra ? SystemRole.MITRA : SystemRole.USER;
 
     // usersService.create enforces global unique email + mobile across
     // User / Person / Mitra / Partner (same mobile+email may already exist
@@ -164,7 +164,7 @@ export class AuthService {
       lastName,
       email,
       phone: mobile,
-      role: assignedRole,
+      roles: [assignedRole],
       permissions: [],
       isActive: true,
     });
@@ -225,11 +225,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
-      throw new UnauthorizedException("Only Super Admin can login to admin panel");
+    const adminRoles = [
+      SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.INSURANCE_COMPANY,
+      SystemRole.PLANTATION_PARTNER, SystemRole.FIELD_OFFICER,
+      SystemRole.GOVERNMENT_OFFICER, SystemRole.AUDITOR
+    ];
+    const hasAdminRole = user.roles?.some(role => adminRoles.includes(role as SystemRole));
+
+    if (dto.source === 'admin' && !hasAdminRole) {
+      throw new UnauthorizedException("You do not have permission to login to the admin panel");
     }
 
-    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+    if (dto.source !== 'admin' && user.roles?.includes(SystemRole.SUPER_ADMIN)) {
       throw new UnauthorizedException("Super admin can't login from app");
     }
 
@@ -266,11 +273,18 @@ export class AuthService {
       throw new UnauthorizedException('Please register first');
     }
 
-    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
-      throw new UnauthorizedException("Only Super Admin can login to admin panel");
+    const adminRoles = [
+      SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.INSURANCE_COMPANY,
+      SystemRole.PLANTATION_PARTNER, SystemRole.FIELD_OFFICER,
+      SystemRole.GOVERNMENT_OFFICER, SystemRole.AUDITOR
+    ];
+    const hasAdminRole = user.roles?.some(role => adminRoles.includes(role as SystemRole));
+
+    if (dto.source === 'admin' && !hasAdminRole) {
+      throw new UnauthorizedException("You do not have permission to login to the admin panel");
     }
 
-    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+    if (dto.source !== 'admin' && user.roles?.includes(SystemRole.SUPER_ADMIN)) {
       throw new UnauthorizedException("Super admin can't login from app");
     }
     const code = this.generateOtp();
@@ -350,11 +364,18 @@ export class AuthService {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    if (dto.source === 'admin' && user.role !== SystemRole.SUPER_ADMIN) {
-      throw new UnauthorizedException("Only Super Admin can login to admin panel");
+    const adminRoles = [
+      SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.INSURANCE_COMPANY,
+      SystemRole.PLANTATION_PARTNER, SystemRole.FIELD_OFFICER,
+      SystemRole.GOVERNMENT_OFFICER, SystemRole.AUDITOR
+    ];
+    const hasAdminRole = user.roles?.some(role => adminRoles.includes(role as SystemRole));
+
+    if (dto.source === 'admin' && !hasAdminRole) {
+      throw new UnauthorizedException("You do not have permission to login to the admin panel");
     }
 
-    if (user.role === SystemRole.SUPER_ADMIN && dto.source !== 'admin') {
+    if (dto.source !== 'admin' && user.roles?.includes(SystemRole.SUPER_ADMIN)) {
       throw new UnauthorizedException("Super admin can't login from app");
     }
 

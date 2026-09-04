@@ -23,8 +23,24 @@ export class User extends BaseSchema {
   @Prop({ select: false })
   password?: string;
 
-  @Prop({ required: true, enum: SystemRole, index: true })
-  role!: SystemRole;
+  @Prop({ type: [{ type: String, enum: SystemRole }], default: [SystemRole.USER], index: true })
+  roles!: SystemRole[];
+
+  @Prop({
+    type: {
+      status: { type: String, enum: ['NOT_SUBMITTED', 'PENDING', 'VERIFIED', 'REJECTED'], default: 'NOT_SUBMITTED' }
+    },
+    default: { status: 'NOT_SUBMITTED' }
+  })
+  vehicleInsurance!: { status: 'NOT_SUBMITTED' | 'PENDING' | 'VERIFIED' | 'REJECTED' };
+
+  @Prop({
+    type: {
+      status: { type: String, enum: ['NOT_APPLIED', 'PENDING', 'APPROVED', 'REJECTED'], default: 'NOT_APPLIED' }
+    },
+    default: { status: 'NOT_APPLIED' }
+  })
+  mitraApplication!: { status: 'NOT_APPLIED' | 'PENDING' | 'APPROVED' | 'REJECTED' };
 
   @Prop({ type: Types.ObjectId, ref: 'Role' })
   roleId?: Types.ObjectId;
@@ -59,5 +75,5 @@ export class User extends BaseSchema {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.index({ role: 1, isActive: 1 });
+UserSchema.index({ roles: 1, isActive: 1 });
 UserSchema.index({ firstName: 'text', lastName: 'text', email: 'text' });

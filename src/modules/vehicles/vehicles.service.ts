@@ -187,7 +187,7 @@ export class VehiclesService {
 
     const ownerId = String(vehicle.userId);
     const isStaff =
-      user.role === SystemRole.SUPER_ADMIN || user.role === SystemRole.ADMIN;
+      user.roles?.includes(SystemRole.SUPER_ADMIN) || user.roles?.includes(SystemRole.ADMIN);
     if (!isStaff && ownerId !== user.sub) {
       throw new ForbiddenException(
         'You can only view trees for your own vehicles',
@@ -253,7 +253,7 @@ export class VehiclesService {
 
     const ownerId = String(vehicle.userId);
     const isStaff =
-      user.role === SystemRole.SUPER_ADMIN || user.role === SystemRole.ADMIN;
+      user.roles?.includes(SystemRole.SUPER_ADMIN) || user.roles?.includes(SystemRole.ADMIN);
     if (!isStaff && ownerId !== user.sub) {
       throw new ForbiddenException(
         'You can only download certificates for your own vehicles',

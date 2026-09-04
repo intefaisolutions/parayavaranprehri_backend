@@ -63,7 +63,7 @@ export class MaintenanceLogsService {
     if (query.treeCode) filter.treeCode = query.treeCode;
 
     const isAdmin =
-      user.role === SystemRole.SUPER_ADMIN || user.role === SystemRole.ADMIN;
+      user.roles?.includes(SystemRole.SUPER_ADMIN) || user.roles?.includes(SystemRole.ADMIN);
     if (!isAdmin || query.mine === 'true') {
       filter.createdByUserId = user.sub;
     }

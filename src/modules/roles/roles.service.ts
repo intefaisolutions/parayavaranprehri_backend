@@ -84,7 +84,7 @@ export class RolesService implements OnModuleInit {
 
       // Keep user JWT permission arrays aligned with system role seeds
       await this.connection.collection('users').updateMany(
-        { role: roleData.name, isDeleted: { $ne: true } },
+        { roles: roleData.name, isDeleted: { $ne: true } },
         { $set: { permissions: roleData.permissionKeys } },
       );
     }

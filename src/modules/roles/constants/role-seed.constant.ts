@@ -92,9 +92,9 @@ export const ROLE_SEED_DATA: Array<{
     ],
   },
   {
-    name: SystemRole.CUSTOMER,
-    displayName: 'Customer',
-    description: 'End customer portal',
+    name: SystemRole.USER,
+    displayName: 'User',
+    description: 'End user portal',
     permissionKeys: [
       `${PermissionResource.VEHICLES}:${PermissionAction.LIST}`,
       `${PermissionResource.VEHICLES}:${PermissionAction.READ}`,

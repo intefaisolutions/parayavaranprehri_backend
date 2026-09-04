@@ -5,7 +5,8 @@ export enum SystemRole {
   PLANTATION_PARTNER = 'plantation_partner',
   FIELD_OFFICER = 'field_officer',
   GOVERNMENT_OFFICER = 'government_officer',
-  CUSTOMER = 'customer',
+  USER = 'user',
+  PARYAVARAN_PRAHRI = 'paryavaran_prahri',
   MITRA = 'mitra',
   AUDITOR = 'auditor',
 }

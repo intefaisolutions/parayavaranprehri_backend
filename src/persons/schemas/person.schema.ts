@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 import { BaseSchema } from '../../common/schemas/base.schema';
 
 export type PersonDocument = HydratedDocument<Person>;
@@ -130,6 +130,9 @@ export class Person extends BaseSchema {
 
   @Prop({ trim: true, index: true })
   updatedByUserId?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', index: true })
+  userId?: Types.ObjectId;
 }
 
 export const PersonSchema = SchemaFactory.createForClass(Person);

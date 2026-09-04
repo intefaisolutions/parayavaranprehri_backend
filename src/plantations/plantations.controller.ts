@@ -40,7 +40,7 @@ export class PlantationsController {
     SystemRole.SUPER_ADMIN,
     SystemRole.ADMIN,
     SystemRole.FIELD_OFFICER,
-    SystemRole.CUSTOMER,
+    SystemRole.USER,
   )
   @Permissions(`${PermissionResource.PLANTATIONS}:${PermissionAction.CREATE}`)
   @ApiOperation({ summary: 'Create plantation request (pending approval)' })

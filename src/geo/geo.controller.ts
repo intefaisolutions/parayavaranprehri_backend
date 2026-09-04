@@ -30,7 +30,7 @@ const GEO_ROLES = [
 ] as const;
 
 /** Staff + citizen app (register / profile GPS). */
-const GEO_CITIZEN_ROLES = [...GEO_ROLES, SystemRole.CUSTOMER] as const;
+const GEO_CITIZEN_ROLES = [...GEO_ROLES, SystemRole.USER] as const;
 
 @ApiTags('Geo')
 @ApiBearerAuth()

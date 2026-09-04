@@ -7,7 +7,7 @@ export const createUserSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(10).max(15).optional(),
   password: z.string().min(8).max(128).optional(),
-  role: z.nativeEnum(SystemRole),
+  roles: z.array(z.nativeEnum(SystemRole)),
   permissions: z.array(z.string()).default([]),
   isActive: z.boolean().default(true),
   avatar: z.string().url().optional(),
@@ -38,7 +38,7 @@ export const userQuerySchema = z.object({
   sortBy: z.string().optional(),
   sortOrder: z.enum(['asc', 'desc']).optional(),
   search: z.string().optional(),
-  role: z.nativeEnum(SystemRole).optional(),
+  roles: z.array(z.nativeEnum(SystemRole)).optional(),
   isActive: z
     .enum(['true', 'false'])
     .transform((v) => v === 'true')

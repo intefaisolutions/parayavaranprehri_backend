@@ -20,7 +20,7 @@ export class AuditLogsService {
     return this.auditLogRepository.create({
       ...dto,
       userName: dto.userName || user?.email || 'System',
-      role: dto.role || user?.role,
+      roles: dto.roles || user?.roles,
       ipAddress: dto.ipAddress || ip,
       dateTime: dto.dateTime ? new Date(dto.dateTime) : new Date(),
     } as Partial<AuditLogDocument>);
@@ -38,7 +38,7 @@ export class AuditLogsService {
 
     return this.auditLogRepository.findPaginated(options, baseFilter, [
       'userName',
-      'role',
+      'roles',
       'moduleName',
       'actionType',
       'recordId',

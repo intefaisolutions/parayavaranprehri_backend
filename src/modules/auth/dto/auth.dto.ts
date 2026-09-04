@@ -71,7 +71,7 @@ export interface AuthResponse extends TokenPair {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    roles: string[];
     permissions: string[];
   };
 }

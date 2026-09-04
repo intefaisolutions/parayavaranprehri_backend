@@ -15,6 +15,7 @@ import {
 } from '../common/utils/identity.util';
 import { oxygenToCo2Kg } from '../common/utils/carbon.util';
 import { PaginationUtil } from '../common/utils/pagination.util';
+import { SystemRole } from '../common/enums/role.enum';
 import {
   User,
   UserDocument,
@@ -31,8 +32,9 @@ import {
   PersonStatus,
 } from './schemas/person.schema';
 
-export type PersonWithLogin = Person & {
-  lastLoginAt?: Date | null;
+export type PersonWithUserDetails = Person & {
+  lastLoginAt: Date | null;
+  roles: string[];
 };
 
 interface InsuranceVehiclesResult {
@@ -106,22 +108,28 @@ export class PersonsService implements OnModuleInit {
     return { ...(person as unknown as Record<string, unknown>) };
   }
 
-  /** Attach login User.lastLoginAt matched by mobile or email. */
-  private async attachLastLogin(
+  /** Attach login User details (lastLoginAt, roles) matched by userId, mobile, or email. */
+  private async attachUserDetails(
     persons: Array<Person | PersonDocument>,
-  ): Promise<PersonWithLogin[]> {
+  ): Promise<PersonWithUserDetails[]> {
     if (persons.length === 0) return [];
 
+    const userIds = new Set<string>();
     const mobiles = new Set<string>();
     const emails = new Set<string>();
     for (const p of persons) {
-      const mobile = normalizeMobile(p.mobile);
-      const email = normalizeEmail(p.email);
-      if (mobile) mobiles.add(mobile);
-      if (email) emails.add(email);
+      if (p.userId) {
+        userIds.add(p.userId.toString());
+      } else {
+        const mobile = normalizeMobile(p.mobile);
+        const email = normalizeEmail(p.email);
+        if (mobile) mobiles.add(mobile);
+        if (email) emails.add(email);
+      }
     }
 
     const or: Record<string, unknown>[] = [];
+    if (userIds.size > 0) or.push({ _id: { $in: [...userIds] } });
     if (mobiles.size > 0) or.push({ phone: { $in: [...mobiles] } });
     if (emails.size > 0) or.push({ email: { $in: [...emails] } });
 
@@ -130,30 +138,35 @@ export class PersonsService implements OnModuleInit {
         ? []
         : await this.userModel
             .find({ isDeleted: false, $or: or })
-            .select('phone email lastLoginAt')
+            .select('_id phone email roles lastLoginAt')
             .lean()
             .exec();
 
-    const byPhone = new Map<string, Date | undefined>();
-    const byEmail = new Map<string, Date | undefined>();
+    const byId = new Map<string, any>();
+    const byPhone = new Map<string, any>();
+    const byEmail = new Map<string, any>();
     for (const u of users) {
+      byId.set(u._id.toString(), u);
       const phone = normalizeMobile(u.phone);
       const email = normalizeEmail(u.email);
-      if (phone) byPhone.set(phone, u.lastLoginAt);
-      if (email) byEmail.set(email, u.lastLoginAt);
+      if (phone) byPhone.set(phone, u);
+      if (email) byEmail.set(email, u);
     }
 
     return persons.map((person) => {
       const mobile = normalizeMobile(person.mobile);
       const email = normalizeEmail(person.email);
-      const lastLoginAt =
+      
+      const user = 
+        (person.userId ? byId.get(person.userId.toString()) : undefined) ??
         (mobile ? byPhone.get(mobile) : undefined) ??
-        (email ? byEmail.get(email) : undefined) ??
-        null;
+        (email ? byEmail.get(email) : undefined);
+
       return {
         ...this.toPlain(person),
-        lastLoginAt,
-      } as PersonWithLogin;
+        roles: user?.roles ?? [],
+        lastLoginAt: user?.lastLoginAt ?? null,
+      } as PersonWithUserDetails;
     });
   }
 
@@ -253,6 +266,25 @@ export class PersonsService implements OnModuleInit {
     }
   }
 
+  private async updateUserInsuranceRole(mobile: string, hasActiveInsurance: boolean) {
+    if (hasActiveInsurance) {
+      await this.userModel.updateOne(
+        { phone: mobile },
+        { 
+          $addToSet: { roles: SystemRole.PARYAVARAN_PRAHRI },
+          $set: { 'vehicleInsurance.status': 'VERIFIED' }
+        }
+      );
+    } else {
+      await this.userModel.updateOne(
+        { phone: mobile },
+        { 
+          $set: { 'vehicleInsurance.status': 'NOT_SUBMITTED' }
+        }
+      );
+    }
+  }
+
   private async syncInsuranceFields(
     id: string,
     mobile: string,
@@ -260,11 +292,14 @@ export class PersonsService implements OnModuleInit {
     const insurance = await this.fetchInsuranceVehicles(mobile);
     if (!insurance.ok) return null;
 
-    return this.personRepository.updateById(id, {
+    const updated = await this.personRepository.updateById(id, {
       vehiclesLinked: insurance.vehiclesLinked,
       insuranceVerified: insurance.verified,
       insuranceCheckedAt: new Date(),
     } as Partial<PersonDocument>);
+
+    await this.updateUserInsuranceRole(mobile, insurance.verified);
+    return updated;
   }
 
   private resolveActor(user?: JwtPayload | AuditActor): AuditActor {
@@ -300,12 +335,20 @@ export class PersonsService implements OnModuleInit {
     const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
     const existing = await this.personRepository.findByMobile(mobile);
     if (existing) {
+      const actorUserId = 'userId' in (actor || {}) ? (actor as AuditActor).userId : (actor as JwtPayload)?.sub;
+      if (actorUserId && !existing.userId) {
+        await this.personRepository.updateById(String(existing._id), { userId: actorUserId } as any);
+      }
       return existing;
     }
+    
+    const actorUserId = 'userId' in (actor || {}) ? (actor as AuditActor).userId : (actor as JwtPayload)?.sub;
+    
     return this.createInternal(
       dto,
       PersonSource.APP,
       this.resolveActor(actor),
+      actorUserId,
     );
   }
 
@@ -313,6 +356,7 @@ export class PersonsService implements OnModuleInit {
     dto: CreatePersonDto,
     source: PersonSource,
     actor: AuditActor = {},
+    userIdToLink?: string,
   ): Promise<Person> {
     const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
     const email = normalizeEmail(dto.email);
@@ -330,12 +374,13 @@ export class PersonsService implements OnModuleInit {
 
     const createdBy = actor.label || email || mobile;
 
-    return this.personRepository.create({
+    const created = await this.personRepository.create({
       ...dto,
       mobile,
       email,
       personId,
       source,
+      userId: userIdToLink,
       // Registration is always Active — insurance verification only
       // informs vehiclesLinked/insuranceVerified, it never gates status.
       status: PersonStatus.ACTIVE,
@@ -347,11 +392,14 @@ export class PersonsService implements OnModuleInit {
       updatedBy: createdBy,
       updatedByUserId: actor.userId,
     } as Partial<PersonDocument>);
+
+    await this.updateUserInsuranceRole(mobile, insurance.ok ? insurance.verified : false);
+    return created;
   }
 
   async findAll(
     query: PersonQueryDto,
-  ): Promise<PaginatedResult<PersonWithLogin>> {
+  ): Promise<PaginatedResult<PersonWithUserDetails>> {
     const options = PaginationUtil.parse(query);
     const baseFilter: Record<string, unknown> = {};
     if (query.status !== undefined) {
@@ -374,18 +422,18 @@ export class PersonsService implements OnModuleInit {
       }),
     );
 
-    const items = await this.attachLastLogin(synced);
+    const items = await this.attachUserDetails(synced);
     return { items, meta: result.meta };
   }
 
-  async findOne(id: string): Promise<PersonWithLogin> {
+  async findOne(id: string): Promise<PersonWithUserDetails> {
     const entry = await this.personRepository.findById(id);
     if (!entry) {
       throw new NotFoundException(`Person "${id}" not found`);
     }
     const updated = await this.syncInsuranceFields(id, entry.mobile);
-    const [withLogin] = await this.attachLastLogin([updated ?? entry]);
-    return withLogin;
+    const [withUserDetails] = await this.attachUserDetails([updated ?? entry]);
+    return withUserDetails;
   }
 
   async getVehicles(id: string): Promise<{
@@ -411,6 +459,7 @@ export class PersonsService implements OnModuleInit {
         insuranceVerified: insurance.hasActiveInsurance,
         insuranceCheckedAt: new Date(),
       } as Partial<PersonDocument>);
+      await this.updateUserInsuranceRole(person.mobile, insurance.hasActiveInsurance);
     }
 
     const vehicles = (insurance.vehicles || []).map((v, index) => {

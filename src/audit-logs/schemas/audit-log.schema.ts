@@ -18,8 +18,8 @@ export class AuditLog extends BaseSchema {
   @Prop({ required: true, trim: true, index: true })
   userName!: string;
 
-  @Prop({ trim: true })
-  role?: string;
+  @Prop({ type: [String] })
+  roles?: string[];
 
   @Prop({ required: true, trim: true, index: true })
   moduleName!: string;
@@ -44,7 +44,7 @@ export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);
 
 AuditLogSchema.index({
   userName: 'text',
-  role: 'text',
+  roles: 'text',
   moduleName: 'text',
   actionType: 'text',
   recordId: 'text',

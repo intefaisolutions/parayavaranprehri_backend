@@ -11,6 +11,7 @@ import {
   normalizeEmail,
   normalizeMobile,
 } from '../common/utils/identity.util';
+import { SystemRole } from '../common/enums/role.enum';
 import { UsersService } from '../modules/users/users.service';
 import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
 import { CreateMitraDto } from './dto/create-mitra.dto';
@@ -328,6 +329,20 @@ export class MitrasService {
       throw new NotFoundException(`Mitra with ID "${id}" not found`);
     }
     await this.applyTreeLinks(updated as MitraDocument);
+    
+    if (updated.mobile) {
+      const user = await this.usersService.findByPhone(updated.mobile);
+      if (user) {
+        await this.connection.collection('users').updateOne(
+          { _id: user._id },
+          {
+            $addToSet: { roles: SystemRole.MITRA },
+            $set: { 'mitraApplication.status': 'APPROVED' },
+          },
+        );
+      }
+    }
+
     return updated;
   }
 
@@ -342,6 +357,20 @@ export class MitrasService {
     if (!updated) {
       throw new NotFoundException(`Mitra with ID "${id}" not found`);
     }
+
+    if (updated.mobile) {
+      const user = await this.usersService.findByPhone(updated.mobile);
+      if (user) {
+        await this.connection.collection('users').updateOne(
+          { _id: user._id },
+          {
+            $set: { 'mitraApplication.status': 'REJECTED' },
+            $pull: { roles: SystemRole.MITRA } as any,
+          },
+        );
+      }
+    }
+
     return updated;
   }
 

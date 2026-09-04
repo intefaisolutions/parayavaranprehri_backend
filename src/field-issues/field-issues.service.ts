@@ -55,7 +55,7 @@ export class FieldIssuesService {
     if (query.status) filter.status = query.status;
 
     const isAdmin =
-      user.role === SystemRole.SUPER_ADMIN || user.role === SystemRole.ADMIN;
+      user.roles?.includes(SystemRole.SUPER_ADMIN) || user.roles?.includes(SystemRole.ADMIN);
     if (!isAdmin || query.mine === 'true') {
       filter.reportedByUserId = user.sub;
     }

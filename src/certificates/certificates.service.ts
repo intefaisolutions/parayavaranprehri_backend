@@ -161,8 +161,8 @@ export class CertificatesService {
     user: JwtPayload,
   ): Promise<void> {
     if (
-      user.role === SystemRole.SUPER_ADMIN ||
-      user.role === SystemRole.ADMIN
+      user.roles?.includes(SystemRole.SUPER_ADMIN) ||
+      user.roles?.includes(SystemRole.ADMIN)
     ) {
       return;
     }

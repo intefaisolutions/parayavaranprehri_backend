@@ -47,7 +47,9 @@ export class UsersService {
       mobile: phone,
     });
 
-    const role = await this.rolesService.findByName(dto.role);
+    const roles = await Promise.all(
+      dto.roles.map((r) => this.rolesService.findByName(r))
+    );
     const passwordHash = dto.password
       ? await bcrypt.hash(dto.password, this.saltRounds)
       : undefined;
@@ -57,9 +59,9 @@ export class UsersService {
       email,
       phone,
       password: passwordHash,
-      roleId: role._id,
+      // roleId omitted
       permissions:
-        dto.permissions.length > 0 ? dto.permissions : role.permissionKeys,
+        dto.permissions.length > 0 ? dto.permissions : [...new Set(roles.flatMap(r => r.permissionKeys))],
     } as Partial<UserDocument>);
 
     return this.sanitizeUser(user);
@@ -71,7 +73,7 @@ export class UsersService {
     const options = PaginationUtil.parse(query);
     const baseFilter: Record<string, unknown> = {};
 
-    if (query.role) baseFilter.role = query.role;
+    if (query.roles) baseFilter.roles = { $in: query.roles };
     if (query.isActive !== undefined) baseFilter.isActive = query.isActive;
     if (query.district) baseFilter.district = query.district;
     if (query.state) baseFilter.state = query.state;
@@ -141,11 +143,12 @@ export class UsersService {
       });
     }
 
-    if (dto.role) {
-      const role = await this.rolesService.findByName(dto.role);
-      updateData.roleId = role._id;
+    if (dto.roles) {
+      const roles = await Promise.all(
+        dto.roles.map((r) => this.rolesService.findByName(r))
+      );
       if (!dto.permissions) {
-        updateData.permissions = role.permissionKeys;
+        updateData.permissions = [...new Set(roles.flatMap(r => r.permissionKeys))];
       }
     }
 

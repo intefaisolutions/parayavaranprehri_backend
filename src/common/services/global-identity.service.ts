@@ -22,7 +22,7 @@ interface IdentityHit {
   mobile?: string;
   email?: string;
   label: string;
-  role?: string;
+  roles?: string[];
 }
 
 /**
@@ -76,7 +76,7 @@ export class GlobalIdentityService {
         );
       }
 
-      if (as === 'mitra' && hit.kind === 'user' && hit.role === 'customer') {
+      if (as === 'mitra' && hit.kind === 'user' && hit.roles?.includes('user')) {
         throw new ConflictException(
           'This number is already registered as a Customer. Please register with another number.',
         );
@@ -107,7 +107,7 @@ export class GlobalIdentityService {
         );
       }
 
-      if (as === 'mitra' && hit.kind === 'user' && hit.role === 'customer') {
+      if (as === 'mitra' && hit.kind === 'user' && hit.roles?.includes('user')) {
         throw new ConflictException(
           'This email is already registered as a Customer. Please register with another email.',
         );
@@ -131,7 +131,7 @@ export class GlobalIdentityService {
     const [users, persons, mitras, partners] = await Promise.all([
       this.userModel
         .find({ phone: mobile, isDeleted: false })
-        .select('_id phone email role')
+        .select('_id phone email roles')
         .lean()
         .exec(),
       this.personModel
@@ -162,7 +162,7 @@ export class GlobalIdentityService {
         mobile: u.phone,
         email: u.email,
         label: 'User',
-        role: u.role as string,
+        roles: u.roles as string[],
       });
     }
     for (const p of persons) {
@@ -209,7 +209,7 @@ export class GlobalIdentityService {
     const [users, persons, mitras, partners] = await Promise.all([
       this.userModel
         .find({ email, isDeleted: false })
-        .select('_id phone email role')
+        .select('_id phone email roles')
         .lean()
         .exec(),
       this.personModel
@@ -240,7 +240,7 @@ export class GlobalIdentityService {
         mobile: u.phone,
         email: u.email,
         label: 'User',
-        role: u.role as string,
+        roles: u.roles as string[],
       });
     }
     for (const p of persons) {

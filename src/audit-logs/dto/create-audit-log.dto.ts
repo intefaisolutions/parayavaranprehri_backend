@@ -5,9 +5,8 @@ export class CreateAuditLogDto {
   @IsOptional()
   userName?: string;
 
-  @IsString()
   @IsOptional()
-  role?: string;
+  roles?: string[];
 
   @IsString()
   @IsNotEmpty()

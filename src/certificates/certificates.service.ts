@@ -9,12 +9,14 @@ import { Connection, Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../common/decorators/current-user.decorator';
 import { SystemRole } from '../common/enums/role.enum';
+import { normalizeMobile } from '../common/utils/identity.util';
 import { MitrasService } from '../mitras/mitras.service';
 import { UsersService } from '../modules/users/users.service';
 import {
   WhatsappSendResult,
   WhatsappService,
 } from '../common/services/whatsapp.service';
+import { buildSimplePdf } from '../reports/utils/report-export.util';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
 import {
@@ -136,21 +138,57 @@ export class CertificatesService {
   }
 
   async findMine(user: JwtPayload): Promise<Certificate[]> {
-    const me = (await this.usersService.findOne(user.sub)) as {
-      phone?: string;
-    };
-    const or: Record<string, unknown>[] = [{ recipientId: user.sub }];
+    const recipientIds: string[] = [];
+    if (user.sub) {
+      recipientIds.push(String(user.sub));
+    }
 
-    if (me.phone) {
-      or.push({ recipientMobile: me.phone });
-      const mitra = await this.mitrasService.findByMobile(me.phone);
-      if (mitra?.mitraId) {
-        or.push({ recipientId: mitra.mitraId });
+    const me = (await this.usersService.findOne(user.sub).catch(() => null)) as {
+      phone?: string;
+      mobile?: string;
+    } | null;
+
+    const rawPhone =
+      me?.phone ||
+      me?.mobile ||
+      (user as JwtPayload & { phone?: string; mobile?: string }).phone ||
+      (user as JwtPayload & { phone?: string; mobile?: string }).mobile;
+
+    const normPhone = normalizeMobile(rawPhone);
+
+    const phoneVariants: string[] = [];
+    if (normPhone) {
+      phoneVariants.push(
+        normPhone,
+        `+91${normPhone}`,
+        `91${normPhone}`,
+        `0${normPhone}`,
+      );
+      recipientIds.push(normPhone);
+
+      try {
+        const mitra = await this.mitrasService.findByMobile(normPhone);
+        if (mitra?.mitraId) {
+          recipientIds.push(mitra.mitraId);
+        }
+      } catch {
+        // Ignore Mitra lookup error
       }
     }
 
+    const uniqueRecipientIds = Array.from(new Set(recipientIds.filter(Boolean)));
+    const uniquePhoneVariants = Array.from(new Set(phoneVariants.filter(Boolean)));
+
+    const orClauses: Record<string, unknown>[] = [
+      { recipientId: { $in: uniqueRecipientIds } },
+    ];
+
+    if (uniquePhoneVariants.length > 0) {
+      orClauses.push({ recipientMobile: { $in: uniquePhoneVariants } });
+    }
+
     return this.certificateModel
-      .find({ isDeleted: false, $or: or })
+      .find({ isDeleted: false, $or: orClauses })
       .populate('templateId')
       .sort({ createdAt: -1 })
       .exec();
@@ -252,6 +290,73 @@ export class CertificatesService {
       return `/certificate/${verificationCode}`;
     }
     return `${frontendUrl}/certificate/${encodeURIComponent(verificationCode)}`;
+  }
+
+  async buildCertificatePdf(
+    code: string,
+  ): Promise<{ buffer: Buffer; fileName: string }> {
+    const cert = await this.certificateModel
+      .findOne({
+        $or: [
+          {
+            verificationCode: new RegExp(
+              `^${code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`,
+              'i',
+            ),
+          },
+          { certificateNumber: code },
+        ],
+        isDeleted: false,
+      })
+      .populate('templateId')
+      .exec();
+
+    if (!cert) {
+      throw new NotFoundException(`Certificate "${code}" not found`);
+    }
+
+    const template = cert.templateId as unknown as CertificateTemplate & {
+      _id?: unknown;
+    };
+    const issueDateStr = cert.issueDate
+      ? new Date(cert.issueDate).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '—';
+
+    const lines = [
+      `OFFICIAL ENVIRONMENTAL RECOGNITION`,
+      `PARYAVARAN PRAHRI - NET ZERO BHARAT MISSION`,
+      ``,
+      `Certificate Title : ${cert.title || 'Certificate of Appreciation'}`,
+      `Certificate No    : ${cert.certificateNumber || '—'}`,
+      `Verification Code : ${cert.verificationCode}`,
+      `Status            : ${cert.status}`,
+      `Issue Date        : ${issueDateStr}`,
+      ``,
+      `PROUDLY PRESENTED TO:`,
+      `>>> ${cert.recipientName} <<<`,
+      ``,
+      cert.description ||
+        template?.description ||
+        'For outstanding contribution to environmental protection and tree plantation.',
+      cert.eventName ? `Event: ${cert.eventName}` : '',
+      cert.treesPlanted ? `Trees Planted: ${cert.treesPlanted}` : '',
+      ``,
+      `-----------------------------------------------------------------`,
+      `This is an authentic digital certificate issued by Paryavaran Prahri.`,
+      `Verify authenticity at: ${this.buildPublicCertificateUrl(cert.verificationCode)}`,
+    ].filter(Boolean);
+
+    const pdfBuffer = buildSimplePdf(
+      cert.title || 'Certificate of Appreciation',
+      lines,
+    );
+    const fileName = `certificate_${cert.certificateNumber || cert.verificationCode}.pdf`;
+
+    return { buffer: pdfBuffer, fileName };
   }
 
   async update(id: string, dto: UpdateCertificateDto): Promise<Certificate> {

@@ -3,14 +3,17 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { JwtPayload } from '../common/decorators/current-user.decorator';
@@ -92,6 +95,17 @@ export class CertificatesController {
   @ApiOperation({ summary: 'Publicly verify a certificate by its code' })
   verify(@Param('code') code: string) {
     return this.certificatesService.verify(code);
+  }
+
+  @Public()
+  @Get('download-pdf/:code')
+  @ApiOperation({ summary: 'Public PDF download of an issued certificate' })
+  @Header('Content-Type', 'application/pdf')
+  async downloadPdf(@Param('code') code: string, @Res() res: Response) {
+    const { buffer, fileName } =
+      await this.certificatesService.buildCertificatePdf(code);
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    res.send(buffer);
   }
 
   @Get('me')

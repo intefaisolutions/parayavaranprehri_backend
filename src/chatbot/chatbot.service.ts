@@ -224,6 +224,7 @@ CRITICAL INSTRUCTIONS:
             required: ['type', 'description'],
           },
         },
+      },
     ];
 
     try {

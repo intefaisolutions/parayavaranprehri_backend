@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport'; // Assuming default Passport JWT guard
-import { SystemRole } from '../../src/common/enums/role.enum';
+import { SystemRole } from '../common/enums/role.enum';
 import { CurrentUser, JwtPayload } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';

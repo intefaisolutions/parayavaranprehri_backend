@@ -1,4 +1,3 @@
-import { InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { KnowledgeBaseService } from '../knowledge-base/knowledge-base.service';
@@ -22,10 +21,8 @@ jest.mock('qrcode', () => ({
 describe('ChatbotService', () => {
   let service: ChatbotService;
   let treesService: any;
-  let certificatesService: any;
   let personsService: any;
   let pendingActionsService: any;
-  let fieldIssuesService: any;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,7 +48,10 @@ describe('ChatbotService', () => {
           useValue: {
             createPendingAction: jest.fn(),
             getPendingAction: jest.fn(),
+            getPendingActionById: jest.fn(),
+            markProcessing: jest.fn(),
             markCompleted: jest.fn(),
+            markCancelled: jest.fn(),
           },
         },
         { provide: FieldIssuesService, useValue: { create: jest.fn() } },
@@ -69,10 +69,8 @@ describe('ChatbotService', () => {
 
     service = module.get<ChatbotService>(ChatbotService);
     treesService = module.get(TreesService);
-    certificatesService = module.get(CertificatesService);
     personsService = module.get(PersonsService);
     pendingActionsService = module.get(PendingActionsService);
-    fieldIssuesService = module.get(FieldIssuesService);
   });
 
   afterEach(() => {
@@ -98,53 +96,89 @@ describe('ChatbotService', () => {
   };
 
   it('should use request_tree_registration and save pending action', async () => {
-    mockAIToolCall('request_tree_registration', '{"treeName":"Neem","city":"Indore","plantedDate":"2026-09-05"}', 'Please confirm.');
-    
-    await service.processChatRequest({ message: 'Register a Neem tree' }, { sub: 'USER-A', roles: [], permissions: [] });
+    pendingActionsService.createPendingAction.mockResolvedValue({ _id: 'pending-123' });
+    mockAIToolCall(
+      'request_tree_registration',
+      '{"treeName":"Neem","city":"Indore","plantedDate":"2026-09-05"}',
+      'Action staged — tap the Confirm button to proceed.',
+    );
+
+    const result = await service.processChatRequest(
+      { message: 'Register a Neem tree' },
+      { sub: 'USER-A', roles: [], permissions: [] },
+    );
 
     expect(pendingActionsService.createPendingAction).toHaveBeenCalledWith(
       'USER-A',
       'default-session',
       'register_tree',
-      { treeName: 'Neem', city: 'Indore', plantedDate: '2026-09-05' }
+      { treeName: 'Neem', city: 'Indore', plantedDate: '2026-09-05' },
     );
+    // Response must include pendingAction metadata for the frontend button
+    expect(result.pendingAction).toBeDefined();
+    expect(result.pendingAction?.type).toBe('register_tree');
   });
 
-  it('should execute confirm_action and build DTO payload securely', async () => {
-    mockAIToolCall('confirm_action', '{"actionType":"register_tree"}', 'Tree registered!');
-    
-    pendingActionsService.getPendingAction.mockResolvedValue({
+  it('confirmPendingAction: should build DTO securely from JWT + PersonsService (never from AI)', async () => {
+    pendingActionsService.getPendingActionById.mockResolvedValue({
       _id: 'pending-123',
+      actionType: 'register_tree',
       userId: 'USER-A',
-      payload: { treeName: 'Neem', city: 'Indore' },
+      payload: { treeName: 'Neem', city: 'Indore', plantedDate: '2026-09-05' },
     });
-
+    pendingActionsService.markProcessing.mockResolvedValue(true);
     personsService.resolvePersonForUser.mockResolvedValue({
       mobile: '9876543210',
       name: 'John Doe',
     });
-
     treesService.create.mockResolvedValue({ treeId: 'TREE-NEW' });
 
-    await service.processChatRequest({ message: 'Yes confirm' }, { sub: 'USER-A', roles: [], permissions: [] });
+    const result = await service.confirmPendingAction('pending-123', {
+      sub: 'USER-A',
+      roles: [],
+      permissions: [],
+    });
 
-    expect(pendingActionsService.getPendingAction).toHaveBeenCalledWith('USER-A', 'default-session', 'register_tree');
+    // Security: userId and mobile come ONLY from JWT/PersonsService
     expect(treesService.create).toHaveBeenCalled();
     const createDto = treesService.create.mock.calls[0][0];
-    expect(createDto.userId).toBe('USER-A'); // Crucial security check!
+    expect(createDto.userId).toBe('USER-A');
     expect(createDto.mobile).toBe('9876543210');
+    expect(pendingActionsService.markProcessing).toHaveBeenCalledWith('pending-123');
     expect(pendingActionsService.markCompleted).toHaveBeenCalledWith('pending-123');
+    expect(result.success).toBe(true);
   });
 
-  it('should gracefully handle confirmation when no pending action exists', async () => {
-    mockAIToolCall('confirm_action', '{"actionType":"register_tree"}', 'No pending action found.');
-    pendingActionsService.getPendingAction.mockRejectedValue(new Error('Not found'));
+  it('confirmPendingAction: double-tap guard — rejects if action is already PROCESSING', async () => {
+    pendingActionsService.getPendingActionById.mockResolvedValue({
+      _id: 'pending-123',
+      actionType: 'register_tree',
+      userId: 'USER-A',
+      payload: { treeName: 'Neem', city: 'Indore', plantedDate: '2026-09-05' },
+    });
+    // Atomic check returns false = another request already claimed PROCESSING
+    pendingActionsService.markProcessing.mockResolvedValue(false);
 
-    await service.processChatRequest({ message: 'Yes' }, { sub: 'USER-A', roles: [], permissions: [] });
+    const result = await service.confirmPendingAction('pending-123', {
+      sub: 'USER-A',
+      roles: [],
+      permissions: [],
+    });
 
     expect(treesService.create).not.toHaveBeenCalled();
-    const openAICalls = mockOpenAI.chat.completions.create.mock.calls;
-    const toolResultMessage = openAICalls[1][0].messages.find((m: any) => m.role === 'tool');
-    expect(toolResultMessage.content).toContain('No pending action found');
+    expect(result.error).toContain('already being processed');
+  });
+
+  it('confirmPendingAction: returns error gracefully when no pending action exists', async () => {
+    pendingActionsService.getPendingActionById.mockRejectedValue(new Error('Not found'));
+
+    const result = await service.confirmPendingAction('nonexistent-id', {
+      sub: 'USER-A',
+      roles: [],
+      permissions: [],
+    });
+
+    expect(treesService.create).not.toHaveBeenCalled();
+    expect(result.error).toContain('No pending action found');
   });
 });

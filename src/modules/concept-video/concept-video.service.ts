@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UpdateConceptVideoDto } from './dto/update-concept-video.dto';
+import {
+  UpdateConceptVideoDto,
+  YOUTUBE_URL_REGEX,
+} from './dto/update-concept-video.dto';
 import {
   ConceptVideo,
   ConceptVideoDocument,
@@ -16,10 +19,8 @@ export class ConceptVideoService {
 
   extractYoutubeId(url?: string): string {
     if (!url) return 'dQw4w9WgXcQ';
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : 'dQw4w9WgXcQ';
+    const match = url.trim().match(YOUTUBE_URL_REGEX);
+    return match && match[1] ? match[1] : '';
   }
 
   async get(): Promise<ConceptVideo> {
@@ -41,11 +42,19 @@ export class ConceptVideoService {
   }
 
   async update(dto: UpdateConceptVideoDto): Promise<ConceptVideo> {
-    const youtubeId =
-      dto.youtubeId ||
-      (dto.videoUrl ? this.extractYoutubeId(dto.videoUrl) : undefined);
+    let youtubeId = dto.youtubeId;
 
-    let thumbnailUrl = dto.thumbnailUrl;
+    if (dto.videoUrl) {
+      const extracted = this.extractYoutubeId(dto.videoUrl);
+      if (!extracted) {
+        throw new BadRequestException(
+          'Invalid YouTube URL. Supported formats: https://www.youtube.com/watch?v=VIDEO_ID, https://youtu.be/VIDEO_ID, or https://www.youtube.com/shorts/VIDEO_ID',
+        );
+      }
+      youtubeId = extracted;
+    }
+
+    let thumbnailUrl = dto.thumbnailUrl?.trim();
     if (!thumbnailUrl && youtubeId) {
       thumbnailUrl = `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
     }
@@ -59,14 +68,19 @@ export class ConceptVideoService {
       const updated = await this.conceptVideoModel
         .findByIdAndUpdate(video._id, payload, { new: true })
         .exec();
-      return updated ? (updated.toObject ? updated.toObject() : updated) : video.toObject();
+      return updated
+        ? updated.toObject
+          ? updated.toObject()
+          : updated
+        : video.toObject();
     } else {
       const created = await this.conceptVideoModel.create({
         title: dto.title || 'What is Paryavaran Prahri?',
         subtitle:
           dto.subtitle ||
           'Learn how vehicles, citizens, plantation and environmental contribution come together under Mission 2047.',
-        videoUrl: dto.videoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        videoUrl:
+          dto.videoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         youtubeId: youtubeId || 'dQw4w9WgXcQ',
         thumbnailUrl:
           thumbnailUrl ||

@@ -1,5 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
+
+export const YOUTUBE_URL_REGEX =
+  /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})(?:[?&/]\S*)?$/;
 
 export class UpdateConceptVideoDto {
   @ApiPropertyOptional({ example: 'What is Paryavaran Prahri?' })
@@ -18,6 +21,10 @@ export class UpdateConceptVideoDto {
   @ApiPropertyOptional({ example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' })
   @IsString()
   @IsOptional()
+  @Matches(YOUTUBE_URL_REGEX, {
+    message:
+      'Invalid YouTube URL. Supported formats: https://www.youtube.com/watch?v=VIDEO_ID, https://youtu.be/VIDEO_ID, or https://www.youtube.com/shorts/VIDEO_ID',
+  })
   videoUrl?: string;
 
   @ApiPropertyOptional({ example: 'dQw4w9WgXcQ' })

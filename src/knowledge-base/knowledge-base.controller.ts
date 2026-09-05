@@ -19,7 +19,7 @@ import { QueryKnowledgeBaseDto } from './dto/query-knowledge-base.dto';
 import { UpdateKnowledgeBaseDto } from './dto/update-knowledge-base.dto';
 import { KnowledgeBaseService } from './knowledge-base.service';
 
-@Controller('api/admin/chatbot/knowledge')
+@Controller({ path: 'admin/chatbot/knowledge', version: '1' })
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Roles(SystemRole.ADMIN)
 export class KnowledgeBaseController {

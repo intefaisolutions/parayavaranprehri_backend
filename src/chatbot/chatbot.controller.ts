@@ -8,7 +8,7 @@ import {
   JwtPayload,
 } from '../common/decorators/current-user.decorator';
 
-@Controller('api/chat')
+@Controller({ path: 'chat', version: '1' })
 @UseGuards(AuthGuard('jwt'))
 export class ChatbotController {
   constructor(

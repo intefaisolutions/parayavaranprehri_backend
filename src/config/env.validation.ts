@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const envSchema = z.object({
@@ -40,6 +41,7 @@ export const envSchema = z.object({
   AWS_S3_BUCKET_NAME: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().optional(),
+  OPENAI_MOCK_MODE: z.string().optional(),
   PUBLIC_APP_URL: z.string().optional(),
 }).passthrough();
 // .passthrough() ensures any env var not explicitly listed above (e.g. AWS_*,

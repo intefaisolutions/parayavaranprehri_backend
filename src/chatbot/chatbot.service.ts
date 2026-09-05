@@ -24,6 +24,7 @@ import { CreateTreeDto } from '../trees/dto/create-tree.dto';
 import { CreateFieldIssueDto } from '../field-issues/dto/create-field-issue.dto';
 import { FieldIssueType } from '../field-issues/schemas/field-issue.schema';
 import { ChatMessageRole } from './schemas/chat-message.schema';
+import { mockAIDecide } from './mock-ai.service';
 
 @Injectable()
 export class ChatbotService {
@@ -31,6 +32,7 @@ export class ChatbotService {
   private openai: OpenAI;
   private readonly modelName: string;
   private readonly maxContextTokens = 3000; // Buffer for history
+  private readonly mockMode: boolean;
 
   constructor(
     private configService: ConfigService,
@@ -45,8 +47,14 @@ export class ChatbotService {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.modelName =
       this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+    this.mockMode =
+      this.configService.get<string>('OPENAI_MOCK_MODE') === 'true';
 
-    if (!apiKey) {
+    if (this.mockMode) {
+      this.logger.warn(
+        '⚠️  OPENAI_MOCK_MODE=true — Using mock AI responses. Set OPENAI_MOCK_MODE=false to use real OpenAI.',
+      );
+    } else if (!apiKey) {
       this.logger.warn(
         'OPENAI_API_KEY is not configured. Chatbot will not work.',
       );
@@ -76,6 +84,141 @@ CRITICAL INSTRUCTIONS:
     return Math.ceil(text.length / 4);
   }
 
+  // ─── Mock Mode ───────────────────────────────────────────────────────────────
+  private async processMockRequest(
+    chatRequest: ChatRequestDto,
+    user: JwtPayload,
+  ): Promise<any> {
+    const { message, sessionId: providedSessionId } = chatRequest;
+
+    // Session resolution (same as real flow)
+    let sessionId: string;
+    if (providedSessionId) {
+      const session = await this.chatHistoryService.validateAndGetSession(
+        providedSessionId,
+        user.sub,
+      );
+      sessionId = session.sessionId;
+    } else {
+      const newSession = await this.chatHistoryService.createSession(user.sub);
+      sessionId = newSession.sessionId;
+    }
+
+    // Persist user message
+    await this.chatHistoryService.saveMessage(
+      sessionId,
+      ChatMessageRole.USER,
+      message,
+    );
+
+    this.logger.log(`[MOCK] Processing message from user ${user.sub}`);
+
+    // Decide intent
+    const decision = mockAIDecide(message, user.sub);
+
+    let responseContent: string;
+    let stagedAction: any = null;
+
+    if (decision.type === 'message') {
+      // Plain text response — no tool call
+      responseContent = decision.content;
+    } else {
+      // Tool call — execute the real handler
+      const { toolName, args, followUpMessage } = decision;
+      let toolResult: any;
+
+      if (toolName === 'search_knowledge_base') {
+        toolResult = await this.handleSearchKnowledgeBase(args.query);
+        if (toolResult.results?.length) {
+          responseContent =
+            '📚 **Yeh information mili:**\n\n' +
+            toolResult.results
+              .map((r: any) => `**Q: ${r.question}**\nA: ${r.answer}`)
+              .join('\n\n');
+        } else {
+          responseContent =
+            'Sorry, is topic par abhi knowledge base mein koi information nahi hai.';
+        }
+      } else if (toolName === 'get_my_trees') {
+        toolResult = await this.handleGetMyTrees(user);
+        if (toolResult.error) {
+          responseContent = toolResult.error;
+        } else if (!toolResult.trees?.length) {
+          responseContent = 'Aapke account mein abhi koi registered tree nahi hai. 🌱 "I want to register a tree" likh ke pehla tree add kar sakte hain!';
+        } else {
+          const treeList = toolResult.trees
+            .map((t: any, i: number) => `${i + 1}. 🌳 **${t.species}** — ${t.city} (${t.treeId})`)
+            .join('\n');
+          responseContent = `Aapke **${toolResult.trees.length}** registered trees hain:\n\n${treeList}`;
+        }
+      } else if (toolName === 'get_my_certificate') {
+        toolResult = await this.handleGetMyCertificate(user);
+        if (toolResult.error) {
+          responseContent = toolResult.error;
+        } else if (toolResult.available) {
+          responseContent = `✅ Aapka certificate ready hai!\n\n📋 Certificate ID: **${toolResult.certificateId}**\nIssued: ${toolResult.issuedAt || 'N/A'}`;
+        } else {
+          responseContent = '⏳ Aapka certificate abhi ready nahi hai. Certificate tab milta hai jab aap enough trees register kar lete hain.';
+        }
+      } else if (toolName === 'get_my_activities') {
+        toolResult = await this.handleGetMyActivities(user);
+        if (toolResult.error) {
+          responseContent = toolResult.error;
+        } else {
+          responseContent =
+            `📊 **Aapki Activity Stats:**\n\n` +
+            `• Trees Planted: **${toolResult.treesPlanted ?? 0}**\n` +
+            `• Events Attended: **${toolResult.eventsAttended ?? 0}**\n` +
+            `• Points: **${toolResult.points ?? 0}**`;
+        }
+      } else if (toolName === 'request_tree_registration') {
+        const action = await this.pendingActionsService.createPendingAction(
+          user.sub,
+          sessionId,
+          'register_tree',
+          { treeName: args.treeName, city: args.city, plantedDate: args.plantedDate },
+        );
+        stagedAction = {
+          id: String((action as any)._id),
+          type: 'register_tree',
+          status: 'PENDING',
+          summary: `Register ${args.treeName} tree in ${args.city}`,
+        };
+        responseContent = followUpMessage;
+      } else if (toolName === 'request_create_complaint') {
+        const action = await this.pendingActionsService.createPendingAction(
+          user.sub,
+          sessionId,
+          'create_complaint',
+          { type: args.type, description: args.description, treeCode: args.treeCode },
+        );
+        stagedAction = {
+          id: String((action as any)._id),
+          type: 'create_complaint',
+          status: 'PENDING',
+          summary: `Create complaint: ${args.type}`,
+        };
+        responseContent = followUpMessage;
+      } else {
+        responseContent = `Tool "${toolName}" ka mock response abhi available nahi hai.`;
+      }
+    }
+
+    // Persist AI response
+    await this.chatHistoryService.saveMessage(
+      sessionId,
+      ChatMessageRole.ASSISTANT,
+      responseContent,
+    );
+
+    return {
+      message: responseContent,
+      sessionId,
+      pendingAction: stagedAction || undefined,
+    };
+  }
+  // ─── End Mock Mode ────────────────────────────────────────────────────────────
+
   async processChatRequest(
     chatRequest: ChatRequestDto,
     user: JwtPayload,
@@ -84,6 +227,11 @@ CRITICAL INSTRUCTIONS:
 
     if (!user.sub) {
       throw new ForbiddenException('User must be authenticated.');
+    }
+
+    // Route to mock engine if enabled
+    if (this.mockMode) {
+      return this.processMockRequest(chatRequest, user);
     }
 
     // Session Resolution

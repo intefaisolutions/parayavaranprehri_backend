@@ -59,6 +59,8 @@ import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { MissionProgressModule } from './mission-progress/mission-progress.module';
 import { ProkeralaModule } from './prokerala/prokerala.module';
 import { AstrologyModule } from './astrology/astrology.module';
+import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -120,6 +122,8 @@ import { AstrologyModule } from './astrology/astrology.module';
     VehicleTreeRulesModule,
     ProkeralaModule,
     AstrologyModule,
+    KnowledgeBaseModule,
+    ChatbotModule,
   ],
   controllers: [AppController],
   providers: [

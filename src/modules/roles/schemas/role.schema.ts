@@ -7,7 +7,7 @@ export type RoleDocument = HydratedDocument<Role>;
 
 @Schema({ timestamps: true, collection: 'roles' })
 export class Role extends BaseSchema {
-  @Prop({ required: true, unique: true, enum: SystemRole })
+  @Prop({ type: String, required: true, unique: true, enum: SystemRole })
   name!: SystemRole;
 
   @Prop({ required: true, trim: true })

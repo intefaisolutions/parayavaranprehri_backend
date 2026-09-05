@@ -206,7 +206,14 @@ export class TreesService {
 
   async findByTreeId(treeId: string): Promise<Tree | null> {
     return this.treeModel
-      .findOne({ treeId: String(treeId).trim() })
+      .findOne({ treeId: String(treeId).trim(), isDeleted: false })
+      .exec();
+  }
+
+  async findByUserId(userId: string): Promise<Tree[]> {
+    return this.treeModel
+      .find({ userId: String(userId).trim(), isDeleted: false })
+      .sort({ createdAt: -1 })
       .exec();
   }
 

@@ -39,6 +39,9 @@ export default () => {
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: process.env.AWS_REGION,
     AWS_S3_BUCKET_NAME: process.env.AWS_S3_BUCKET_NAME,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_MODEL: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+    PUBLIC_APP_URL: process.env.PUBLIC_APP_URL ?? 'https://paryavaranprahri.org',
   };
 
   return config;

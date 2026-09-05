@@ -24,4 +24,8 @@ export class CreateLandOfferDto {
   @IsString()
   @IsNotEmpty()
   landSize!: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }

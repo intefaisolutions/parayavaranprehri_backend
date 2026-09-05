@@ -24,9 +24,16 @@ export class LandOffer extends BaseSchema {
   @Prop({ required: true, trim: true })
   landSize!: string;
 
+  @Prop({ trim: true })
+  description?: string;
+
   @Prop({ type: Types.ObjectId, ref: 'User' })
   userId?: Types.ObjectId;
+
+  @Prop({ default: 'Pending', enum: ['Pending', 'Selected', 'Rejected'], trim: true })
+  status!: string;
 }
 
 export const LandOfferSchema = SchemaFactory.createForClass(LandOffer);
 LandOfferSchema.index({ userId: 1 });
+LandOfferSchema.index({ status: 1 });

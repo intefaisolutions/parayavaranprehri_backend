@@ -20,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { GreenSelfiesModule } from './modules/green-selfies/green-selfies.module';
 import { LandOffersModule } from './modules/land-offers/land-offers.module';
+import { ConceptVideoModule } from './modules/concept-video/concept-video.module';
 import { StaticDataModule } from './modules/static-data/static-data.module';
 import { GamificationModule } from './modules/gamification/gamification.module';
 import { PersonsModule } from './persons/persons.module';
@@ -84,6 +85,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     VehiclesModule,
     GreenSelfiesModule,
     LandOffersModule,
+    ConceptVideoModule,
     StaticDataModule,
     GamificationModule,
     PersonsModule,

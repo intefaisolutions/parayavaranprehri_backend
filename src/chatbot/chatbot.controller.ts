@@ -21,24 +21,16 @@ export class ChatbotController {
     @Body() chatRequest: ChatRequestDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    const result = await this.chatbotService.processChatRequest(
+    return this.chatbotService.processChatRequest(
       chatRequest,
       user,
     );
-    return {
-      success: true,
-      data: result,
-    };
   }
 
   @Get('sessions')
   async getSessions(@CurrentUser() user: JwtPayload) {
     if (!user.sub) return [];
-    const sessions = await this.chatHistoryService.getSessionsByUser(user.sub);
-    return {
-      success: true,
-      data: sessions,
-    };
+    return this.chatHistoryService.getSessionsByUser(user.sub);
   }
 
   @Get('history/:sessionId')
@@ -47,14 +39,10 @@ export class ChatbotController {
     @CurrentUser() user: JwtPayload,
   ) {
     if (!user.sub) return [];
-    const history = await this.chatHistoryService.getSessionHistory(
+    return this.chatHistoryService.getSessionHistory(
       sessionId,
       user.sub,
     );
-    return {
-      success: true,
-      data: history,
-    };
   }
 
   @Post('actions/:pendingActionId/confirm')
@@ -62,8 +50,7 @@ export class ChatbotController {
     @Param('pendingActionId') pendingActionId: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    const result = await this.chatbotService.confirmPendingAction(pendingActionId, user);
-    return { success: true, data: result };
+    return this.chatbotService.confirmPendingAction(pendingActionId, user);
   }
 
   @Post('actions/:pendingActionId/cancel')
@@ -71,7 +58,6 @@ export class ChatbotController {
     @Param('pendingActionId') pendingActionId: string,
     @CurrentUser() user: JwtPayload,
   ) {
-    const result = await this.chatbotService.cancelPendingAction(pendingActionId, user);
-    return { success: true, data: result };
+    return this.chatbotService.cancelPendingAction(pendingActionId, user);
   }
 }

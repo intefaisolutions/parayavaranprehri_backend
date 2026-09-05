@@ -15,10 +15,10 @@ export class ConceptVideoService {
   constructor(
     @InjectModel(ConceptVideo.name)
     private conceptVideoModel: Model<ConceptVideoDocument>,
-  ) {}
+  ) { }
 
   extractYoutubeId(url?: string): string {
-    if (!url) return 'dQw4w9WgXcQ';
+    if (!url) return '';
     const match = url.trim().match(YOUTUBE_URL_REGEX);
     return match && match[1] ? match[1] : '';
   }
@@ -42,16 +42,13 @@ export class ConceptVideoService {
   }
 
   async update(dto: UpdateConceptVideoDto): Promise<ConceptVideo> {
-    let youtubeId = dto.youtubeId;
+    let youtubeId = dto.youtubeId || '';
 
     if (dto.videoUrl) {
       const extracted = this.extractYoutubeId(dto.videoUrl);
-      if (!extracted) {
-        throw new BadRequestException(
-          'Invalid YouTube URL. Supported formats: https://www.youtube.com/watch?v=VIDEO_ID, https://youtu.be/VIDEO_ID, or https://www.youtube.com/shorts/VIDEO_ID',
-        );
+      if (extracted) {
+        youtubeId = extracted;
       }
-      youtubeId = extracted;
     }
 
     let thumbnailUrl = dto.thumbnailUrl?.trim();
@@ -60,7 +57,7 @@ export class ConceptVideoService {
     }
 
     const payload: Partial<ConceptVideo> = { ...dto };
-    if (youtubeId) payload.youtubeId = youtubeId;
+    payload.youtubeId = youtubeId;
     if (thumbnailUrl) payload.thumbnailUrl = thumbnailUrl;
 
     let video = await this.conceptVideoModel.findOne().exec();

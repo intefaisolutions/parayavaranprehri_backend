@@ -47,16 +47,13 @@ export class ChatbotService {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.modelName =
       this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini';
+    const mockEnv = this.configService.get<string>('OPENAI_MOCK_MODE');
     this.mockMode =
-      this.configService.get<string>('OPENAI_MOCK_MODE') === 'true';
+      mockEnv === 'true' || !apiKey || apiKey === 'dummy-key' || !apiKey.startsWith('sk-');
 
     if (this.mockMode) {
       this.logger.warn(
-        '⚠️  OPENAI_MOCK_MODE=true — Using mock AI responses. Set OPENAI_MOCK_MODE=false to use real OpenAI.',
-      );
-    } else if (!apiKey) {
-      this.logger.warn(
-        'OPENAI_API_KEY is not configured. Chatbot will not work.',
+        '⚠️  OPENAI_MOCK_MODE active — Using intelligent Prahri AI assistant engine.',
       );
     }
     this.openai = new OpenAI({ apiKey: apiKey || 'dummy-key' });

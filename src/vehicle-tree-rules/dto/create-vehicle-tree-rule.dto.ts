@@ -10,6 +10,11 @@ export class CreateVehicleTreeRuleDto {
   @IsNotEmpty()
   treesRequired!: number;
 
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  maxUserSuggestions?: number;
+
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

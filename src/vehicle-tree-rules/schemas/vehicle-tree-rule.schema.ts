@@ -12,6 +12,9 @@ export class VehicleTreeRule extends BaseSchema {
   @Prop({ required: true, min: 0 })
   treesRequired!: number;
 
+  @Prop({ default: 1, min: 0 })
+  maxUserSuggestions!: number;
+
   @Prop({ default: true })
   isActive!: boolean;
 }

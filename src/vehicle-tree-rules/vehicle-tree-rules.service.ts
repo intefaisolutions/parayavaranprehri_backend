@@ -33,6 +33,31 @@ export class VehicleTreeRulesService {
     return rule;
   }
 
+  async findByVehicleType(vehicleType: string): Promise<VehicleTreeRule | null> {
+    const clean = String(vehicleType || '').trim();
+    if (!clean) return null;
+
+    // 1. Direct case-insensitive match
+    const rule = await this.ruleModel
+      .findOne({
+        vehicleType: new RegExp(`^${clean}$`, 'i'),
+        isActive: true,
+      })
+      .exec();
+    if (rule) return rule;
+
+    // 2. Normalized match (ignoring spaces, hyphens, underscores)
+    const normalized = clean.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const allRules = await this.ruleModel.find({ isActive: true }).exec();
+    return (
+      allRules.find(
+        (r) =>
+          r.vehicleType.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() ===
+          normalized,
+      ) || null
+    );
+  }
+
   async update(id: string, dto: UpdateVehicleTreeRuleDto): Promise<VehicleTreeRule> {
     if (dto.vehicleType) {
       const existing = await this.ruleModel.findOne({

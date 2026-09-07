@@ -62,6 +62,7 @@ import { ProkeralaModule } from './prokerala/prokerala.module';
 import { AstrologyModule } from './astrology/astrology.module';
 import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { PlantationAssignmentsModule } from './plantation-assignments/plantation-assignments.module';
 
 @Module({
   imports: [
@@ -126,6 +127,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     AstrologyModule,
     KnowledgeBaseModule,
     ChatbotModule,
+    PlantationAssignmentsModule,
   ],
   controllers: [AppController],
   providers: [

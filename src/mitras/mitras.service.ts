@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -66,8 +67,17 @@ export class MitrasService {
    */
   async selfRegister(dto: CreateMitraDto): Promise<Mitra> {
     const mobile = normalizeMobile(dto.mobile) ?? dto.mobile.trim();
-    const existing = await this.findByMobile(mobile);
+    const existing = await this.mitraModel.findOne({ mobile }).exec();
     if (existing) {
+      if (existing.isDeleted) {
+        existing.isDeleted = false;
+        existing.status = MitraStatus.PENDING;
+        existing.name = dto.name || existing.name;
+        existing.email = dto.email ? normalizeEmail(dto.email) : existing.email;
+        existing.profession = dto.profession || existing.profession;
+        existing.address = dto.address || existing.address;
+        return existing.save();
+      }
       return existing;
     }
     return this.createInternal(dto, MitraSource.APP, MitraStatus.PENDING, true);
@@ -101,9 +111,22 @@ export class MitrasService {
       source,
       status,
     });
-    const saved = await mitra.save();
-    await this.applyTreeLinks(saved);
-    return saved;
+    try {
+      const saved = await mitra.save();
+      await this.applyTreeLinks(saved);
+      return saved;
+    } catch (error: any) {
+      if (error?.code === 11000 || error?.name === 'MongoServerError') {
+        const existing = await this.mitraModel.findOne({ mobile }).exec();
+        if (existing) {
+          return existing;
+        }
+        throw new ConflictException(
+          'This mobile number or email is already registered as Paryavaran Mitra.',
+        );
+      }
+      throw error;
+    }
   }
 
   async findAll(query: MitraQuery = {}): Promise<Mitra[]> {

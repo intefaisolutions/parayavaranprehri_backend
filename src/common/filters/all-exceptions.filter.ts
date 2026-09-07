@@ -36,6 +36,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
         errors = res.errors ?? (Array.isArray(res.message) ? res.message : undefined);
       }
+    } else if (exception && typeof exception === 'object' && (exception as any).code === 11000) {
+      status = HttpStatus.CONFLICT;
+      message = 'This mobile number or record is already registered.';
     } else if (exception instanceof Error) {
       message = exception.message;
       this.logger.error(exception.stack);

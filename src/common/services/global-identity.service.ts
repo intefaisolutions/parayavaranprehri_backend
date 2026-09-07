@@ -76,10 +76,12 @@ export class GlobalIdentityService {
         );
       }
 
-      if (as === 'mitra' && hit.kind === 'user' && hit.roles?.includes('user')) {
-        throw new ConflictException(
-          'This number is already registered as a Customer. Please register with another number.',
-        );
+      // Allow same user/person to register across User / Person / Mitra roles
+      if (
+        (as === 'mitra' || as === 'person' || as === 'user') &&
+        (hit.kind === 'user' || hit.kind === 'mitra' || hit.kind === 'person')
+      ) {
+        continue;
       }
 
       const hitEmail = normalizeEmail(hit.email);
@@ -107,10 +109,12 @@ export class GlobalIdentityService {
         );
       }
 
-      if (as === 'mitra' && hit.kind === 'user' && hit.roles?.includes('user')) {
-        throw new ConflictException(
-          'This email is already registered as a Customer. Please register with another email.',
-        );
+      // Allow same user/person to register across User / Person / Mitra roles
+      if (
+        (as === 'mitra' || as === 'person' || as === 'user') &&
+        (hit.kind === 'user' || hit.kind === 'mitra' || hit.kind === 'person')
+      ) {
+        continue;
       }
 
       const hitMobile = normalizeMobile(hit.mobile);

@@ -26,15 +26,14 @@ export class ConceptVideoService {
   async get(): Promise<ConceptVideo> {
     let video = await this.conceptVideoModel.findOne({ isActive: true }).exec();
     if (!video) {
-      // Create default initial document
+      // Create initial document without sample video
       video = await this.conceptVideoModel.create({
         title: 'What is Paryavaran Prahri?',
         subtitle:
           'Learn how vehicles, citizens, plantation and environmental contribution come together under Mission 2047.',
-        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        youtubeId: 'dQw4w9WgXcQ',
-        thumbnailUrl:
-          'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        videoUrl: '',
+        youtubeId: '',
+        thumbnailUrl: '',
         isActive: true,
       });
     }
@@ -76,12 +75,9 @@ export class ConceptVideoService {
         subtitle:
           dto.subtitle ||
           'Learn how vehicles, citizens, plantation and environmental contribution come together under Mission 2047.',
-        videoUrl:
-          dto.videoUrl || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        youtubeId: youtubeId || 'dQw4w9WgXcQ',
-        thumbnailUrl:
-          thumbnailUrl ||
-          'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+        videoUrl: dto.videoUrl || '',
+        youtubeId: youtubeId || '',
+        thumbnailUrl: thumbnailUrl || '',
         isActive: dto.isActive !== undefined ? dto.isActive : true,
       });
       return created.toObject ? created.toObject() : created;

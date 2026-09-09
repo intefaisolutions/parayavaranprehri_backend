@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UsersModule } from '../modules/users/users.module';
 import { User, UserSchema } from '../modules/users/schemas/user.schema';
 import { Tree, TreeSchema } from '../trees/schemas/tree.schema';
 import { PersonRepository } from './repositories/person.repository';
@@ -14,6 +15,7 @@ import { Person, PersonSchema } from './schemas/person.schema';
       { name: User.name, schema: UserSchema },
       { name: Tree.name, schema: TreeSchema },
     ]),
+    UsersModule,
   ],
   controllers: [PersonsController],
   providers: [PersonsService, PersonRepository],

@@ -42,6 +42,15 @@ export default () => {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENAI_MODEL: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
     PUBLIC_APP_URL: process.env.PUBLIC_APP_URL ?? 'https://paryavaranprahri.org',
+    CRM_PUBLIC_FORM_URL:
+      process.env.CRM_PUBLIC_FORM_URL ??
+      'https://crm.intefai.com/api/public-forms/8fc8a9f2/submit',
+    CRM_PUBLIC_FORM_ID: process.env.CRM_PUBLIC_FORM_ID ?? '8fc8a9f2',
+    CRM_API_URL: process.env.CRM_API_URL ?? 'https://crm.intefai.com/api',
+    CRM_API_KEY:
+      process.env.CRM_API_KEY ?? 'iai_pk_live_c00d50d8f3c1fbbf0c287d58',
+    CRM_COMPANY_ID:
+      process.env.CRM_COMPANY_ID ?? '6a7c5eac4e89ab60b7c96017',
   };
 
   return config;

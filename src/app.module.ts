@@ -63,6 +63,8 @@ import { AstrologyModule } from './astrology/astrology.module';
 import { KnowledgeBaseModule } from './knowledge-base/knowledge-base.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { PlantationAssignmentsModule } from './plantation-assignments/plantation-assignments.module';
+import { LeadsModule } from './leads/leads.module';
+import { CrmSettingsModule } from './crm-settings/crm-settings.module';
 
 @Module({
   imports: [
@@ -128,6 +130,8 @@ import { PlantationAssignmentsModule } from './plantation-assignments/plantation
     KnowledgeBaseModule,
     ChatbotModule,
     PlantationAssignmentsModule,
+    LeadsModule,
+    CrmSettingsModule,
   ],
   controllers: [AppController],
   providers: [

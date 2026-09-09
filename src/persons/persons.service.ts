@@ -20,6 +20,7 @@ import {
   User,
   UserDocument,
 } from '../modules/users/schemas/user.schema';
+import { UsersService } from '../modules/users/users.service';
 import { Tree, TreeDocument } from '../trees/schemas/tree.schema';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { PersonQueryDto } from './dto/person-query.dto';
@@ -60,6 +61,7 @@ export class PersonsService implements OnModuleInit {
   constructor(
     private readonly personRepository: PersonRepository,
     private readonly globalIdentity: GlobalIdentityService,
+    private readonly usersService: UsersService,
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Tree.name) private readonly treeModel: Model<TreeDocument>,
     @InjectConnection() private readonly connection: Connection,
@@ -93,6 +95,99 @@ export class PersonsService implements OnModuleInit {
       this.logger.warn(
         `Could not migrate persons unique indexes: ${
           error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    // Auto-sync any existing Person records that have no linked User account
+    await this.syncPersonsToUsers();
+  }
+
+  /**
+   * Sync existing Person records that have no linked User account.
+   * Finds or creates a User in the users collection and links their userId.
+   */
+  private async syncPersonsToUsers() {
+    try {
+      const collection = this.connection.collection('persons');
+      const unlinkedPersons = await collection
+        .find({
+          isDeleted: { $ne: true },
+          $or: [
+            { userId: { $exists: false } },
+            { userId: null },
+            { userId: '' },
+          ],
+        })
+        .toArray();
+
+      for (const person of unlinkedPersons) {
+        const mobile = normalizeMobile(person.mobile);
+        const email = normalizeEmail(person.email);
+        if (!mobile && !email) continue;
+
+        let userDoc = mobile ? await this.usersService.findByPhone(mobile) : null;
+        if (!userDoc && email) {
+          userDoc = await this.usersService.findByEmail(email);
+        }
+
+        if (!userDoc) {
+          const nameStr = (person.name || '').trim();
+          const nameParts = nameStr.split(/\s+/);
+          const firstName = nameParts[0] || 'User';
+          const lastName =
+            nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Citizen';
+          const userEmail = email || `${mobile}@paryawaran.gov.in`;
+
+          const roles = [SystemRole.USER];
+          if (person.insuranceVerified) {
+            roles.push(SystemRole.PARYAVARAN_PRAHRI);
+          }
+
+          try {
+            const createdUser = await this.usersService.create({
+              firstName,
+              lastName,
+              email: userEmail,
+              phone: mobile,
+              roles,
+              permissions: [],
+              isActive: true,
+              state: person.state,
+              district: person.city,
+              avatar: person.photo,
+            });
+            const newUserId = String(
+              (createdUser as any)._id || (createdUser as any).id,
+            );
+            await collection.updateOne(
+              { _id: person._id },
+              { $set: { userId: new Types.ObjectId(newUserId) } },
+            );
+            this.logger.log(
+              `Synced existing person "${person.name}" (${person.personId}) -> new user ${newUserId}`,
+            );
+          } catch (err) {
+            this.logger.warn(
+              `Could not auto-create user for person "${person.name}": ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          }
+        } else {
+          await collection.updateOne(
+            { _id: person._id },
+            { $set: { userId: userDoc._id } },
+          );
+          this.logger.log(
+            `Linked existing person "${person.name}" (${person.personId}) -> existing user ${userDoc._id}`,
+          );
+        }
+      }
+    } catch (err) {
+      this.logger.warn(
+        `syncPersonsToUsers failed: ${
+          err instanceof Error ? err.message : String(err)
         }`,
       );
     }
@@ -372,6 +467,56 @@ export class PersonsService implements OnModuleInit {
       this.fetchInsuranceVehicles(mobile),
     ]);
 
+    let resolvedUserId = userIdToLink;
+
+    // If userId was not passed (e.g. created by Admin), find existing user or auto-create one
+    if (!resolvedUserId) {
+      let existingUser = mobile ? await this.usersService.findByPhone(mobile) : null;
+      if (!existingUser && email) {
+        existingUser = await this.usersService.findByEmail(email);
+      }
+
+      if (existingUser) {
+        resolvedUserId = String(existingUser._id);
+      } else {
+        const nameStr = (dto.name || '').trim();
+        const nameParts = nameStr.split(/\s+/);
+        const firstName = nameParts[0] || 'User';
+        const lastName =
+          nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Citizen';
+        const userEmail = email || `${mobile}@paryawaran.gov.in`;
+
+        const roles = [SystemRole.USER];
+        if (insurance.ok && insurance.verified) {
+          roles.push(SystemRole.PARYAVARAN_PRAHRI);
+        }
+
+        try {
+          const createdUser = await this.usersService.create({
+            firstName,
+            lastName,
+            email: userEmail,
+            phone: mobile,
+            roles,
+            permissions: [],
+            isActive: true,
+            state: dto.state,
+            district: dto.city,
+            avatar: dto.photo,
+          });
+          resolvedUserId = String(
+            (createdUser as any)._id || (createdUser as any).id,
+          );
+        } catch (err) {
+          this.logger.warn(
+            `Could not auto-create User for Person "${dto.name}" (${mobile}): ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        }
+      }
+    }
+
     const createdBy = actor.label || email || mobile;
 
     const created = await this.personRepository.create({
@@ -380,7 +525,7 @@ export class PersonsService implements OnModuleInit {
       email,
       personId,
       source,
-      userId: userIdToLink,
+      userId: resolvedUserId ? new Types.ObjectId(resolvedUserId) : undefined,
       // Registration is always Active — insurance verification only
       // informs vehiclesLinked/insuranceVerified, it never gates status.
       status: PersonStatus.ACTIVE,

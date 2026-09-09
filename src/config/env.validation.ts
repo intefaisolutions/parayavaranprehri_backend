@@ -43,6 +43,11 @@ export const envSchema = z.object({
   OPENAI_MODEL: z.string().optional(),
   OPENAI_MOCK_MODE: z.string().optional(),
   PUBLIC_APP_URL: z.string().optional(),
+  CRM_PUBLIC_FORM_URL: z.string().optional(),
+  CRM_PUBLIC_FORM_ID: z.string().optional(),
+  CRM_API_URL: z.string().optional(),
+  CRM_API_KEY: z.string().optional(),
+  CRM_COMPANY_ID: z.string().optional(),
 }).passthrough();
 // .passthrough() ensures any env var not explicitly listed above (e.g. AWS_*,
 // GEMINI_API_KEY, future additions) still reaches ConfigService.get() instead

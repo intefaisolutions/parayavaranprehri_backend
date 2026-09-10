@@ -53,17 +53,20 @@ export class RashiPlantRequestsController {
     return this.rashiPlantRequestsService.create(dto, req.user ?? null);
   }
 
-  @ApiBearerAuth()
+  @Public()
   @Get()
   @ApiOperation({
-    summary: 'List sacred-tree plant requests (own by default; admins see all)',
+    summary: 'List sacred-tree plant requests (own when mine=true; all requests for admin)',
   })
   findAll(
-    @CurrentUser() user: JwtPayload,
+    @Req() req: { user?: JwtPayload },
     @Query('status') status?: string,
     @Query('mine') mine?: string,
   ) {
-    return this.rashiPlantRequestsService.findAll(user, { status, mine });
+    return this.rashiPlantRequestsService.findAll(req.user ?? null, {
+      status,
+      mine,
+    });
   }
 
   @ApiBearerAuth()

@@ -228,8 +228,9 @@ export class UsersService {
       throw new ConflictException('User does not have a phone number');
     }
 
-    const insuranceApiUrl =
-      process.env.INSURANCE_API_URL || 'http://localhost:5001';
+    const rawInsuranceUrl =
+      process.env.INSURANCE_API_URL || 'https://www.suregrowthsolution.com';
+    const insuranceApiUrl = rawInsuranceUrl.replace(/\/+$/, '');
 
     try {
       const response = await fetch(

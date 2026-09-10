@@ -97,15 +97,13 @@ export class RashiPlantRequestsService {
   }
 
   async findAll(
-    user: JwtPayload,
+    user: JwtPayload | null,
     query: { status?: string; mine?: string } = {},
   ) {
     const filter: Record<string, unknown> = { isDeleted: false };
     if (query.status) filter.status = query.status;
 
-    const isAdmin =
-      user.roles?.includes(SystemRole.SUPER_ADMIN) || user.roles?.includes(SystemRole.ADMIN);
-    if (!isAdmin || query.mine === 'true') {
+    if (query.mine === 'true' && user?.sub) {
       filter.userId = user.sub;
     }
 

@@ -65,6 +65,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
 import { PlantationAssignmentsModule } from './plantation-assignments/plantation-assignments.module';
 import { LeadsModule } from './leads/leads.module';
 import { CrmSettingsModule } from './crm-settings/crm-settings.module';
+import { ContentModule } from './content/content.module';
 
 @Module({
   imports: [
@@ -132,6 +133,7 @@ import { CrmSettingsModule } from './crm-settings/crm-settings.module';
     PlantationAssignmentsModule,
     LeadsModule,
     CrmSettingsModule,
+    ContentModule,
   ],
   controllers: [AppController],
   providers: [

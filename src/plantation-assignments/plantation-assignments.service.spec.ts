@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { PlantationAssignmentsService } from './plantation-assignments.service';
 import {
   PlantationRequest,
+  PlantationRequestDocument,
   PlantationRequestStatus,
 } from './schemas/plantation-request.schema';
 import {
@@ -38,18 +39,21 @@ describe('PlantationAssignmentsService', () => {
     sub: mockUserAId,
     email: 'userA@example.com',
     roles: [SystemRole.USER],
+    permissions: [],
   };
 
   const userBJwt: JwtPayload = {
     sub: mockUserBId,
     email: 'userB@example.com',
     roles: [SystemRole.USER],
+    permissions: [],
   };
 
   const adminJwt: JwtPayload = {
     sub: new Types.ObjectId().toString(),
     email: 'admin@example.com',
     roles: [SystemRole.ADMIN],
+    permissions: [],
   };
 
   let mockRequestModel: any;
@@ -63,22 +67,22 @@ describe('PlantationAssignmentsService', () => {
   let mockConnection: any;
 
   beforeEach(async () => {
-    mockRequestModel = jest.fn().mockImplementation(function (dto: any) {
-      Object.assign(this, dto);
-      this._id = this._id || new Types.ObjectId();
-      this.save = jest.fn().mockResolvedValue(this);
-      return this;
+    mockRequestModel = jest.fn().mockImplementation((dto: Record<string, unknown>) => {
+      const instance: Record<string, unknown> = Object.assign({}, dto);
+      instance._id = instance._id ?? new Types.ObjectId();
+      instance.save = jest.fn().mockImplementation(() => Promise.resolve(instance));
+      return instance;
     });
     mockRequestModel.findOne = jest.fn();
     mockRequestModel.findById = jest.fn();
     mockRequestModel.find = jest.fn();
     mockRequestModel.countDocuments = jest.fn();
 
-    mockAssignmentModel = jest.fn().mockImplementation(function (dto: any) {
-      Object.assign(this, dto);
-      this._id = this._id || new Types.ObjectId();
-      this.save = jest.fn().mockResolvedValue(this);
-      return this;
+    mockAssignmentModel = jest.fn().mockImplementation((dto: Record<string, unknown>) => {
+      const instance: Record<string, unknown> = Object.assign({}, dto);
+      instance._id = instance._id ?? new Types.ObjectId();
+      instance.save = jest.fn().mockImplementation(() => Promise.resolve(instance));
+      return instance;
     });
     mockAssignmentModel.find = jest.fn();
     mockAssignmentModel.findById = jest.fn();
@@ -501,7 +505,7 @@ describe('PlantationAssignmentsService', () => {
     );
 
     // Returned the existing request without creating a duplicate
-    expect(result.request._id).toEqual(existingRequestId);
+    expect((result.request as PlantationRequestDocument)._id).toEqual(existingRequestId);
     expect(result.request.insuranceId).toBe('INS-DUPLICATE-CHECK');
   });
 

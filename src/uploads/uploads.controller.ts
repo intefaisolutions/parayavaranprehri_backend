@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Post,
@@ -20,6 +21,7 @@ import {
   S3UploadService,
   UploadCategory,
 } from '../common/services/s3-upload.service';
+import { CreatePresignedUrlDto } from './dto/create-presigned-url.dto';
 
 const VALID_CATEGORIES: UploadCategory[] = [
   'users',
@@ -77,5 +79,25 @@ export class UploadsController {
     }
     const signedUrl = await this.s3UploadService.getSignedGetUrl(target);
     return { signedUrl };
+  }
+
+  @Public()
+  @Post('presigned-url')
+  @ApiOperation({
+    summary:
+      'Generate an AWS S3 Presigned PUT URL for direct client-side upload of videos/large files.',
+  })
+  async presignedUrl(@Body() dto: CreatePresignedUrlDto) {
+    const category: UploadCategory = VALID_CATEGORIES.includes(
+      dto.category as UploadCategory,
+    )
+      ? (dto.category as UploadCategory)
+      : 'general';
+
+    return this.s3UploadService.createPresignedUrl(
+      dto.fileName,
+      dto.contentType,
+      category,
+    );
   }
 }

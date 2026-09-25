@@ -12,10 +12,11 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomBytes } from 'crypto';
-import type {} from 'multer';
+import type { } from 'multer';
 
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
+  'image/jpg',
   'image/png',
   'image/webp',
   'image/gif',
@@ -23,6 +24,7 @@ const ALLOWED_MIME_TYPES = new Set([
   'application/pdf',
   'video/mp4',
   'video/quicktime',
+  'video/webm',
 ]);
 
 const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
@@ -42,14 +44,14 @@ export class S3UploadService implements OnModuleInit {
   private cachedRegion: string | undefined;
   private cachedAccessKeyId: string | undefined;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) { }
 
   onModuleInit() {
     const bucket = this.configService.get<string>('AWS_S3_BUCKET_NAME');
     const region = this.configService.get<string>('AWS_REGION');
     const hasKeys = Boolean(
       this.configService.get<string>('AWS_ACCESS_KEY_ID') &&
-        this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+      this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
     );
     if (bucket && region && hasKeys) {
       this.logger.log(
@@ -259,5 +261,63 @@ export class S3UploadService implements OnModuleInit {
     this.logger.log(`Uploaded file to s3://${bucket}/${key}`);
 
     return { key, bucket, url, signedUrl };
+  }
+
+  /**
+   * Generates a temporary S3 presigned PUT URL for client-side direct uploads.
+   * Bypasses Nginx and backend server payload size limits.
+   */
+  async createPresignedUrl(
+    fileName: string,
+    contentType: string,
+    category: UploadCategory = 'general',
+  ): Promise<{
+    uploadUrl: string;
+    key: string;
+    bucket: string;
+    url: string;
+    contentType: string;
+    signedUrl: string;
+  }> {
+    if (!fileName || typeof fileName !== 'string') {
+      throw new BadRequestException('fileName is required and must be a string.');
+    }
+    if (!contentType || typeof contentType !== 'string') {
+      throw new BadRequestException('contentType is required and must be a string.');
+    }
+
+    const normalizedMime = contentType.toLowerCase().trim();
+    if (!ALLOWED_MIME_TYPES.has(normalizedMime)) {
+      throw new BadRequestException(
+        `Unsupported content type: ${contentType}. Allowed types: video (mp4, quicktime, webm), images (jpeg, png, webp, gif, svg), and PDF.`,
+      );
+    }
+
+    const { client, bucket, region } = this.getClient();
+    const key = this.buildKey(category, fileName);
+
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: normalizedMime,
+    });
+
+    const uploadUrl = await getSignedUrl(client as any, command, {
+      expiresIn: 900, // 15 minutes
+    });
+
+    const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+    const signedUrl = await this.getSignedGetUrl(url, 60 * 60 * 12);
+
+    this.logger.log(`Generated presigned PUT upload URL for key="${key}"`);
+
+    return {
+      uploadUrl,
+      key,
+      bucket,
+      url,
+      contentType: normalizedMime,
+      signedUrl,
+    };
   }
 }

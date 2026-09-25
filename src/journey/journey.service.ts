@@ -23,6 +23,19 @@ import {
 } from './schemas/journey-profile.schema';
 import { withMediaCacheBust } from '../common/utils/media-url.util';
 
+const DEFAULT_PROFILE_TAGS = [
+  'COP26',
+  'Climate Change',
+  'Green Energy',
+  'Renewable Energy',
+  'Carbon Reduction',
+  'Net Zero 2070',
+  'Panchamrit',
+  'Sustainable Development',
+  'Environmental Protection',
+  'Green India',
+];
+
 @Injectable()
 export class JourneyService implements OnModuleInit {
   private readonly logger = new Logger(JourneyService.name);
@@ -42,6 +55,22 @@ export class JourneyService implements OnModuleInit {
       this.logger.log(
         `Normalized journey achievement displayOrder for ${changed} rows`,
       );
+    }
+    const profile = await this.profileModel
+      .findOne({ isDeleted: false })
+      .sort({ createdAt: 1 })
+      .exec();
+    if (profile) {
+      profile.tags = DEFAULT_PROFILE_TAGS;
+      await profile.save();
+    } else {
+      await this.profileModel.create({
+        name: '',
+        subtitle: 'Journey & Achievements',
+        stats: [],
+        tags: DEFAULT_PROFILE_TAGS,
+        inspirationText: '',
+      });
     }
   }
 
@@ -146,7 +175,7 @@ export class JourneyService implements OnModuleInit {
         name: '',
         subtitle: 'Journey & Achievements',
         stats: [],
-        tags: [],
+        tags: DEFAULT_PROFILE_TAGS,
         inspirationText: '',
       });
     }

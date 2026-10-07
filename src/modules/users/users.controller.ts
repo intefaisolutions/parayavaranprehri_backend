@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -102,10 +103,21 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @Roles(SystemRole.SUPER_ADMIN, SystemRole.ADMIN)
-  @Permissions(`${PermissionResource.USERS}:${PermissionAction.DELETE}`)
-  @ApiOperation({ summary: 'Soft delete user by ID' })
-  remove(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Delete user by ID (Self or Admin)' })
+  remove(@Param('id') id: string, @CurrentUser() currentUser: JwtPayload) {
+    const isAdmin = currentUser.roles?.some((role) =>
+      [SystemRole.SUPER_ADMIN, SystemRole.ADMIN].includes(role as SystemRole),
+    );
+    const hasDeletePerm = currentUser.permissions?.includes(
+      `${PermissionResource.USERS}:${PermissionAction.DELETE}`,
+    );
+
+    if (!isAdmin && !hasDeletePerm && currentUser.sub !== id) {
+      throw new ForbiddenException(
+        'You are only authorized to delete your own account',
+      );
+    }
+
     return this.usersService.remove(id);
   }
 }

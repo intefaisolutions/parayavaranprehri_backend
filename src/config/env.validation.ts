@@ -34,6 +34,8 @@ export const envSchema = z.object({
   SMS_OTP_TEMPLATE: z.string().optional(),
   FRONTEND_URL: z.string().optional(),
   STATIC_OTP_MODE: z.string().optional(),
+  STATIC_OTP_PHONE: z.string().optional(),
+  STATIC_OTP: z.string().optional(),
   STATIC_OTP_CODE: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),

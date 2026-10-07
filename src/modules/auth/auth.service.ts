@@ -50,14 +50,60 @@ export class AuthService {
     private readonly whatsappService: WhatsappService,
   ) { }
 
-  private generateOtp(): string {
-    // STATIC_OTP_MODE=true → fixed code for local testing (skips SMS).
-    // Otherwise → random 4-digit OTP delivered via HSP SMS / WhatsApp.
+  private isStaticOtpTarget(phone?: string): boolean {
     const staticMode = this.configService.get<string>('STATIC_OTP_MODE');
-    if (staticMode === 'true') {
-      return this.configService.get<string>('STATIC_OTP_CODE') ?? '1234';
+    if (staticMode !== 'true') {
+      return false;
+    }
+    if (!phone) {
+      return false;
+    }
+    const configuredPhone =
+      this.configService.get<string>('STATIC_OTP_PHONE') || '8817678133';
+    const normalizedTarget = normalizeMobile(configuredPhone) || '8817678133';
+    const normalizedPhone = normalizeMobile(phone);
+    return Boolean(normalizedPhone && normalizedPhone === normalizedTarget);
+  }
+
+  private getStaticOtpCode(): string {
+    return (
+      this.configService.get<string>('STATIC_OTP') ||
+      this.configService.get<string>('STATIC_OTP_CODE') ||
+      '1234'
+    );
+  }
+
+  private generateOtp(phone?: string): string {
+    // When STATIC_OTP_MODE=true, return fixed OTP ONLY for the configured demo phone number.
+    // All other numbers receive a real random 4-digit OTP.
+    if (this.isStaticOtpTarget(phone)) {
+      return this.getStaticOtpCode();
     }
     return Math.floor(1000 + Math.random() * 9000).toString();
+  }
+
+  private async ensureDemoUserExists(phone: string): Promise<UserDocument> {
+    const existing = await this.usersService.findByPhone(phone);
+    if (existing) {
+      if (!existing.isActive) {
+        existing.isActive = true;
+        await existing.save();
+      }
+      return existing;
+    }
+
+    const demoEmail = `demo.${phone}@paryavaranprahri.org`;
+    const created = await this.userRepository.create({
+      firstName: 'Demo',
+      lastName: 'User',
+      email: demoEmail,
+      phone: phone,
+      roles: [SystemRole.USER],
+      permissions: [],
+      isActive: true,
+    } as Partial<UserDocument>);
+
+    return created;
   }
 
   private buildPayload(user: UserDocument): JwtPayload {
@@ -265,9 +311,13 @@ export class AuthService {
       throw new UnauthorizedException('Email or phone must be provided');
     }
 
-    const user = email
+    let user = email
       ? await this.usersService.findByEmail(email)
       : await this.usersService.findByPhone(phone!);
+
+    if (!user && this.isStaticOtpTarget(phone)) {
+      user = await this.ensureDemoUserExists(phone!);
+    }
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Please register first');
@@ -287,7 +337,7 @@ export class AuthService {
     if (dto.source !== 'admin' && user.roles?.includes(SystemRole.SUPER_ADMIN)) {
       throw new UnauthorizedException("Super admin can't login from app");
     }
-    const code = this.generateOtp();
+    const code = this.generateOtp(phone);
     const expiresMinutes =
       this.configService.get<number>('OTP_EXPIRES_IN_MINUTES') ?? 10;
     const expiresAt = new Date(Date.now() + expiresMinutes * 60 * 1000);
@@ -299,11 +349,10 @@ export class AuthService {
       user._id.toString(),
     );
 
-    const staticMode =
-      this.configService.get<string>('STATIC_OTP_MODE') === 'true';
+    const isDemoTarget = this.isStaticOtpTarget(phone);
 
-    if (staticMode) {
-      // Skip real gateway calls entirely while testing with a fixed OTP.
+    if (isDemoTarget) {
+      // Skip real gateway calls for the demo account (Apple reviewer cannot receive Indian SMS).
       return { message: 'OTP has been sent successfully' };
     }
 
@@ -350,15 +399,22 @@ export class AuthService {
       throw new UnauthorizedException('Email or phone must be provided');
     }
 
-    const otp = await this.otpRepository.findValid(identifier, dto.code);
+    let otp = await this.otpRepository.findValid(identifier, dto.code);
 
-    if (!otp) {
+    const isDemoTarget = this.isStaticOtpTarget(phone);
+    const isValidDemoCode = isDemoTarget && dto.code === this.getStaticOtpCode();
+
+    if (!otp && !isValidDemoCode) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    const user = email
+    let user = email
       ? await this.usersService.findByEmail(email)
       : await this.usersService.findByPhone(phone!);
+
+    if (!user && isDemoTarget) {
+      user = await this.ensureDemoUserExists(phone!);
+    }
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
@@ -379,7 +435,9 @@ export class AuthService {
       throw new UnauthorizedException("Super admin can't login from app");
     }
 
-    await this.otpRepository.markUsed(otp._id.toString());
+    if (otp) {
+      await this.otpRepository.markUsed(otp._id.toString());
+    }
     await this.usersService.updateLastLogin(user._id.toString());
 
     const tokens = await this.generateTokens(user, userAgent, ipAddress);

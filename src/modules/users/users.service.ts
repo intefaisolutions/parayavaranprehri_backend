@@ -213,9 +213,14 @@ export class UsersService {
     return this.sanitizeUser(updated);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<{ success: boolean; message: string }> {
     await this.findOne(id);
-    await this.userRepository.softDelete(id);
+    await this.userRepository.updateById(id, {
+      isDeleted: true,
+      isActive: false,
+      deletedAt: new Date(),
+    });
+    return { success: true, message: 'Account deleted successfully' };
   }
 
   async getUserVehicles(userId: string): Promise<any> {
